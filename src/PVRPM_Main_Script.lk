@@ -1,6 +1,6 @@
 
 //*************************************************************************************
-//PV Reliability and Performance Model Version 2.0 
+//PV Reliability and Performance Model Version 2.0
 //Inputs and Control Script -- BETA --
 //Janine Freeman, NREL
 //20 June 2017
@@ -14,21 +14,21 @@ Redistribution and use in source and binary forms, with or without modification,
 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
-AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-For five (5) years from 12/16/2016 the United States Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this data to 
-reproduce, prepare derivative works, and perform publicly and display publicly, by or on behalf of the Government. There is provision for the possible extension of the term of this license. 
-Subsequent to that period or any extension granted, the United States Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license 
-in this data to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so. The specific term of the license 
+For five (5) years from 12/16/2016 the United States Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license in this data to
+reproduce, prepare derivative works, and perform publicly and display publicly, by or on behalf of the Government. There is provision for the possible extension of the term of this license.
+Subsequent to that period or any extension granted, the United States Government is granted for itself and others acting on its behalf a paid-up, nonexclusive, irrevocable worldwide license
+in this data to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so. The specific term of the license
 can be identified by inquiry made to Sandia Corporation or DOE.
 
-NEITHER THE UNITED STATES GOVERNMENT, NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR SANDIA CORPORATION, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY 
+NEITHER THE UNITED STATES GOVERNMENT, NOR THE UNITED STATES DEPARTMENT OF ENERGY, NOR SANDIA CORPORATION, NOR ANY OF THEIR EMPLOYEES, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY
 LEGAL RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS.
 
-Any licensee of this software has the obligation and responsibility to abide by the applicable export control laws, regulations, and general prohibitions relating to the export of technical data. 
+Any licensee of this software has the obligation and responsibility to abide by the applicable export control laws, regulations, and general prohibitions relating to the export of technical data.
 Failure to obtain an export control license or other authority from the Government may result in criminal liability under U.S. laws.
 */
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -53,11 +53,11 @@ import 'PVRPM_Function.lk';
 	num_combiners = 2; //total number of DC combiner boxes
 	num_transformers = 1; //total number of Transformers
 	num_trackers = 2; //total number of trackers
-	
+
 //----Financial inputs-----------------------------------------------------------------------------------------
 	present_day_labor_rate = 100; //dollars per hour
 	inflation = 3; //%
-	
+
 //----Tracker failure algorithm--------------------------------------------------------------------------------
 	use_worst_case_tracker = false;
 
@@ -66,13 +66,13 @@ import 'PVRPM_Function.lk';
 	Equation format must follow:
 	Inputs: 	percent_per_day = degradation rate in percent per DAY
 				t = time (in DAYS) since the module was new or replaced
-	Return: Current degradation factor in fractional form, 
+	Return: Current degradation factor in fractional form,
 	i.e. if module is 2% degraded, returns 0.98
 	*/
 	function current_degradation_rate(percent_per_day, t)
 	{
 		return 1 / pow((1 + percent_per_day / 100), t);
-	}	
+	}
 
 //----Number of stochastic realizations to be run--------------------------------------------------------------
 	num_realizations = 3; //must be 2 or greater
@@ -84,7 +84,7 @@ import 'PVRPM_Function.lk';
 //run pre-checks on the case and system configuration to make sure that it will run appropriately
 check_case(); //do not change this line!
 
-		
+
 //********************************************************************************************************************************************************************************
 // USER-DEFINED COMPONENT META DATA
 // These inputs control the failure and repair modes and costs for the different component types. Please modify these inputs.
@@ -95,7 +95,7 @@ check_case(); //do not change this line!
 	//**NOTE: components currently include: module, string, combiner, inverter, disconnect, transformer, grid, and (optional) tracker
 	/*
 	meta.
-		component.			
+		component.
 			name = a string containing the name of the component type, used for error reporting
 			can_fail = true if component is allowed to fail
 			can_repair = true if component is allowed to be repaired after failing
@@ -118,10 +118,10 @@ check_case(); //do not change this line!
 				rate = degradation rate (%/year)
 	*/
 
-global meta = null; 
+global meta = null;
 
 //----Modules--------------------------------------------------------------------------------------------------
-	meta.module.name = 'module';	
+	meta.module.name = 'module';
 	meta.module.can_fail = true;
 	meta.module.can_repair = true;
 	meta.module.warranty.has_warranty = true;
@@ -142,7 +142,7 @@ global meta = null;
 	meta.module.repair[0].parameters =  [60, 20]; //mean, std, in days
 	meta.module.degradation.can_degrade = true;
 	meta.module.degradation.rate = 20; //%/year
-	
+
 //----Strings--------------------------------------------------------------------------------------------------
 	meta.string.name = 'string';
 	meta.string.can_fail = true;
@@ -154,7 +154,7 @@ global meta = null;
 	meta.string.failure[0].cost = 20; //$
 	meta.string.repair[0].distribution = 'lognormal';
 	meta.string.repair[0].parameters = [7, 3]; //mean, std, days
-	
+
 //----Combiners------------------------------------------------------------------------------------------------
 	meta.combiner.name = 'combiner';
 	meta.combiner.can_fail = true;
@@ -166,12 +166,12 @@ global meta = null;
 	meta.combiner.failure[0].cost = 976; //$
 	meta.combiner.repair[0].distribution = 'exponential';
 	meta.combiner.repair[0].parameters = [3]; //mean, days
-	
+
 //----Inverters------------------------------------------------------------------------------------------------
 	meta.inverter.name = 'inverter';
 	meta.inverter.can_fail = true;
 	meta.inverter.can_repair = true;
-	meta.inverter.warranty.has_warranty = false; 
+	meta.inverter.warranty.has_warranty = false;
 	//failure mode 1: component failure
 	meta.inverter.failure[0].distribution = 'exponential';
 	meta.inverter.failure[0].parameters = [1 / 365]; //failures per year converted to per day
@@ -203,7 +203,7 @@ global meta = null;
 	//repair mode 3: catastrophic failure
 	meta.inverter.repair[2].distribution = 'lognormal';
 	meta.inverter.repair[2].parameters = [3, 1.5]; //mean, std, in days
-	
+
 //----AC Disconnects-------------------------------------------------------------------------------------------
 	meta.disconnect.name = 'disconnect';
 	meta.disconnect.can_fail = true;
@@ -215,7 +215,7 @@ global meta = null;
 	meta.disconnect.failure[0].cost = 500; //$
 	meta.disconnect.repair[0].distribution = 'lognormal';
 	meta.disconnect.repair[0].parameters = [1, 0.5]; //mean, std, in years converted to days
-	
+
 //----Transformers---------------------------------------------------------------------------------------------
 	meta.transformer.name = 'transformer';
 	meta.transformer.can_fail = true;
@@ -227,7 +227,7 @@ global meta = null;
 	meta.transformer.failure[0].cost = 32868; //$
 	meta.transformer.repair[0].distribution = 'lognormal';
 	meta.transformer.repair[0].parameters = [0.25, 0.5]; //mean, std, in days
-	
+
 //----Grid-----------------------------------------------------------------------------------------------------
 	meta.grid.name = 'grid';
 	meta.grid.can_fail = true;
@@ -239,7 +239,7 @@ global meta = null;
 	meta.grid.failure[0].cost = 0;
 	meta.grid.repair[0].distribution = 'exponential';
 	meta.grid.repair[0].parameters = [0.5]; //mean in days
-	
+
 //----Trackers-------------------------------------------------------------------------------------------------
 	// Only required for tracking systems, otherwise must be deleted or commented out
 	/*
@@ -254,7 +254,7 @@ global meta = null;
 	meta.tracker.repair[0].distribution = 'lognormal';
 	meta.tracker.repair[0].parameters = [30, 10]; //mean, std, in days
 	*/
-	
+
 
 //********************************************************************************************************************************************************************************
 // RUNNING THE MODEL, DO NOT CHANGE ANY OF THE FOLLOWING LINES
@@ -263,9 +263,3 @@ configuration_check();
 if (is_tracking_system)
 	precalculate_tracker_losses();
 pvrpm_exec();
-
-
-
-
-
-
