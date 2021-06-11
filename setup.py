@@ -9,6 +9,7 @@ setup(
         "nrel-pysam",
         "pandas",
         "click",
+        "pyyaml",
     ],
     extras_require={
         "docs": [
@@ -22,7 +23,7 @@ setup(
         [console_scripts]
         pvrpm=pvrpm.__main__:main
     """,
-    author="Brandon Silva",
+    author=["Brandon Silva", "Paul Lunis"],
     long_description="README.md",
     long_description_content_type="text/markdown",
     url="https://github.com/FSEC-Photovoltaics/pvrpm-lcoe",
