@@ -1,0 +1,6 @@
+module_order: # the order the modules of this case should be executed
+              # typically, this should be pvsystem -> grid -> utiltiy -> others
+  - Pvwattsv7
+  - Grid
+  - Utilityrate5
+  - Cashloan
