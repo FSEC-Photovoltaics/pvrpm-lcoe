@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 import scipy
 
-import PySAM as pysam
 import PySAM.PySSC as pssc
 
 from pvrpm.core.logger import logger
@@ -30,11 +29,16 @@ class SamCase:
         # load the case jsons and pysam module objects for them
         first_module = None
         for path in glob(os.path.join(sam_json_dir, "*.json")):
-            module_name = os.basename(path)
+            module_name = os.path.basename(path)
             try:
                 module = filename_to_module(module_name)
             except AttributeError:
                 raise CaseError(f"Couldn't find module for file {module_name}!")
+
+            if not module:
+                raise CaseError(f"Couldn't find module for file {module_name}!")
+
+            module_name = module.__name__.replace("PySAM.", "")
 
             if not first_module:
                 first_module = module.new()
@@ -47,7 +51,7 @@ class SamCase:
                 if k != "number_inputs":
                     module.value(k, v)
 
-            self.modules[module.__name__] = module
+            self.modules[module_name] = module
 
         if not (self.modules and self.config):
             raise CaseError("There are errors in the configuration files, see logs.")
