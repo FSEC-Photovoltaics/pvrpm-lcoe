@@ -2,6 +2,7 @@ import json
 import yaml
 import os
 from glob import glob
+from typing import Optional, Union, Any
 
 import pandas as pd
 import numpy as np
@@ -61,7 +62,7 @@ class SamCase:
     @staticmethod
     def __load_config(path: str, type: str = "yaml") -> dict:
         """
-        Loads a configuration from a YAML or JSON file and returns the dictionary
+        Loads a configuration from a YAML or JSON file and returns the dictionary.
 
         Args:
             path (str): String path to the file
@@ -90,22 +91,72 @@ class SamCase:
 
     def __verify_config(self) -> None:
         """
-        Verifies loaded YAML configuration file
+        Verifies loaded YAML configuration file.
         """
         pass
 
     def __verify_case(self) -> None:
         """
-        Verifies loaded module configuration from SAM
+        Verifies loaded module configuration from SAM.
         """
         pass
 
     def simulate(self, verbose: int = 0) -> None:
         """
-        Executes simulations for all modules in this case
+        Executes simulations for all modules in this case.
 
         Args:
             verbose (int): 0 for no log messages, 1 for simulation log messages
         """
         for m_name in self.config[ck.MODULE_ORDER]:
             self.modules[m_name].execute(verbose)
+
+    def value(self, name: str, value: Optional[Any] = None) -> Union[None, float, dict, list, str]:
+        """
+        Get or set by string name a module value, without specifying the module the variable resides in.
+
+        If there is no value provided, the value is returned for the variable name.
+
+        This will search the module's data and update the variable if found. If the value is not found in all of the modules, an AttributeError is raised.
+
+        Args:
+            name (str): Name of the value
+            value (Any, optional): Value to set variable to
+
+        Returns:
+            Value or the variable if value is None
+        """
+        for m_name in self.modules.keys():
+            try:
+                if value:
+                    return self.modules[m_name].value(name, value)
+                else:
+                    return self.modules[m_name].value(name)
+            except:
+                pass
+
+        raise AttributeError(f"Variable {name} not found or incorrect value datatype in {list(self.modules.keys())}")
+
+    def output(self, name: str) -> Union[None, float, dict, list, str]:
+        """
+        Get an output variable by string name, without specifying the module the variable resides in.
+
+        This will search all of the module's outputs. If the value is not found in all of the modules, an AttributeError is raised.
+
+        Args:
+            name (str): Name of the output
+
+        Returns:
+            The value of the output variable
+        """
+        for m_name in self.modules.keys():
+            try:
+                return getattr(self.modules[m_name].Outputs, name)
+            except AttributeError:
+                pass  # in case something else should be done
+            except:
+                # if this happens, value was found but was not set, which in PvSAM raises an exception
+                # so, return None
+                return None
+
+        raise AttributeError(f"Output variable {name} not found in {list(self.modules.keys())}")

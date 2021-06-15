@@ -1,5 +1,6 @@
 module_order: # the order the modules of this case should be executed
               # typically, this should be pvsystem -> grid -> utiltiy -> others
+              # see https://nrel-pysam.readthedocs.io/en/master/Configs.html?highlight=belpe#sam-simulation-configurations
   - Pvwattsv7
   - Grid
   - Utilityrate5
