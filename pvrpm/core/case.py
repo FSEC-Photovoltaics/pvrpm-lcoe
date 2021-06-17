@@ -93,13 +93,61 @@ class SamCase:
         """
         Verifies loaded YAML configuration file.
         """
+        # need to check everything in the config
+        # check num_realizations too
         pass
 
     def __verify_case(self) -> None:
         """
-        Verifies loaded module configuration from SAM.
+        Verifies loaded module configuration from SAM and also sets class variables for some information about the case.
         """
-        pass
+        """
+        Not sure how to check this, maybe just see if pvsamv1 is loaded?
+        // Technology must be detailed PV model
+        global cfg = configuration();
+        tech = cfg[0];
+        if (tech != 'Flat Plate PV')
+        {
+            outln('Error: This script is only applicable to the detailed photovoltaic model. Exiting simulation.');
+                exit;
+        }
+        """
+        self.num_modules = 0
+        self.is_tracking_system = False
+        self.has_multiple_subarrays = False
+        for sub in range(1, 5):
+            if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
+                self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
+                    f"subarray{sub}_nstrings"
+                )
+
+                if self.value(f"subarray{sub}_track_mode"):
+                    self.is_tracking_system = True
+
+                if sub > 1:
+                    self.has_multiple_subarrays = True
+
+        self.num_modules_per_string = self.value("subarray1_modules_per_string")
+
+        self.num_strings = self.value("subarray1_nstrings")
+        self.num_inverters = self.value("inverter_count")
+
+        inverter = self.value("inverter_model")
+        if inverter == 0:
+            self.inverter_size = self.value("inv_snl_paco")
+        elif inverter == 1:
+            self.inverter_size = self.value("inv_ds_paco")
+        elif inverter == 2:
+            self.inverter_size = self.value("inv_pd_paco")
+        else:
+            raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
+
+        self.num_disconnects = self.num_inverters
+        # assume 1 AC disconnect per inverter
+        self.num_strings_per_combiner = np.floor(self.num_strings / self.config[ck.NUM_COMBINERS])
+        self.num_inverters_per_transformer = np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS])
+
+        self.system_lifetime_yrs = self.value("analysis_period")
 
     def simulate(self, verbose: int = 0) -> None:
         """

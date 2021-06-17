@@ -5,3 +5,8 @@ module_order: # the order the modules of this case should be executed
   - Grid
   - Utilityrate5
   - Cashloan
+
+num_realizations: 2 # number of passes to make
+num_combiners: 2 # total number of DC combiner boxes
+num_transformers: 1 # total number of Transformers
+num_trackers: 2 # total number of trackers
