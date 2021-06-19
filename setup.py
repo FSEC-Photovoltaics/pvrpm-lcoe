@@ -10,6 +10,8 @@ setup(
         "pandas",
         "click",
         "pyyaml",
+        "scipy",
+        "scikit-learn",
     ],
     extras_require={
         "docs": [
