@@ -1,12 +1,278 @@
 module_order: # the order the modules of this case should be executed
+              # check to see what modules you use by the name of the json output files
               # typically, this should be pvsystem -> grid -> utiltiy -> others
               # see https://nrel-pysam.readthedocs.io/en/master/Configs.html?highlight=belpe#sam-simulation-configurations
-  - Pvwattsv7
+  - Pvsamv1
   - Grid
   - Utilityrate5
   - Cashloan
 
+### Run Setup ###
+# results folder doesn't need to exist, it will be created if it doesnt already
+results_folder: /path/to/results/folder
 num_realizations: 2 # number of passes to make
+p_value: 60 # PXX is what will get calculated
+conf_interval: 60 #XX % confidence interval around the mean will be calculated
+
+### Case Setup ###
 num_combiners: 2 # total number of DC combiner boxes
 num_transformers: 1 # total number of Transformers
 num_trackers: 2 # total number of trackers
+
+### Financial Inputs ###
+present_day_labor_rate: 100 # dollars per hour
+inflation: 3 # in percent
+
+### Failure Tracker Algorithm ###
+use_worst_case_tracker: false
+
+
+### Component Information ###
+  # The structure of the user-entered component information is as follows:
+  #**NOTE: components currently include: module, string, combiner, inverter, disconnect, transformer, grid, and (optional) tracker
+
+#    component.
+#      name = a string containing the name of the component type, used for error reporting
+#      can_fail = true if component is allowed to fail
+#      can_repair = true if component is allowed to be repaired after failing
+#      ### if can_repair or can_fail is false, you can remove their respective section below (failures and repairs)
+#      warranty (remove if no warranty)
+#        days = number of days that the warranty is for (e.g. a 20 year warranty would be 20 * 365 days)
+#      failures (list as many failures as needed)
+#        distribution = distribution type of this failure mode
+#        parameters = parameters for this failure mode
+#          mean: mean in days for this failure mode's distribution
+#          std: standard deviation for this failure mode's distribution (not all distributions need std)
+#        labor_time = number of hours of labor it takes to repair this type of failure
+#        cost = parts cost to repair this type of failure
+#        fraction (optional) = If fraction is defined, then this failure mode is a defective failure mode, and "fraction" represents the fraction of this type of component that are defective
+#      repairs (list a repair for each failure, or only 1 repair for all failures)
+#        distribution = distribution type of repair times
+#        parameters = parameters of the repair distribution
+#          mean: mean in days for this repair mode's distribution
+#          std: standard deviation for this failure mode's distribution (not all distributions need std)
+#        **NOTE: If there is only ONE repair distribution (repair[0]), then ALL failure modes will use that distribution! Otherwise, # repair modes must equal # failure modes.
+#      degradation (MODULES ONLY) (remove if no degradation)
+#        rate = degradation rate (%/year)
+
+### Distribution types
+# PVRPM has some distributions built in, where only a mean and standard deviation is needed to
+# properly model the failure or repair. Under the hood, PVRPM uses scipy.stats distribution
+# functions to model these. However, scipy.stats documentation for each function is not very
+# clear on how to convert the mean and std into usuable values for the distribution, which
+# is why PVRPM will wrap them for you.
+
+# However, not every single scipy distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):
+#  - exponential
+#  - normal
+#  - uniform
+#  - lognormal
+#  - weibull
+# If using one of these distributions, you can simply provide the mean and std in days.
+
+# You can also override this, and change the distribution to match the function name of any of the distributions listed here:
+# https://docs.scipy.org/doc/scipy/reference/stats.html
+# If you do this, then the "parameters" option will then be a list of kwargs to the scipy function you select. For example, if you want to use the gamma distribution:
+#  distribution: gamma
+#  parameters:
+#    a: 1.99
+#    scale: 100 # 1 / beta
+###
+
+module:
+  name: module
+  can_fail: true
+  can_repair: true
+
+  warranty:
+    days: 7300 # years converted to days
+
+  failures:
+    normal_failures: # this key name can be anything you want
+      distribution: normal
+      parameters: # parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function
+        mean: 1460 # years converted to days
+        std: 365 # days
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+    defective_failures: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 100 # mean in days, or you can do 1 / (num_failures / year * 365)
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+      fraction: 0.2 # > 0 and < 1, fraction of these components that are defective
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 60 # in days
+        std: 20 # in days
+
+  degradation: # modules only, how much a module degrades per year
+    rate: 20 # in percent
+
+string:
+  name: string
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 182.5 # mean in days, or you can do 1 / (num_failures / year * 365)
+      labor_time: 1 # in hours
+      cost: 20 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 7 # in days
+        std: 3 # in days
+
+combiner:
+  name: combiner
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 730
+        std: 182.5
+      labor_time: 2 # in hours
+      cost: 976 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 3 # in days
+
+inverter:
+  name: inverter
+  can_fail: true
+  can_repair: true
+
+  failures:
+    component_failure: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 365
+      labor_time: 0 # in hours
+      cost: 280 # in USD, typically you should do cents/watt * inverter_size (listed in SAM)
+    routine_failure:
+      distribution: exponential
+      parameters:
+        mean: 365
+      labor_time: 0
+      cost: 500 # USD, typically based on inverter size
+    catastrophic_failure:
+      distribution: normal
+      parameters:
+        mean: 500
+        std: 365.25
+      labor_time: 0
+      cost: 1400 # cents/watt * inverter size
+
+  repairs:
+    component_repair: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 3 # in days
+        std: 1.5
+    routine_repair:
+      distribution: exponential
+      parameters:
+        mean: 0.5
+    catastrophic_repair:
+      distribution: lognormal
+      parameters:
+        mean: 3
+        std: 1.5
+
+disconnect: # A/C disconnect
+  name: disconnect
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 1095
+        std: 540
+      labor_time: 4 # in hours
+      cost: 500 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 1 # in days
+        std: 0.5
+
+transformer:
+  name: transformer
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 365
+        std: 184
+      labor_time: 10 # in hours
+      cost: 32868 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 0.25 # in days
+        std: 0.5
+
+grid:
+  name: grid
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 100
+        std: 20
+      labor_time: 0 # in hours
+      cost: 0 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 0.5 # in days
+
+tracker: # only required for tracking systems, remove it not using trackers
+  name: tracker
+  can_fail: true
+  can_repair: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 500
+      labor_time: 0 # in hours
+      cost: 2000 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 30 # in days
+        std: 10

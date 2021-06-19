@@ -36,3 +36,17 @@ def sim(case: str, config: str, verbose: int):
         sam_case.simulate(verbose=verbose)
     except Exception as e:
         logger.error(f"There was an error in running the simulation: {e}")
+
+
+@main.command()
+@click.argument("config")
+@click.option("--case", metavar="<path>", help="Path to directory containing json export from SAM for the case")
+def verify(case: str, config: str):
+    """
+    Verify the case and pvrpm configuration files
+    """
+    try:
+        sam_case = SamCase(case, config)
+        logger.info("Configuration verified successfully!")
+    except CaseError as e:
+        logger.error(f"Error loading and verifying case: {e}")
