@@ -95,6 +95,31 @@ def sample(
         return dist.rvs(size=num_samples)
 
 
+def cf_interval(alpha: float, std: float, num_samples: int) -> float:
+    """
+    Calculates the two tails margin of error given the desired input. The margin of error is the value added and subtracted by the sample mean to obtain the confidence interval
+
+    Sample sizes less then equal to 30 use t score, greater then 30 use z score
+
+    Args:
+        alpha (float): The significance level for the interval
+        std (float): The standard deviation of the data
+        num_samples (int): The number of samples in the data
+
+    Returns:
+        float: The margin of error
+    """
+    # two tails
+    alpha = alpha / 2
+
+    if num_samples > 30:
+        score = stats.norm.ppf(alpha)
+    else:
+        score = stats.t.ppf(1 - alpha, num_samples - 1)
+
+    return score * std / np.sqrt(num_samples)
+
+
 def pvrpm_sim(case: SamCase):
     """
     Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
