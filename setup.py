@@ -11,7 +11,7 @@ setup(
         "click",
         "pyyaml",
         "scipy",
-        "scikit-learn",
+        "tqdm",
     ],
     extras_require={
         "docs": [
