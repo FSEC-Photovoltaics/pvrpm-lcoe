@@ -9,12 +9,14 @@ import numpy as np
 
 from pvrpm.core.logger import logger
 from pvrpm.core.exceptions import CaseError
-from pvrpm.core.utils import filename_to_module
+from pvrpm.core.utils import filename_to_module, summarize_dc_energy
 from pvrpm.core.enums import ConfigKeys as ck
 
 
 class SamCase:
-    """"""
+    """
+    SAM Case loader, verifier, and simulation
+    """
 
     def __init__(self, sam_json_dir: str, config: str):
         """"""
@@ -306,21 +308,12 @@ class SamCase:
         self.simulate()
         timeseries_without_tracker = self.output("dc_net")
 
-        # calculate daily loss statistics
-        timestep = len(timeseries_with_tracker) / 8760
-        self.daily_tracker_coeffs = np.zeros(365)
-        curr_dc = 0
-        # TODO make this more efficent
-        for d in range(365):
-            sum_without_tracker = 0  # kWh
-            sum_with_tracker = 0  # kWh
-            for h in range(24):
-                for t in range(timestep):
-                    sum_with_tracker += timeseries_with_tracker[curr_dc] / timestep
-                    sum_without_tracker += timeseries_without_tracker[curr_dc] / timestep
-                    curr_dc += 1
+        # summarize it to daily energy
+        sum_with_tracker = summarize_dc_energy(timeseries_with_tracker, 365)
+        sum_without_tracker = summarize_dc_energy(timeseries_without_tracker, 365)
 
-            self.daily_tracker_coeffs[d] = sum_without_tracker / sum_with_tracker
+        # calculate daily loss statistics
+        self.daily_tracker_coeffs = sum_without_tracker / sum_with_tracker
 
         self.value("analysis_period", user_analysis_period)
         self.value("subarray1_track_mode", user_tracking_mode)

@@ -52,8 +52,7 @@ use_worst_case_tracker: false
 #          mean: mean in days for this repair mode's distribution
 #          std: standard deviation for this failure mode's distribution (not all distributions need std)
 #        **NOTE: If there is only ONE repair distribution (repair[0]), then ALL failure modes will use that distribution! Otherwise, # repair modes must equal # failure modes.
-#      degradation (MODULES ONLY) (remove if no degradation)
-#        rate = degradation rate (%/year)
+#      degradation (MODULES ONLY) (remove if no degradation) (%/year)
 
 ### Distribution types
 # PVRPM has some distributions built in, where only a mean and standard deviation is needed to
@@ -110,8 +109,7 @@ module:
         mean: 60 # in days
         std: 20 # in days
 
-  degradation: # modules only, how much a module degrades per year
-    rate: 20 # in percent
+  degradation: 20 # modules only, how much a module degrades per year in percent
 
 string:
   name: string
