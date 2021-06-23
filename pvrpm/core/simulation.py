@@ -1,4 +1,5 @@
 import os
+import time
 
 import pandas as pd
 import numpy as np
@@ -9,6 +10,8 @@ from tqdm import tqdm
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
+from pvrpm.core.utils import summarize_dc_energy
+from pvrpm.core.logger import logger
 
 
 def sample(
@@ -120,6 +123,24 @@ def cf_interval(alpha: float, std: float, num_samples: int) -> float:
     return score * std / np.sqrt(num_samples)
 
 
+def component_degradation(percent_per_day: float, t: int):
+    """
+    Calculate the degradation of a component given the time since last replacement
+
+    Args:
+        percent_per_day (float): The percent degradation per day of the module
+        t (int): Time since the module was last replaced, or if its a new module installed
+
+    Returns:
+        float: The performance of the module, between 0 and 1
+
+    Note:
+        This gives the overall module performance based on degradation, so if the module has degraded 2 percent so far, this function returns 0.98
+    """
+
+    return 1 / np.power((1 + percent_per_day / 100), t)
+
+
 def pvrpm_sim(case: SamCase):
     """
     Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
@@ -127,4 +148,45 @@ def pvrpm_sim(case: SamCase):
     Args:
         case (:obj:`SamCase`): The loaded and verified case to use with the simulation
     """
-    pass
+    # run the dummy base case
+    case.value("en_dc_lifetime_losses", 0)
+    case.value("en_ac_lifetime_losses", 0)
+
+    case.value("om_fixed", [0])
+
+    module_degradation_rate = case.config[ck.MODULE].get(ck.DEGRADE, 0) / 365
+
+    degrade = [
+        (1 - component_degradation(module_degradation_rate, i)) * 100
+        for i in range(int(case.config[ck.LIFETIME_YRS] * 365))
+    ]
+
+    case.value("en_dc_lifetime_losses", 1)
+    case.value("dc_lifetime_losses", degrade)
+
+    logger.info("Running base case simulation...")
+    start = time.time()
+    case.simulate()
+    logger.info("Base case simulation took: {:.2f} seconds".format(time.time() - start))
+
+    index = ["Base Case"]
+    data = {"lcoe": [case.output("lcoe_real")]}
+    lifetime = case.value("analysis_period")
+
+    # ac energy
+    # remove the first element from cf_energy_net because it is always 0, representing year 0
+    base_annual_energy = np.array(case.output("cf_energy_net")[1:])
+    cumulative_ac_energy = np.cumsum(base_annual_energy)
+
+    for i in range(int(lifetime)):
+        data[f"annual_ac_energy_{i+1}"] = [base_annual_energy[i]]
+        data[f"cumulative_ac_energy_{i+1}"] = [cumulative_ac_energy[i]]
+
+    # dc energy
+    timeseries_dc_power = case.output("dc_net")
+    dc_energy = summarize_dc_energy(timeseries_dc_power, case.config[ck.LIFETIME_YRS])
+    for i in range(len(dc_energy)):
+        data[f"dc_energy_{i+1}"] = [dc_energy[i]]
+
+    summary_results = pd.DataFrame(index=index, data=data)
+    summary_results.index.name = "Realization"
