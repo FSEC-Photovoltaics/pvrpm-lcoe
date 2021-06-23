@@ -185,6 +185,30 @@ class SamCase:
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
 
+            if self.config[ck.STR_PER_COMBINER] * self.config[ck.NUM_COMBINERS] != self.num_strings:
+                raise CaseError("There must be an integer number of strings per combiner!")
+
+            if self.config[ck.INVERTER_PER_TRANS] * self.config[ck.NUM_TRANSFORMERS] != self.num_inverters:
+                raise CaseError("There must be an integer number of inverters per transformer!")
+
+            # add the number of each component to its configuration information
+            if component == ck.MODULE:
+                self.config[component][ck.NUM_COMPONENT] = int(self.num_modules)
+            elif component == ck.STRING:
+                self.config[component][ck.NUM_COMPONENT] = int(self.num_strings)
+            elif component == ck.COMBINER:
+                self.config[component][ck.NUM_COMPONENT] = self.config[ck.NUM_COMBINERS]
+            elif component == ck.INVERTER:
+                self.config[component][ck.NUM_COMPONENT] = int(self.num_inverters)
+            elif component == ck.DISCONNECT:
+                self.config[component][ck.NUM_COMPONENT] = int(self.num_disconnects)
+            elif component == ck.TRANSFORMER:
+                self.config[component][ck.NUM_COMPONENT] = self.config[ck.NUM_TRANSFORMERS]
+            elif component == ck.GRID:
+                self.config[component][ck.NUM_COMPONENT] = 1
+            elif component == ck.TRACKER:
+                self.config[component][ck.NUM_COMPONENT] = self.config[ck.NUM_TRACKERS]
+
         if self.config[ck.TRACKING] and self.config[ck.TRACKER][ck.CAN_FAIL]:
             self.precalculate_tracker_losses()
 
@@ -209,20 +233,19 @@ class SamCase:
             )
             self.value("dc_degradation", [0])
 
-        self.config[ck.NUM_MODULES] = 0
-        self.config[ck.NUM_STRINGS] = 0
-        self.config[ck.INVERTER_SIZE] = self.value("inverter_count")
+        self.num_modules = 0
+        self.num_strings = 0
         # assume the number of modules per string is the same for each subarray
         self.config[ck.MODULES_PER_STR] = self.value("subarray1_modules_per_string")
         self.config[ck.TRACKING] = False
         self.config[ck.MULTI_SUBARRAY] = False
         for sub in range(1, 5):
             if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
-                self.config[ck.NUM_MODULES] += self.value(f"subarray{sub}_modules_per_string") * self.value(
+                self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
                     f"subarray{sub}_nstrings"
                 )
 
-                self.config[ck.NUM_STRINGS] += self.value(f"subarray{sub}_nstrings")
+                self.num_strings += self.value(f"subarray{sub}_nstrings")
 
                 if self.value(f"subarray{sub}_track_mode"):
                     self.config[ck.TRACKING] = True
@@ -232,11 +255,11 @@ class SamCase:
 
         inverter = self.value("inverter_model")
         if inverter == 0:
-            self.inverter_size = self.value("inv_snl_paco")
+            self.config[ck.INVERTER_SIZE] = self.value("inv_snl_paco")
         elif inverter == 1:
-            self.inverter_size = self.value("inv_ds_paco")
+            self.config[ck.INVERTER_SIZE] = self.value("inv_ds_paco")
         elif inverter == 2:
-            self.inverter_size = self.value("inv_pd_paco")
+            sself.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
@@ -252,12 +275,12 @@ class SamCase:
                 )
 
         # assume 1 AC disconnect per inverter
-        self.config[ck.NUM_INVERTERS] = self.value("inverter_count")
-        self.config[ck.NUM_DISCONNECTS] = self.config[ck.NUM_INVERTERS]
+        self.num_inverters = self.value("inverter_count")
+        self.num_disconnects = self.num_inverters
 
-        self.config[ck.STR_PER_COMBINER] = np.floor(self.config[ck.NUM_STRINGS] / self.config[ck.NUM_COMBINERS])
+        self.config[ck.STR_PER_COMBINER] = np.floor(self.num_strings / self.config[ck.NUM_COMBINERS])
 
-        self.config[ck.INVERTER_PER_TRANS] = np.floor(self.config[ck.NUM_INVERTERS] / self.config[ck.NUM_TRANSFORMERS])
+        self.config[ck.INVERTER_PER_TRANS] = np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS])
 
         self.config[ck.LIFETIME_YRS] = self.value("analysis_period")
 

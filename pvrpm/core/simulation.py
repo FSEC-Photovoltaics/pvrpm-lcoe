@@ -4,98 +4,13 @@ import time
 import pandas as pd
 import numpy as np
 import scipy
-import scipy.stats as stats
-from scipy.special import gamma, gammaln
 from tqdm import tqdm
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
+from pvrpm.core.components import Components
 from pvrpm.core.utils import summarize_dc_energy
 from pvrpm.core.logger import logger
-
-
-def sample(
-    distribution: str,
-    parameters: dict,
-    num_samples: int,
-    method: str = "rou",
-) -> np.array:
-    """
-    Sample data from a distribution. If distribution is a supported distribution, parameters should be a dictionary with keys "mean" and "std". Otherwise, distribution should be a scipy stats function and parameters be the kwargs for the distribution.
-
-    Supported Distributions (only requires mean and std):
-        - lognormal
-        - normal
-        - uniform (one std around mean)
-        - weibull
-        - exponential
-
-    Supported sampling methods:
-        - 'rou': Ratio of uniforms, the default. Pretty much random sampling
-
-    Args:
-        distribution (str): Name of the distribution function
-        parameters (:obj:`dict`): Kwargs for the distribution (for a supported distribution should only be the mean and std)
-        num_samples (int): Number of samples to return from distribution
-        method (str, Optional): Sampling method to use, defaults to ratio of uniforms
-
-    Returns:
-        :obj:(list): List of floats containing samples from the distribution
-    """
-    distribution = distribution.lower().strip()
-    method = method.lower().strip()
-
-    if distribution == "lognormal":
-        # lognormal uses the mean and std of the underlying normal distribution of log(X)
-        # so they must be normalized first
-        mu, sigma = parameters[ck.MEAN], parameters[ck.STD]
-        normalized_std = np.sqrt(np.log(1 + (sigma / mu) ** 2))
-        normalized_mean = np.log(mu) - normalized_std ** 2 / 2
-        dist = stats.lognorm(s=normalized_std, scale=np.exp(normalized_mean))
-    elif distribution == "normal":
-        dist = stats.norm(loc=parameters[ck.MEAN], scale=parameters[ck.STD])
-    elif distribution == "uniform":
-        a = parameters[ck.MEAN] - parameters[ck.STD]
-        b = parameters[ck.STD] * 2
-        dist = stats.uniform(loc=a, scale=b)
-    elif distribution == "weibull":
-        # for weibull, we have to solve for c and the scale parameter
-        # this files for certain parameter ranges, raising a runtime error
-        # see https://github.com/scipy/scipy/issues/12134 for reference
-        def _h(c):
-            r = np.exp(gammaln(2 / c) - 2 * gammaln(1 / c))
-            return np.sqrt(1 / (2 * c * r - 1))
-
-        mean, std = parameters[ck.MEAN], parameters[ck.STD]
-        c0 = 1.27 * np.sqrt(mean / std)
-        c, info, ier, msg = scipy.optimize.fsolve(
-            lambda t: _h(t) - (mean / std),
-            c0,
-            xtol=1e-10,
-            full_output=True,
-        )
-
-        # Test residual rather than error code.
-        if np.abs(info["fvec"][0]) > 1e-8:
-            raise RuntimeError(f"with mean={mean} and std={std}, solve failed: {msg}")
-
-        c = c[0]
-        scale = mean / gamma(1 + 1 / c)
-        dist = stats.weibull_min(c=c, scale=scale)
-    elif distribution == "exponential":
-        dist = stats.expon(scale=parameters[ck.MEAN])
-    else:
-        # else, we don't know this distribution, pass the distribution directly to scipy
-        dist = getattr(stats, distribution)
-        if not dist:
-            raise AttributeError(f"Scipy stats doesn't have a distribution '{distribution}'")
-        dist = dist(**parameters)
-
-    if method == "lhs":
-        pass
-    else:
-        # scipy rvs uses rou sampling method
-        return dist.rvs(size=num_samples)
 
 
 def cf_interval(alpha: float, std: float, num_samples: int) -> float:
@@ -141,12 +56,34 @@ def component_degradation(percent_per_day: float, t: int):
     return 1 / np.power((1 + percent_per_day / 100), t)
 
 
-def pvrpm_sim(case: SamCase):
+def run_system_realization(case: SamCase):
+    """
+    Run a full realization for calculating costs
+
+    Args:
+        case (:obj:`SamCase`): The loaded and verified case to use with the simulation
+    """
+    # data storage
+    comp = Components(case)
+    lifetime = case.config[ck.LIFETIME_YRS]
+    module_degradation_factor = np.zeros(int(lifetime * 365))
+    dc_power_availability = np.zeros(int(lifetime * 365))
+    ac_power_availability = np.zeros(int(lifetime * 365))
+    labor_rate = 0
+
+    if case.config[ck.TRACKING]:
+        tracker_power_loss_factor = np.zeros(int(lifetime * 365))
+    else:
+        tracker_power_loss_factor = None
+
+
+def pvrpm_sim(case: SamCase, save_graphs: bool = False):
     """
     Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
 
     Args:
         case (:obj:`SamCase`): The loaded and verified case to use with the simulation
+        save_graphs (bool): Whether to save output graphs with results
     """
     # run the dummy base case
     case.value("en_dc_lifetime_losses", 0)
@@ -190,3 +127,21 @@ def pvrpm_sim(case: SamCase):
 
     summary_results = pd.DataFrame(index=index, data=data)
     summary_results.index.name = "Realization"
+
+    # calculate availability using sun hours
+    # contains every hour in the year and whether is sun up, down, sunrise, sunset
+    sunup = case.value("sunup")
+
+    # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
+    sunup = np.reshape(np.array(sunup), (365, 24))
+    # zero out every value except where the value is 1 (for sunup)
+    sunup = np.where(sunup == 1, sunup, 0)
+    # sum up daylight hours for each day
+    daylight_hours = np.sum(sunup, axis=1)
+    annual_daylight_hours = np.sum(daylight_hours)
+
+    # realize what we are doing in life
+    for i in tqdm(
+        range(case.config[ck.NUM_REALIZATION]), ascii=True, desc="Running system realizations", unit="realization"
+    ):
+        run_system_realization(case)

@@ -49,14 +49,11 @@ class ConfigKeys:
     UNIFORM = "uniform"
 
     # added during case setup
-    NUM_MODULES = "num_modules"
+    NUM_COMPONENT = "count"
     TRACKING = "is_tracking_system"
     MULTI_SUBARRAY = "has_multiple_subarrays"
     MODULES_PER_STR = "num_modules_per_string"
-    NUM_STRINGS = "num_modules_per_string"
-    NUM_INVERTERS = "num_inverters"
     INVERTER_SIZE = "inverter_size"
-    NUM_DISCONNECTS = "num_disconnects"
     STR_PER_COMBINER = "num_strings_per_combiner"
     INVERTER_PER_TRANS = "num_inverters_per_transformer"
     LIFETIME_YRS = "system_lifetime_yrs"
