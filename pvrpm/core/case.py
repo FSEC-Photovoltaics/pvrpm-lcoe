@@ -25,6 +25,10 @@ class SamCase:
         self.daily_tracker_coeffs = None
         self.modules = {}
 
+        # will be calculated after base case simulation
+        self.daylight_hours = None
+        self.annual_daylight_hours = None
+
         # load the case jsons and pysam module objects for them
         first_module = None
         for path in glob(os.path.join(sam_json_dir, "*.json")):
@@ -236,7 +240,7 @@ class SamCase:
         self.num_modules = 0
         self.num_strings = 0
         # assume the number of modules per string is the same for each subarray
-        self.config[ck.MODULES_PER_STR] = self.value("subarray1_modules_per_string")
+        self.config[ck.MODULES_PER_STR] = int(self.value("subarray1_modules_per_string"))
         self.config[ck.TRACKING] = False
         self.config[ck.MULTI_SUBARRAY] = False
         for sub in range(1, 5):
@@ -278,9 +282,9 @@ class SamCase:
         self.num_inverters = self.value("inverter_count")
         self.num_disconnects = self.num_inverters
 
-        self.config[ck.STR_PER_COMBINER] = np.floor(self.num_strings / self.config[ck.NUM_COMBINERS])
+        self.config[ck.STR_PER_COMBINER] = int(np.floor(self.num_strings / self.config[ck.NUM_COMBINERS]))
 
-        self.config[ck.INVERTER_PER_TRANS] = np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS])
+        self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
 
         self.config[ck.LIFETIME_YRS] = self.value("analysis_period")
 
