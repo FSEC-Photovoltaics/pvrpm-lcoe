@@ -32,10 +32,10 @@ def run(case: str, config: str):
         logger.error(f"Error loading and verifying case: {e}")
         return
 
-    # try:
-    pvrpm_sim(sam_case)
-    # except Exception as e:
-    #    logger.error(f"There was an error in performing the simulation: {e}")
+    try:
+        pvrpm_sim(sam_case)
+    except Exception as e:
+        logger.error(f"There was an error in performing the simulation: {e}")
 
 
 @main.command()
