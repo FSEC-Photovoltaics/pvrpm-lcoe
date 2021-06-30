@@ -213,6 +213,9 @@ class SamCase:
             elif component == ck.TRACKER:
                 self.config[component][ck.NUM_COMPONENT] = self.config[ck.NUM_TRACKERS]
 
+        # make directory for results if it doesnt exist
+        os.makedirs(self.config[ck.RESULTS_FOLDER], exist_ok=True)
+
         if self.config[ck.TRACKING] and self.config[ck.TRACKER][ck.CAN_FAIL]:
             self.precalculate_tracker_losses()
 

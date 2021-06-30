@@ -101,10 +101,10 @@ def simulate_day(case: SamCase, comp: Components, day: int):
 
         # module can still degrade even if it cant fail
         if case.config[c].get(ck.DEGRADE, None):
+            df["days_of_degradation"] += 1
             df["degradation_factor"] = [
                 component_degradation(case.config[c][ck.DEGRADE] / 365, d) for d in df["days_of_degradation"]
             ]
-            df["days_of_degradation"] += 1
 
 
 def run_system_realization(case: SamCase) -> Components:
@@ -395,7 +395,7 @@ def pvrpm_sim(case: SamCase, save_graphs: bool = False):
     upper_conf.name = f"{conf_interval}% upper confidence interval of mean"
     stats_append.append(upper_conf)
 
-    # p test, need to figure out what they are doing, should be a t test
+    # TODO: p test, need to figure out what they are doing, should be a t test
 
     summary_results = summary_results.append(stats_append)
 
