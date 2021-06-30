@@ -70,9 +70,9 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         if not case.config.get(c, None):
             continue
 
+        df = comp.comps[c]
         # if component can't fail, just continue
         if case.config[c][ck.CAN_FAIL]:
-            df = comp.comps[c]
             comp.uptime[c] += case.config[c][ck.NUM_COMPONENT]
 
             # decrement time to failures for operational modules
