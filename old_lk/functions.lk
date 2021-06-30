@@ -165,6 +165,18 @@ function check_case()
 	global num_modules = get('total_modules');
 	global num_modules_per_string = get('subarray1_modules_per_string');
 	global num_strings = get('subarray1_nstrings');
+	if (get('subarray2_enable') == 1)
+	{
+		num_strings += get('subarray1_nstrings');
+	}
+	if (get('subarray3_enable') == 1)
+	{
+		num_strings += get('subarray1_nstrings');
+	}
+	if (get('subarray4_enable') == 1)
+	{
+		num_strings += get('subarray1_nstrings');
+	}
 	global num_inverters = get('inverter_count');
 	global inverter_size = ?(get('inverter_model')) [get('inv_snl_paco'), get('inv_ds_paco'), get('inv_pd_paco')];
 	global num_disconnects = num_inverters; //assume 1 AC disconnect per inverter
