@@ -129,13 +129,6 @@ class SamCase:
         if self.config[ck.NUM_TRANSFORMERS] <= 0:
             raise CaseError("Number of transformers must be greater than 0!")
 
-        # Limitations of empirical P-value calculation
-        max_p = (1 - (1 / self.config[ck.NUM_REALIZATION])) * 100
-        if self.config[ck.P_VALUE] > max_p:
-            raise CaseError(
-                f"The maximum p-value that can be calculated with {self.config[ck.NUM_REALIZATION]} is {max_p}. Please either lower your desired p-value or increase the number of realizations."
-            )
-
         for component in ck.component_keys:
             if not self.config.get(component, None):  # for non-needed components
                 continue

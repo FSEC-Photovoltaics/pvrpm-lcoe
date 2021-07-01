@@ -6,7 +6,6 @@ class ConfigKeys:
     NUM_TRACKERS = "num_trackers"
 
     RESULTS_FOLDER = "results_folder"
-    P_VALUE = "p_value"
     CONF_INTERVAL = "conf_interval"
 
     LABOR_RATE = "present_day_labor_rate"
@@ -66,7 +65,6 @@ class ConfigKeys:
         NUM_TRANSFORMERS,
         NUM_TRACKERS,
         RESULTS_FOLDER,
-        P_VALUE,
         CONF_INTERVAL,
         LABOR_RATE,
         INFLATION,

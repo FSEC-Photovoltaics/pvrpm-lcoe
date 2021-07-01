@@ -364,23 +364,24 @@ def pvrpm_sim(case: SamCase, save_graphs: bool = False):
     yearly_cost_results["total"] = yearly_cost_results.sum(axis=1)
 
     stats_append = []
-    min = summary_results.min()
+    summary_no_base = summary_results.iloc[1:]
+    min = summary_no_base.min()
     min.name = "min"
     stats_append.append(min)
 
-    max = summary_results.max()
+    max = summary_no_base.max()
     max.name = "max"
     stats_append.append(max)
 
-    mean = summary_results.mean()
+    mean = summary_no_base.mean()
     mean.name = "mean"
     stats_append.append(mean)
 
-    median = summary_results.median()
+    median = summary_no_base.median()
     median.name = "median"
     stats_append.append(median)
 
-    std = summary_results.std()
+    std = summary_no_base.std()
     std.name = "stddev"
     stats_append.append(std)
 
