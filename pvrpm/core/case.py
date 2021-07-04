@@ -30,8 +30,11 @@ class SamCase:
         self.daylight_hours = None
         self.annual_daylight_hours = None
         self.base_lcoe = None
+        self.base_ac_energy = None
+        self.base_load = None
         self.base_annual_energy = None
         self.base_dc_energy = None
+        self.base_losses = {}
 
         if not (self.modules and self.config):
             raise CaseError("There are errors in the configuration files, see logs.")
@@ -404,7 +407,22 @@ class SamCase:
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0
         self.base_annual_energy = np.array(self.output("cf_energy_net")[1:])
+        self.base_ac_energy = self.value("gen")
         self.base_dc_energy = summarize_dc_energy(self.output("dc_net"), lifetime)
+
+        # other outputs from base case (for graphing)
+        self.base_load = self.value("load")
+
+        for loss in ck.losses:
+            try:
+                value = self.value(loss)
+                # need to fix soiling loss since they decided to have it as an array for each month
+                if "soiling" in loss:
+                    self.base_losses[loss] = np.average(np.array(value)) / len(value)
+                else:
+                    self.base_losses[loss] = value
+            except:
+                self.base_losses[loss] = 0
 
         # calculate availability using sun hours
         # contains every hour in the year and whether is sun up, down, sunrise, sunset

@@ -37,7 +37,7 @@ def run(case: str, threads: int, config: str):
         return
 
     try:
-        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads)
+        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=True)
     except Exception as e:
         logger.error(f"There was an error in performing the simulation: {e}")
 
