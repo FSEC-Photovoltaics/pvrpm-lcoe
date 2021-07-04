@@ -613,7 +613,9 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     ax1.xaxis.set_visible(False)
     ax2.xaxis.set_visible(False)
 
+    ax1.set_title("Realization Average")
     ax1.set_ylabel("Percent")
+    ax2.set_title("Base Case")
     ax2.set_ylabel("Percent")
 
     fig.legend(bbox_to_anchor=(0.8, 0.0, 0.5, 0.5))
