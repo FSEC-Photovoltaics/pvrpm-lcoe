@@ -37,10 +37,14 @@ class Components:
         self.dc_power_availability = np.zeros(lifetime * 365)
         self.ac_power_availability = np.zeros(lifetime * 365)
         self.labor_rate = 0
+
+        # Data from simulation at end of realization
         self.timeseries_dc_power = None
         self.timeseries_ac_power = None
         self.lcoe = None
         self.annual_energy = None
+        self.load = None
+        self.losses = {}
 
         if case.config[ck.TRACKING]:
             self.tracker_power_loss_factor = np.zeros(lifetime * 365)

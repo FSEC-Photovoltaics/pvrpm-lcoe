@@ -59,3 +59,21 @@ def summarize_dc_energy(dc_power_output: tuple, split: int):
     data = np.array(dc_power_output)
     data = np.reshape(data, (int(split), int(len(dc_power_output) / split)))
     return np.sum(data, axis=1)
+
+
+def component_degradation(percent_per_day: float, t: int) -> float:
+    """
+    Calculate the degradation of a component given the time since last replacement
+
+    Args:
+        percent_per_day (float): The percent degradation per day of the module
+        t (int): Time since the module was last replaced, or if its a new module installed
+
+    Returns:
+        float: The performance of the module, between 0 and 1
+
+    Note:
+        This gives the overall module performance based on degradation, so if the module has degraded 2 percent so far, this function returns 0.98
+    """
+
+    return 1 / np.power((1 + percent_per_day / 100), t)

@@ -6,8 +6,6 @@ from pvrpm.core.exceptions import CaseError
 from pvrpm.core.case import SamCase
 from pvrpm.core.simulation import pvrpm_sim
 
-init_logger()
-
 
 @click.group()
 def main():
@@ -20,7 +18,13 @@ def main():
 @main.command()
 @click.argument("config")
 @click.option("--case", metavar="<path>", help="Path to directory containing json export from SAM for the case")
-def run(case: str, config: str):
+@click.option(
+    "--threads",
+    metavar="<num_threads>",
+    help="Number of threads to use for paralized simulations, set to 0 to use all CPU threads",
+    default=1,
+)
+def run(case: str, threads: int, config: str):
     """
     Run the PVRPM LCOE cost model for the case
 
@@ -33,7 +37,7 @@ def run(case: str, config: str):
         return
 
     try:
-        pvrpm_sim(sam_case)
+        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads)
     except Exception as e:
         logger.error(f"There was an error in performing the simulation: {e}")
 
@@ -44,7 +48,7 @@ def run(case: str, config: str):
 @click.option("--verbose", default=0, is_flag=True, help="Enable verbosity in SAM simulation")
 def sim(case: str, config: str, verbose: int):
     """
-    Load the SAM case and run the basic SAM simulation
+    Load the SAM case and test the basic SAM simulation
 
     The config YAML file should specify module order of simulation
     """
