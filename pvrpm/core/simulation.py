@@ -8,9 +8,9 @@ import numpy as np
 import scipy
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from tqdm import tqdm
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
@@ -135,6 +135,7 @@ def run_system_realization(
             desc=f"Running realization {realization_num}",
             unit="day",
             position=mp.current_process()._identity[0],
+            leave=False,
         )
     else:
         logger.info(f"Running realization {realization_num}...")
@@ -199,20 +200,6 @@ def run_system_realization(
     comp.lcoe = case.value("lcoe_real")
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
-
-    # get more outputs for graphing
-    comp.load = case.value("load")
-
-    for loss in ck.losses:
-        try:
-            value = case.value(loss)
-            # need to average soiling loss since they decided to have it as an array for each month
-            if "soiling" in loss:
-                comp.losses[loss] = np.average(np.array(value)) / len(value)
-            else:
-                comp.losses[loss] = value
-        except:
-            comp.losses[loss] = 0
 
     return comp
 
@@ -423,6 +410,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     colors = ["r", "g", "b", "c", "m", "y", "k", "tab:orange", "tab:brown", "lime", "tab:gray"]
 
     # base case data to compare to
+    # base load and loss is same throughout realizations
     base_losses = case.base_losses
     base_load = np.array(case.base_load)
     base_ac_energy = np.array(case.base_ac_energy)
@@ -431,23 +419,15 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     # parse data
     avg_ac_energy = np.zeros(lifetime * 365 * 24)
     avg_annual_energy = np.zeros(lifetime)
-    avg_load = np.zeros(365 * 24)
-    avg_losses = np.zeros(len(ck.losses))
 
     # computing the average across every realization
     for comp in results:
         avg_ac_energy += np.array(comp.timeseries_ac_power)
         avg_annual_energy += np.array(comp.annual_energy)
-        avg_load += np.array(comp.load)
-        avg_losses += np.array(list(comp.losses.values()))
 
     # monthly and annual energy
     avg_ac_energy /= len(results)
     avg_annual_energy /= len(results)
-    avg_load /= len(results)
-    avg_losses /= len(results)
-
-    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}
 
     avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
@@ -459,9 +439,6 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     base_ac_energy = np.reshape(base_ac_energy, (365, 24))
     base_ac_energy = np.sum(base_ac_energy, axis=1)
 
-    avg_load = np.reshape(avg_load, (365, 24))
-    avg_load = np.sum(avg_load, axis=1)
-
     base_load = np.reshape(base_load, (365, 24))
     base_load = np.sum(base_load, axis=1)
 
@@ -472,14 +449,12 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     monthly_energy = {}
     monthly_load = {}
     base_monthly_energy = {}
-    base_monthly_load = {}
     for _ in range(12):
         month = current_month.strftime("%b")
         num_days = ((current_month + delta) - current_month).days
         monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
         base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
-        monthly_load[month] = np.sum(avg_load[start : start + num_days])
-        base_monthly_load[month] = np.sum(base_load[start : start + num_days])
+        monthly_load[month] = np.sum(base_load[start : start + num_days])
         current_month += delta
         start += num_days
 
@@ -520,7 +495,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     ax1.set_ylabel("kWh")
 
     ax2.bar(ind - 0.2, list(base_monthly_energy.values()), width=0.4)
-    ax2.bar(ind + 0.2, list(base_monthly_load.values()), width=0.4, color="tab:gray")
+    ax2.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray")
     ax2.set_title("Base Case")
     ax2.set_xlabel("Month")
     ax2.set_xticks(ind)
@@ -560,63 +535,51 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
 
     plt.close()  # clear plot
 
-    # this helper function just makes it easier since the base case requires this as well
-    def gen_loss_data(losses):
-        # losses
-        loss_data = {
-            "AC wiring loss": losses["acwiring_loss"],
-            "DC power optimizer loss": losses["dcoptimizer_loss"],
-            "Transformer loss": (losses["transformer_load_loss"] + losses["transformer_no_load_loss"]),
-            "Transmission loss": losses["transmission_loss"],
-            "DC wiring loss": 0,
-            "DC diode and connection losses": 0,
-            "DC mismatch loss": 0,
-            "DC nameplate loss": 0,
-            "POA rear irradiance loss": 0,
-            "POA soiling loss": 0,
-            "DC tracking loss": 0,
-        }
+    # losses
+    loss_data = {
+        "AC wiring loss": base_losses["acwiring_loss"],
+        "DC power optimizer loss": base_losses["dcoptimizer_loss"],
+        "Transformer loss": (base_losses["transformer_load_loss"] + base_losses["transformer_no_load_loss"]),
+        "Transmission loss": base_losses["transmission_loss"],
+        "DC wiring loss": 0,
+        "DC diode and connection losses": 0,
+        "DC mismatch loss": 0,
+        "DC nameplate loss": 0,
+        "POA rear irradiance loss": 0,
+        "POA soiling loss": 0,
+        "DC tracking loss": 0,
+    }
 
-        # need to combine losses for these values on each subarray
-        for i in range(1, 5):  # 4 subarrays
-            loss_data["DC wiring loss"] += losses[f"subarray{i}_dcwiring_loss"]
-            loss_data["DC diode and connection losses"] += losses[f"subarray{i}_diodeconn_loss"]
-            loss_data["DC mismatch loss"] += losses[f"subarray{i}_mismatch_loss"]
-            loss_data["DC nameplate loss"] += losses[f"subarray{i}_nameplate_loss"]
-            loss_data["POA rear irradiance loss"] += losses[f"subarray{i}_rear_irradiance_loss"]
-            loss_data["POA soiling loss"] += losses[f"subarray{i}_soiling"]
-            loss_data["DC tracking loss"] += losses[f"subarray{i}_tracking_loss"]
+    # need to combine losses for these values on each subarray
+    for i in range(1, 5):  # 4 subarrays
+        loss_data["DC wiring loss"] += base_losses[f"subarray{i}_dcwiring_loss"]
+        loss_data["DC diode and connection losses"] += base_losses[f"subarray{i}_diodeconn_loss"]
+        loss_data["DC mismatch loss"] += base_losses[f"subarray{i}_mismatch_loss"]
+        loss_data["DC nameplate loss"] += base_losses[f"subarray{i}_nameplate_loss"]
+        loss_data["POA rear irradiance loss"] += base_losses[f"subarray{i}_rear_irradiance_loss"]
+        loss_data["POA soiling loss"] += base_losses[f"subarray{i}_soiling"]
+        loss_data["DC tracking loss"] += base_losses[f"subarray{i}_tracking_loss"]
 
-        # only average by the enabled sub arrays, non enabled sub arrays would have values of 0
-        loss_data["DC wiring loss"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["DC diode and connection losses"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["DC mismatch loss"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["DC nameplate loss"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["POA rear irradiance loss"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["POA soiling loss"] /= case.config[ck.MULTI_SUBARRAY]
-        loss_data["DC tracking loss"] /= case.config[ck.MULTI_SUBARRAY]
+    # only average by the enabled sub arrays, non enabled sub arrays would have values of 0
+    loss_data["DC wiring loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["DC diode and connection losses"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["DC mismatch loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["DC nameplate loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["POA rear irradiance loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["POA soiling loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data["DC tracking loss"] /= case.config[ck.MULTI_SUBARRAY]
 
-        return loss_data
-
-    loss_data = gen_loss_data(avg_losses)
-    base_loss_data = gen_loss_data(base_losses)
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig, ax1 = plt.subplots(1, 1, sharey=True)
     fig.set_figheight(5)
     fig.set_figwidth(10)
 
     for i, (k, c) in enumerate(zip(sorted(list(loss_data.keys())), colors)):
         ax1.bar(i, loss_data[k], width=0.3, color=c, label=k)
-        ax2.bar(i, base_loss_data[k], width=0.3, color=c)
 
     # remove x axis labels
     ax1.xaxis.set_visible(False)
-    ax2.xaxis.set_visible(False)
 
-    ax1.set_title("Realization Average")
     ax1.set_ylabel("Percent")
-    ax2.set_title("Base Case")
-    ax2.set_ylabel("Percent")
 
     fig.legend(bbox_to_anchor=(0.8, 0.0, 0.5, 0.5))
     fig.suptitle("Energy Loss")
@@ -638,13 +601,15 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     else:
         plt.show()
 
+    plt.close()  # clear plot
+
 
 def pvrpm_sim(
     case: SamCase,
     save_results: bool = False,
     save_graphs: bool = False,
-    threads: int = 1,
     progress_bar: bool = False,
+    threads: int = 1,
 ) -> List[Components]:
     """
     Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
@@ -653,12 +618,16 @@ def pvrpm_sim(
         case (:obj:`SamCase`): The loaded and verified case to use with the simulation
         save_results (bool, Optional): Whether to save output csv results
         save_graphs (bool, Optional): Whether to save output graphs
-        threads (int, Optional): Number of threads to use for paralizing realizations
         progress_bar (bool, Optional): Whether to display progress bar for each realization
+        threads (int, Optional): Number of threads to use for paralizing realizations
 
     Returns:
         :obj:`list(Components)`: Returns the list of results Component objects for each realization
     """
+    # tqdm multiprocessing setup
+    mp.freeze_support()  # for Windows support
+    tqdm.set_lock(mp.RLock())  # for managing output contention
+
     save_path = case.config[ck.RESULTS_FOLDER]
     lifetime = int(case.config[ck.LIFETIME_YRS])
     if threads == 0:
@@ -671,13 +640,14 @@ def pvrpm_sim(
 
     # realize what we are doing in life
     results = []
-    args = [(case, True, i, progress_bar) for i in range(case.config[ck.NUM_REALIZATION])]
-    with mp.Pool(threads) as p:
+    args = [(case, True, i + 1, progress_bar) for i in range(case.config[ck.NUM_REALIZATION])]
+    with mp.Pool(threads, initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)) as p:
         results = p.starmap(run_system_realization, args)
 
     # gen all those results
     summary_results, degradation_results, dc_power_results, ac_power_results, yearly_cost_results = gen_results(
-        case, results
+        case,
+        results,
     )
 
     # finally, graph results

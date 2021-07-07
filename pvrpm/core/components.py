@@ -44,7 +44,6 @@ class Components:
         self.lcoe = None
         self.annual_energy = None
         self.load = None
-        self.losses = {}
 
         if case.config[ck.TRACKING]:
             self.tracker_power_loss_factor = np.zeros(lifetime * 365)
