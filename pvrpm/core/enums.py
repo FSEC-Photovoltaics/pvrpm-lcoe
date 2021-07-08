@@ -27,6 +27,7 @@ class ConfigKeys:
     STD = "std"
     LABOR = "labor_time"
     COST = "cost"
+    COST_PER_WATT = "cost_per_watt"
     FRAC = "fraction"
 
     REPAIR = "repairs"
@@ -109,39 +110,36 @@ class ConfigKeys:
         UNIFORM,
     ]
 
+    # these are modules that are required for PVRPM
+    required_modules = [
+        "Pvsamv1",
+    ]
+
+    # lcoe modules that cant be used
+    unusable_lcoe_calcs = [
+        "Lcoefcr",
+    ]
+
     # for output generation
     losses = [
-        "acwiring_loss",
-        "dcoptimizer_loss",
-        "subarray1_dcwiring_loss",
-        "subarray1_diodeconn_loss",
-        "subarray1_mismatch_loss",
-        "subarray1_nameplate_loss",
-        "subarray1_rear_irradiance_loss",
-        "subarray1_soiling",
-        "subarray1_tracking_loss",
-        "subarray2_dcwiring_loss",
-        "subarray2_diodeconn_loss",
-        "subarray2_mismatch_loss",
-        "subarray2_nameplate_loss",
-        "subarray2_rear_irradiance_loss",
-        "subarray2_soiling",
-        "subarray2_tracking_loss",
-        "subarray3_dcwiring_loss",
-        "subarray3_diodeconn_loss",
-        "subarray3_mismatch_loss",
-        "subarray3_nameplate_loss",
-        "subarray3_rear_irradiance_loss",
-        "subarray3_soiling",
-        "subarray3_tracking_loss",
-        "subarray4_dcwiring_loss",
-        "subarray4_diodeconn_loss",
-        "subarray4_mismatch_loss",
-        "subarray4_nameplate_loss",
-        "subarray4_rear_irradiance_loss",
-        "subarray4_soiling",
-        "subarray4_tracking_loss",
-        "transformer_load_loss",
-        "transformer_no_load_loss",
-        "transmission_loss",
+        "annual_poa_shading_loss_percent",
+        "annual_poa_soiling_loss_percent",
+        "annual_poa_cover_loss_percent",
+        "annual_dc_module_loss_percent",
+        "annual_dc_mppt_clip_loss_percent",
+        "annual_dc_mismatch_loss_percent",
+        "annual_dc_diodes_loss_percent",
+        "annual_dc_wiring_loss_percent",
+        "annual_dc_tracking_loss_percent",
+        "annual_dc_nameplate_loss_percent",
+        "annual_dc_optimizer_loss_percent",
+        "annual_dc_perf_adj_loss_percent",
+        "annual_ac_inv_clip_loss_percent",
+        "annual_ac_inv_pso_loss_percent",
+        "annual_ac_inv_pnt_loss_percent",
+        "annual_ac_inv_eff_loss_percent",
+        "ac_loss",
+        "annual_transmission_loss_percent",
+        "annual_ac_perf_adj_loss_percent",
+        "annual_xfmr_loss_percent",
     ]

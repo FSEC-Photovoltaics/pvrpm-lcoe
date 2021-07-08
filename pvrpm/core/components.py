@@ -43,7 +43,9 @@ class Components:
         self.timeseries_ac_power = None
         self.lcoe = None
         self.annual_energy = None
-        self.load = None
+
+        self.tax_cash_flow = None
+        self.losses = {}
 
         if case.config[ck.TRACKING]:
             self.tracker_power_loss_factor = np.zeros(lifetime * 365)
@@ -93,7 +95,7 @@ class Components:
             dist = stats.uniform(loc=a, scale=b)
         elif distribution == "weibull":
             # for weibull, we have to solve for c and the scale parameter
-            # this files for certain parameter ranges, raising a runtime error
+            # this fails for certain parameter ranges, raising a runtime error
             # see https://github.com/scipy/scipy/issues/12134 for reference
             def _h(c):
                 r = np.exp(gammaln(2 / c) - 2 * gammaln(1 / c))

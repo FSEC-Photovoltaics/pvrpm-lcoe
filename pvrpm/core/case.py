@@ -31,9 +31,11 @@ class SamCase:
         self.annual_daylight_hours = None
         self.base_lcoe = None
         self.base_ac_energy = None
-        self.base_load = None
         self.base_annual_energy = None
         self.base_dc_energy = None
+
+        self.base_load = None
+        self.base_tax_cash_flow = None
         self.base_losses = {}
 
         if not (self.modules and self.config):
@@ -109,6 +111,12 @@ class SamCase:
 
             modules[module_name] = module
 
+        # final check that required modules are present in this case
+        for required in ck.required_modules:
+            if required not in modules:
+                raise CaseError(
+                    f"PVRPM requires the module '{required}' for the simulation to run properly. Please redefine your case."
+                )
         return modules
 
     def __verify_config(self) -> None:
@@ -173,18 +181,30 @@ class SamCase:
 
             for failure, fail_config in self.config[component].get(ck.FAILURE, {}).items():
                 fails = set(ck.failure_keys)
+                if component == ck.INVERTER:
+                    # inverters may have cost_per_watt specified instead of cost
+                    fails.discard(ck.COST)
+
                 included = fails & set(fail_config.keys())
                 if included != fails:
                     missing += list(fails - included)
+
+                # update cost for inverters
+                if component == ck.INVERTER:
+                    if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
+                        missing.append(ck.COST)
+
+                    if fail_config.get(ck.COST_PER_WATT, None) is not None:
+                        # calculate costs based on cents/watt
+                        self.config[component][ck.FAILURE][failure][ck.COST] = (
+                            fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
+                        )
 
                 if fail_config.get(ck.DIST, None) in ck.dists:
                     if ck.MEAN not in fail_config[ck.PARAM]:
                         missing.append(ck.MEAN)
                     if fail_config[ck.DIST] != ck.EXPON and ck.STD not in fail_config[ck.PARAM]:
                         missing.append(ck.STD)
-                if component == ck.INVERTER:
-                    # calculate costs based on cents/watt
-                    self.config[component][ck.FAILURE][failure][ck.COST] *= self.config[ck.INVERTER_SIZE]
 
             for repair, repair_config in self.config[component].get(ck.REPAIR, {}).items():
                 repairs_ = set(ck.repair_keys)
@@ -235,8 +255,12 @@ class SamCase:
         """
         Verifies loaded module configuration from SAM and also sets class variables for some information about the case.
         """
-        if not self.value("system_use_lifetime_output"):
-            raise CaseError("Please modify your case to use lifetime mode!")
+        # need to check that an LCOE calculator that supports lifetime is used
+        for bad_module in ck.unusable_lcoe_calcs:
+            if bad_module in self.modules:
+                raise CaseError(
+                    f"LCOE calculator {bad_module} cannot be used since it doesn't support lifetime, please fix the calculator in the case."
+                )
 
         if self.value("en_dc_lifetime_losses") or self.value("en_ac_lifetime_losses"):
             logger.warn("Lifetime daily DC and AC losses will be overridden for this run.")
@@ -406,21 +430,17 @@ class SamCase:
         self.base_lcoe = self.output("lcoe_real")
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0
-        self.base_annual_energy = np.array(self.output("cf_energy_net")[1:])
+        self.base_annual_energy = self.output("cf_energy_net")[1:]
         self.base_ac_energy = self.value("gen")
         self.base_dc_energy = summarize_dc_energy(self.output("dc_net"), lifetime)
 
         # other outputs from base case (for graphing)
         self.base_load = self.value("load")
+        self.base_tax_cash_flow = self.output("cf_after_tax_cash_flow")
 
         for loss in ck.losses:
             try:
-                value = self.value(loss)
-                # need to fix soiling loss since they decided to have it as an array for each month
-                if "soiling" in loss:
-                    self.base_losses[loss] = np.average(np.array(value)) / len(value)
-                else:
-                    self.base_losses[loss] = value
+                self.base_losses[loss] = self.output(loss)
             except:
                 self.base_losses[loss] = 0
 
@@ -460,6 +480,9 @@ class SamCase:
 
         Returns:
             Value or the variable if value is None
+
+        Note:
+            Some modules have the same keys, this function will return the first key found in the module order specified in the configuration. Because of the way modules share data in PySAM, setting the value in the first module will propagate it to the other modules.
         """
         for m_name in self.modules.keys():
             try:

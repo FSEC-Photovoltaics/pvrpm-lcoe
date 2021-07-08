@@ -1,5 +1,6 @@
 import os
 import time
+import warnings
 import multiprocessing as mp
 from typing import List
 
@@ -200,6 +201,15 @@ def run_system_realization(
     comp.lcoe = case.value("lcoe_real")
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
+
+    # more results, for graphing and what not
+    comp.tax_cash_flow = case.output("cf_after_tax_cash_flow")
+
+    for loss in ck.losses:
+        try:
+            comp.losses[loss] = case.output(loss)
+        except:
+            comp.losses[loss] = 0
 
     return comp
 
@@ -407,40 +417,71 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
         save_path (str, Optional): Path to save graphs to, if provided
     """
     lifetime = int(case.config[ck.LIFETIME_YRS])
-    colors = ["r", "g", "b", "c", "m", "y", "k", "tab:orange", "tab:brown", "lime", "tab:gray"]
-
+    colors = [
+        "r",
+        "g",
+        "b",
+        "c",
+        "m",
+        "y",
+        "k",
+        "tab:orange",
+        "tab:brown",
+        "lime",
+        "tab:gray",
+        "indigo",
+        "navy",
+        "pink",
+        "coral",
+        "yellow",
+        "teal",
+        "fuchsia",
+        "palegoldenrod",
+        "darkgreen",
+    ]
     # base case data to compare to
-    # base load and loss is same throughout realizations
     base_losses = case.base_losses
     base_load = np.array(case.base_load)
     base_ac_energy = np.array(case.base_ac_energy)
     base_annual_energy = np.array(case.base_annual_energy)
+    base_tax_cash_flow = np.array(case.base_tax_cash_flow)
 
     # parse data
     avg_ac_energy = np.zeros(lifetime * 365 * 24)
     avg_annual_energy = np.zeros(lifetime)
+    avg_losses = np.zeros(len(ck.losses))
+    avg_tax_cash_flow = np.zeros(lifetime + 1)  # add 1 for year 0
 
     # computing the average across every realization
     for comp in results:
         avg_ac_energy += np.array(comp.timeseries_ac_power)
         avg_annual_energy += np.array(comp.annual_energy)
+        avg_losses += np.array(list(comp.losses.values()))
+        avg_tax_cash_flow += np.array(comp.tax_cash_flow)
 
     # monthly and annual energy
     avg_ac_energy /= len(results)
     avg_annual_energy /= len(results)
+    avg_losses /= len(results)
+    avg_tax_cash_flow /= len(results)
 
     avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
     avg_ac_energy = np.reshape(avg_ac_energy, (365, 24))  # day energy by hour
+    avg_day_energy_by_hour = avg_ac_energy.copy()
     avg_ac_energy = np.sum(avg_ac_energy, axis=1)  # energy per day
 
     base_ac_energy = np.reshape(base_ac_energy, (lifetime, 365 * 24))
     base_ac_energy = np.sum(base_ac_energy, axis=0) / lifetime
     base_ac_energy = np.reshape(base_ac_energy, (365, 24))
+    base_day_energy_by_hour = base_ac_energy.copy()
     base_ac_energy = np.sum(base_ac_energy, axis=1)
 
+    # daily load, load is the same between realizations and base
     base_load = np.reshape(base_load, (365, 24))
     base_load = np.sum(base_load, axis=1)
+
+    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}
 
     # calculate per month energy averaged across every year on every realization
     current_month = datetime(datetime.utcnow().year, 1, 1)
@@ -452,9 +493,12 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     for _ in range(12):
         month = current_month.strftime("%b")
         num_days = ((current_month + delta) - current_month).days
+
         monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
         base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
+
         monthly_load[month] = np.sum(base_load[start : start + num_days])
+
         current_month += delta
         start += num_days
 
@@ -535,57 +579,126 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
 
     plt.close()  # clear plot
 
-    # losses
-    loss_data = {
-        "AC wiring loss": base_losses["acwiring_loss"],
-        "DC power optimizer loss": base_losses["dcoptimizer_loss"],
-        "Transformer loss": (base_losses["transformer_load_loss"] + base_losses["transformer_no_load_loss"]),
-        "Transmission loss": base_losses["transmission_loss"],
-        "DC wiring loss": 0,
-        "DC diode and connection losses": 0,
-        "DC mismatch loss": 0,
-        "DC nameplate loss": 0,
-        "POA rear irradiance loss": 0,
-        "POA soiling loss": 0,
-        "DC tracking loss": 0,
-    }
+    # this helper function just makes it easier since the base case requires this as well
+    def gen_loss_data(losses):
+        # losses
+        loss_data = {
+            "POA front-side shading loss": losses["annual_poa_shading_loss_percent"],
+            "POA front-side soiling loss": losses["annual_poa_soiling_loss_percent"],
+            "POA front-side reflection (IAM) loss": losses["annual_poa_cover_loss_percent"],
+            "DC module deviation from STC": losses["annual_dc_module_loss_percent"],
+            "DC inverter MPPT clipping loss": losses["annual_dc_mppt_clip_loss_percent"],
+            "DC mismatch loss": losses["annual_dc_mismatch_loss_percent"],
+            "DC diodes and connections loss": losses["annual_dc_diodes_loss_percent"],
+            "DC wiring loss": losses["annual_dc_wiring_loss_percent"],
+            "DC tracking loss": losses["annual_dc_tracking_loss_percent"],
+            "DC nameplate loss": losses["annual_dc_nameplate_loss_percent"],
+            "DC power optimizer loss": losses["annual_dc_optimizer_loss_percent"],
+            "DC performance adjustment loss": losses["annual_dc_perf_adj_loss_percent"],
+            "AC inverter power clipping loss": losses["annual_ac_inv_clip_loss_percent"],
+            "AC inverter power consumption loss": losses["annual_ac_inv_pso_loss_percent"],
+            "AC inverter night tare loss": losses["annual_ac_inv_pnt_loss_percent"],
+            "AC inverter efficiency loss": losses["annual_ac_inv_eff_loss_percent"],
+            "AC wiring loss": losses["ac_loss"],
+            "Transformer loss percent": losses["annual_xfmr_loss_percent"],
+            "AC performance adjustment loss": losses["annual_ac_perf_adj_loss_percent"],
+            "AC transmission loss": losses["annual_transmission_loss_percent"],
+        }
 
-    # need to combine losses for these values on each subarray
-    for i in range(1, 5):  # 4 subarrays
-        loss_data["DC wiring loss"] += base_losses[f"subarray{i}_dcwiring_loss"]
-        loss_data["DC diode and connection losses"] += base_losses[f"subarray{i}_diodeconn_loss"]
-        loss_data["DC mismatch loss"] += base_losses[f"subarray{i}_mismatch_loss"]
-        loss_data["DC nameplate loss"] += base_losses[f"subarray{i}_nameplate_loss"]
-        loss_data["POA rear irradiance loss"] += base_losses[f"subarray{i}_rear_irradiance_loss"]
-        loss_data["POA soiling loss"] += base_losses[f"subarray{i}_soiling"]
-        loss_data["DC tracking loss"] += base_losses[f"subarray{i}_tracking_loss"]
+        return loss_data
 
-    # only average by the enabled sub arrays, non enabled sub arrays would have values of 0
-    loss_data["DC wiring loss"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["DC diode and connection losses"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["DC mismatch loss"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["DC nameplate loss"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["POA rear irradiance loss"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["POA soiling loss"] /= case.config[ck.MULTI_SUBARRAY]
-    loss_data["DC tracking loss"] /= case.config[ck.MULTI_SUBARRAY]
+    loss_data = gen_loss_data(avg_losses)
+    base_loss_data = gen_loss_data(base_losses)
 
-    fig, ax1 = plt.subplots(1, 1, sharey=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
     fig.set_figheight(5)
     fig.set_figwidth(10)
 
     for i, (k, c) in enumerate(zip(sorted(list(loss_data.keys())), colors)):
         ax1.bar(i, loss_data[k], width=0.3, color=c, label=k)
+        ax2.bar(i, base_loss_data[k], width=0.3, color=c)
+
+    ax1.set_title("Realization Average")
+    ax2.set_title("Base Case")
 
     # remove x axis labels
     ax1.xaxis.set_visible(False)
+    ax2.xaxis.set_visible(False)
 
     ax1.set_ylabel("Percent")
+    ax2.set_ylabel("Percent")
 
     fig.legend(bbox_to_anchor=(0.8, 0.0, 0.5, 0.5))
-    fig.suptitle("Energy Loss")
+    fig.suptitle("Annual Energy Loss")
     fig.tight_layout()
     if save_path:
-        plt.savefig(os.path.join(save_path, "Energy Loss.png"), bbox_inches="tight", dpi=200)
+        plt.savefig(os.path.join(save_path, "Annual Energy Loss.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # heatmap of ac energy averaged throughout each year
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    # calculate the min/max value of the base case and realizations for coloring consistency
+    vmin = np.amin([np.amin(avg_day_energy_by_hour), np.amin(base_day_energy_by_hour)])
+    vmax = np.amax([np.amax(avg_day_energy_by_hour), np.amax(base_day_energy_by_hour)])
+
+    # transpose so the x axis is day
+    cb = ax1.pcolormesh(
+        np.arange(365), np.arange(24), avg_day_energy_by_hour.T, cmap="plasma", vmin=vmin, vmax=vmax, shading="auto"
+    )
+    ax2.pcolormesh(
+        np.arange(365), np.arange(24), base_day_energy_by_hour.T, cmap="plasma", vmin=vmin, vmax=vmax, shading="auto"
+    )
+
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Day")
+    ax1.set_ylabel("Hour")
+
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Day")
+    ax2.set_ylabel("Hour")
+
+    fig.suptitle("Yearly System Power Generated (kW)")
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([1, 0.15, 0.05, 0.7])
+    fig.colorbar(cb, cax=cbar_ax)
+
+    with warnings.catch_warnings():  # matplotlib sucks
+        warnings.simplefilter("ignore")
+        fig.tight_layout()
+
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Yearly System Power Generated.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    ax1.bar(np.arange(lifetime + 1), avg_tax_cash_flow)
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Year")
+    ax1.set_ylabel("USD")
+
+    ax2.bar(np.arange(lifetime + 1), base_tax_cash_flow)
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Year")
+    ax2.set_ylabel("USD")
+
+    fig.suptitle("After Tax Cash Flow for System Lifetime")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(
+            os.path.join(save_path, "After Tax Cash Flow for System Lifetime.png"), bbox_inches="tight", dpi=200
+        )
     else:
         plt.show()
 
@@ -593,7 +706,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
 
     # box plot for lcoe
     lcoe = np.array([comp.lcoe for comp in results])
-    plt.boxplot(lcoe, vert=False, labels=["LCOE"])
+    plt.boxplot(lcoe, vert=True, labels=["LCOE"])
     plt.title("LCOE Box Plot for Realizations")
 
     if save_path:
@@ -643,6 +756,8 @@ def pvrpm_sim(
     args = [(case, True, i + 1, progress_bar) for i in range(case.config[ck.NUM_REALIZATION])]
     with mp.Pool(threads, initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)) as p:
         results = p.starmap(run_system_realization, args)
+
+    logger.info("Generating results...")
 
     # gen all those results
     summary_results, degradation_results, dc_power_results, ac_power_results, yearly_cost_results = gen_results(
