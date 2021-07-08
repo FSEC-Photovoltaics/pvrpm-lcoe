@@ -1,16 +1,22 @@
 import os
 import time
+import warnings
+import multiprocessing as mp
+from typing import List
 
 import pandas as pd
 import numpy as np
 import scipy
 import scipy.stats as stats
+import matplotlib.pyplot as plt
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 from tqdm import tqdm
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
 from pvrpm.core.components import Components
-from pvrpm.core.utils import summarize_dc_energy
+from pvrpm.core.utils import summarize_dc_energy, component_degradation
 from pvrpm.core.logger import logger
 
 
@@ -37,24 +43,6 @@ def cf_interval(alpha: float, std: float, num_samples: int) -> float:
         score = stats.t.ppf(1 - alpha, num_samples - 1)
 
     return score * std / np.sqrt(num_samples)
-
-
-def component_degradation(percent_per_day: float, t: int):
-    """
-    Calculate the degradation of a component given the time since last replacement
-
-    Args:
-        percent_per_day (float): The percent degradation per day of the module
-        t (int): Time since the module was last replaced, or if its a new module installed
-
-    Returns:
-        float: The performance of the module, between 0 and 1
-
-    Note:
-        This gives the overall module performance based on degradation, so if the module has degraded 2 percent so far, this function returns 0.98
-    """
-
-    return 1 / np.power((1 + percent_per_day / 100), t)
 
 
 def simulate_day(case: SamCase, comp: Components, day: int):
@@ -107,16 +95,27 @@ def simulate_day(case: SamCase, comp: Components, day: int):
             ]
 
 
-def run_system_realization(case: SamCase) -> Components:
+def run_system_realization(
+    case: SamCase,
+    seed: bool = False,
+    realization_num: int = 0,
+    progress_bar: bool = False,
+) -> Components:
     """
     Run a full realization for calculating costs
 
     Args:
         case (:obj:`SamCase`): The loaded and verified case to use with the simulation
+        seed (bool, Optional): Whether to seed the random number generator, for multiprocessing
+        realization_num (int, Optional): Current realization number, used for multiprocessing
+        progress_bar (bool, Optional): Whether to display progress bar during the realization
 
     Returns:
         :obj:`Components`: The components object which contains all the data for this realization
     """
+    if seed:
+        np.random.seed()
+
     # data storage
     comp = Components(case)
     lifetime = int(case.config[ck.LIFETIME_YRS])
@@ -130,7 +129,20 @@ def run_system_realization(case: SamCase) -> Components:
     comp.dc_power_availability[0] = comp.dc_availability()
     comp.ac_power_availability[0] = comp.ac_availability()
 
-    for i in tqdm(range(1, lifetime * 365), ascii=True, desc="Running realization", unit="day"):
+    if progress_bar:
+        iterator = tqdm(
+            range(1, lifetime * 365),
+            ascii=True,
+            desc=f"Running realization {realization_num}",
+            unit="day",
+            position=mp.current_process()._identity[0],
+            leave=False,
+        )
+    else:
+        logger.info(f"Running realization {realization_num}...")
+        iterator = range(1, lifetime * 365)
+
+    for i in iterator:
         # calculate new labor rate each year
         if i == 1 or i % 365 == 0:
             comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION]) / 100, i)
@@ -151,7 +163,6 @@ def run_system_realization(case: SamCase) -> Components:
         comp.ac_power_availability[i] = comp.ac_availability()
 
     # create same performance adjustment tables for avail, degradation, tracker losses
-    logger.info("Running SAM simulation for this realization...")
     if case.config[ck.TRACKING]:
         daily_dc_loss = 100 * (
             1 - (comp.dc_power_availability * comp.module_degradation_factor * comp.tracker_power_loss_factor)
@@ -177,9 +188,7 @@ def run_system_realization(case: SamCase) -> Components:
 
     case.value("om_fixed", list(o_m_yearly_costs))
 
-    s_time = time.time()
     case.simulate()
-    logger.info("Realization simulation took {:.2f} seconds".format(time.time() - s_time))
 
     # reset tracker failure cost
     if case.config[ck.TRACKING]:
@@ -192,79 +201,55 @@ def run_system_realization(case: SamCase) -> Components:
     comp.lcoe = case.value("lcoe_real")
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
+
+    # more results, for graphing and what not
+    comp.tax_cash_flow = case.output("cf_after_tax_cash_flow")
+
+    for loss in ck.losses:
+        try:
+            comp.losses[loss] = case.output(loss)
+        except:
+            comp.losses[loss] = 0
+
     return comp
 
 
-def pvrpm_sim(case: SamCase, save_graphs: bool = False):
+def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     """
-    Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
+    Generates results for the given SAM case and list of component objects containing the results of each realization.
 
     Args:
         case (:obj:`SamCase`): The loaded and verified case to use with the simulation
-        save_graphs (bool): Whether to save output graphs with results
+        results (:obj:`list(Components)`): List of component objects that contain the results for each realization
+
+    Returns:
+        :obj:`list(pd.DataFrame)`: List of dataframes containing the results.
+
+    Note:
+        The order of the returned dataframes is:
+            - Summary Results
+            - Degradation Results
+            - DC Power
+            - AC Power
+            - Yearly Costs
     """
-    save_path = case.config[ck.RESULTS_FOLDER]
-
-    # run the dummy base case
-    case.value("en_dc_lifetime_losses", 0)
-    case.value("en_ac_lifetime_losses", 0)
-
-    case.value("om_fixed", [0])
-
-    module_degradation_rate = case.config[ck.MODULE].get(ck.DEGRADE, 0) / 365
-
-    degrade = [
-        (1 - component_degradation(module_degradation_rate, i)) * 100
-        for i in range(int(case.config[ck.LIFETIME_YRS] * 365))
-    ]
-
-    case.value("en_dc_lifetime_losses", 1)
-    case.value("dc_lifetime_losses", degrade)
-
-    logger.info("Running base case simulation...")
-    start = time.time()
-    case.simulate()
-    logger.info("Base case simulation took: {:.2f} seconds".format(time.time() - start))
-
     summary_index = ["Base Case"]
-    summary_data = {"lcoe": [case.output("lcoe_real")]}
+    summary_data = {"lcoe": [case.base_lcoe]}
     lifetime = int(case.config[ck.LIFETIME_YRS])
+    p_vals = [99, 95, 90, 75, 50, 10]
 
     # ac energy
-    # remove the first element from cf_energy_net because it is always 0, representing year 0
-    base_annual_energy = np.array(case.output("cf_energy_net")[1:])
-    cumulative_ac_energy = np.cumsum(base_annual_energy)
+    cumulative_ac_energy = np.cumsum(case.base_annual_energy)
 
     for i in range(int(lifetime)):
-        summary_data[f"annual_ac_energy_{i+1}"] = [base_annual_energy[i]]
+        summary_data[f"annual_ac_energy_{i+1}"] = [case.base_annual_energy[i]]
         summary_data[f"cumulative_ac_energy_{i+1}"] = [cumulative_ac_energy[i]]
 
     # dc energy
-    timeseries_dc_power = case.output("dc_net")
-    dc_energy = summarize_dc_energy(timeseries_dc_power, lifetime)
-    for i in range(len(dc_energy)):
-        summary_data[f"dc_energy_{i+1}"] = [dc_energy[i]]
+    for i in range(len(case.base_dc_energy)):
+        summary_data[f"dc_energy_{i+1}"] = [case.base_dc_energy[i]]
 
-    # calculate availability using sun hours
-    # contains every hour in the year and whether is sun up, down, sunrise, sunset
-    sunup = case.value("sunup")
-
-    # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
-    sunup = np.reshape(np.array(sunup), (365, 24))
-    # zero out every value except where the value is 1 (for sunup)
-    sunup = np.where(sunup == 1, sunup, 0)
-    # sum up daylight hours for each day
-    case.daylight_hours = np.sum(sunup, axis=1)
-    case.annual_daylight_hours = np.sum(case.daylight_hours)
-
-    # realize what we are doing in life
-    results = []
-    for i in range(case.config[ck.NUM_REALIZATION]):
-        logger.info(f"Running system realization {i + 1}...")
-        results.append(run_system_realization(case))
-
-    # write all those results
-    # TODO: maybe move this to another function?
+    # TODO: also, need to clean this up, i just use dictionaries and fill in blanks for base case, but this can be much cleaner
     # per realization results
     day_index = np.arange(lifetime * 365) + 1
     hour_index = np.arange(lifetime * 365 * 24)
@@ -396,15 +381,405 @@ def pvrpm_sim(case: SamCase, save_graphs: bool = False):
     upper_conf.name = f"{conf_interval}% upper confidence interval of mean"
     stats_append.append(upper_conf)
 
-    # TODO: p test, need to figure out what they are doing, should be a t test
+    # p test, which is using the ppf of the normal distribituion with our calculated mean and std. We use scipy's functions for this
+    # see https://help.helioscope.com/article/141-creating-a-p50-and-p90-with-helioscope
+    for p in p_vals:
+        values = []
+        # calculate the p value for every column
+        for m, s in zip(mean, std):
+            if s != 0:  # for columns with no STDDEV
+                values.append(stats.norm.ppf((1 - p / 100), loc=m, scale=s))
+            else:
+                values.append(None)
+        # save results
+        values = pd.Series(values, index=mean.index)
+        values.name = f"P{p}"
+        stats_append.append(values)
 
     summary_results = summary_results.append(stats_append)
 
-    # save results
-    summary_results.to_csv(os.path.join(save_path, "PVRPM_Summary_Results.csv"), index=True)
-    degradation_results.to_csv(os.path.join(save_path, "Daily_Degradation.csv"), index=True)
-    dc_power_results.to_csv(os.path.join(save_path, "Timeseries_DC_Power.csv"), index=True)
-    ac_power_results.to_csv(os.path.join(save_path, "Timeseries_AC_Power.csv"), index=True)
-    yearly_cost_results.to_csv(os.path.join(save_path, "Yearly_Costs_By_Component.csv"), index=True)
+    return [
+        summary_results,
+        degradation_results,
+        dc_power_results,
+        ac_power_results,
+        yearly_cost_results,
+    ]
 
-    logger.info(f"Results saved to {save_path}")
+
+def graph_results(case: SamCase, results: List[Components], save_path: str = None) -> None:
+    """
+    Generate graphs from a list of Component objects from each realization
+
+    Args:
+        case (:obj:`SamCase`): The loaded and verified case to use with the simulation
+        results (:obj:`list(Components)`): List of component objects that contain the results for each realization
+        save_path (str, Optional): Path to save graphs to, if provided
+    """
+    lifetime = int(case.config[ck.LIFETIME_YRS])
+    colors = [
+        "r",
+        "g",
+        "b",
+        "c",
+        "m",
+        "y",
+        "k",
+        "tab:orange",
+        "tab:brown",
+        "lime",
+        "tab:gray",
+        "indigo",
+        "navy",
+        "pink",
+        "coral",
+        "yellow",
+        "teal",
+        "fuchsia",
+        "palegoldenrod",
+        "darkgreen",
+    ]
+    # base case data to compare to
+    base_losses = case.base_losses
+    base_load = np.array(case.base_load)
+    base_ac_energy = np.array(case.base_ac_energy)
+    base_annual_energy = np.array(case.base_annual_energy)
+    base_tax_cash_flow = np.array(case.base_tax_cash_flow)
+
+    # parse data
+    avg_ac_energy = np.zeros(lifetime * 365 * 24)
+    avg_annual_energy = np.zeros(lifetime)
+    avg_losses = np.zeros(len(ck.losses))
+    avg_tax_cash_flow = np.zeros(lifetime + 1)  # add 1 for year 0
+
+    # computing the average across every realization
+    for comp in results:
+        avg_ac_energy += np.array(comp.timeseries_ac_power)
+        avg_annual_energy += np.array(comp.annual_energy)
+        avg_losses += np.array(list(comp.losses.values()))
+        avg_tax_cash_flow += np.array(comp.tax_cash_flow)
+
+    # monthly and annual energy
+    avg_ac_energy /= len(results)
+    avg_annual_energy /= len(results)
+    avg_losses /= len(results)
+    avg_tax_cash_flow /= len(results)
+
+    avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
+    avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
+    avg_ac_energy = np.reshape(avg_ac_energy, (365, 24))  # day energy by hour
+    avg_day_energy_by_hour = avg_ac_energy.copy()
+    avg_ac_energy = np.sum(avg_ac_energy, axis=1)  # energy per day
+
+    base_ac_energy = np.reshape(base_ac_energy, (lifetime, 365 * 24))
+    base_ac_energy = np.sum(base_ac_energy, axis=0) / lifetime
+    base_ac_energy = np.reshape(base_ac_energy, (365, 24))
+    base_day_energy_by_hour = base_ac_energy.copy()
+    base_ac_energy = np.sum(base_ac_energy, axis=1)
+
+    # daily load, load is the same between realizations and base
+    base_load = np.reshape(base_load, (365, 24))
+    base_load = np.sum(base_load, axis=1)
+
+    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}
+
+    # calculate per month energy averaged across every year on every realization
+    current_month = datetime(datetime.utcnow().year, 1, 1)
+    delta = relativedelta(months=1)
+    start = 0
+    monthly_energy = {}
+    monthly_load = {}
+    base_monthly_energy = {}
+    for _ in range(12):
+        month = current_month.strftime("%b")
+        num_days = ((current_month + delta) - current_month).days
+
+        monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
+        base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
+
+        monthly_load[month] = np.sum(base_load[start : start + num_days])
+
+        current_month += delta
+        start += num_days
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+    ax1.bar(list(monthly_energy.keys()), list(monthly_energy.values()))
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Month")
+    ax1.set_ylabel("kWh")
+
+    ax2.bar(list(monthly_energy.keys()), list(base_monthly_energy.values()))
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Month")
+    ax2.set_ylabel("kWh")
+
+    fig.suptitle("Monthly Energy Production")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Average Monthly Energy Production.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # graph the monthly energy against the monthly load
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    ind = np.arange(len(monthly_energy))
+    ax1.bar(ind - 0.2, list(monthly_energy.values()), width=0.4, label="AC Energy")
+    ax1.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray", label="Electricity Load")
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Month")
+    ax1.set_xticks(ind)
+    ax1.set_xticklabels(labels=list(monthly_energy.keys()))
+    ax1.set_ylabel("kWh")
+
+    ax2.bar(ind - 0.2, list(base_monthly_energy.values()), width=0.4)
+    ax2.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray")
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Month")
+    ax2.set_xticks(ind)
+    ax2.set_xticklabels(labels=list(monthly_energy.keys()))
+    ax2.set_ylabel("kWh")
+
+    fig.legend()
+    fig.suptitle("Monthly Energy and Load")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Average Monthly Energy and Load.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    ax1.bar(np.arange(lifetime) + 1, avg_annual_energy)
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Year")
+    ax1.set_ylabel("kWh")
+
+    ax2.bar(np.arange(lifetime) + 1, base_annual_energy)
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Year")
+    ax2.set_ylabel("kWh")
+
+    fig.suptitle("Annual Energy Production")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Average Annual Energy Production.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # this helper function just makes it easier since the base case requires this as well
+    def gen_loss_data(losses):
+        # losses
+        loss_data = {
+            "POA front-side shading loss": losses["annual_poa_shading_loss_percent"],
+            "POA front-side soiling loss": losses["annual_poa_soiling_loss_percent"],
+            "POA front-side reflection (IAM) loss": losses["annual_poa_cover_loss_percent"],
+            "DC module deviation from STC": losses["annual_dc_module_loss_percent"],
+            "DC inverter MPPT clipping loss": losses["annual_dc_mppt_clip_loss_percent"],
+            "DC mismatch loss": losses["annual_dc_mismatch_loss_percent"],
+            "DC diodes and connections loss": losses["annual_dc_diodes_loss_percent"],
+            "DC wiring loss": losses["annual_dc_wiring_loss_percent"],
+            "DC tracking loss": losses["annual_dc_tracking_loss_percent"],
+            "DC nameplate loss": losses["annual_dc_nameplate_loss_percent"],
+            "DC power optimizer loss": losses["annual_dc_optimizer_loss_percent"],
+            "DC performance adjustment loss": losses["annual_dc_perf_adj_loss_percent"],
+            "AC inverter power clipping loss": losses["annual_ac_inv_clip_loss_percent"],
+            "AC inverter power consumption loss": losses["annual_ac_inv_pso_loss_percent"],
+            "AC inverter night tare loss": losses["annual_ac_inv_pnt_loss_percent"],
+            "AC inverter efficiency loss": losses["annual_ac_inv_eff_loss_percent"],
+            "AC wiring loss": losses["ac_loss"],
+            "Transformer loss percent": losses["annual_xfmr_loss_percent"],
+            "AC performance adjustment loss": losses["annual_ac_perf_adj_loss_percent"],
+            "AC transmission loss": losses["annual_transmission_loss_percent"],
+        }
+
+        return loss_data
+
+    loss_data = gen_loss_data(avg_losses)
+    base_loss_data = gen_loss_data(base_losses)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    for i, (k, c) in enumerate(zip(sorted(list(loss_data.keys())), colors)):
+        ax1.bar(i, loss_data[k], width=0.3, color=c, label=k)
+        ax2.bar(i, base_loss_data[k], width=0.3, color=c)
+
+    ax1.set_title("Realization Average")
+    ax2.set_title("Base Case")
+
+    # remove x axis labels
+    ax1.xaxis.set_visible(False)
+    ax2.xaxis.set_visible(False)
+
+    ax1.set_ylabel("Percent")
+    ax2.set_ylabel("Percent")
+
+    fig.legend(bbox_to_anchor=(0.8, 0.0, 0.5, 0.5))
+    fig.suptitle("Annual Energy Loss")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Annual Energy Loss.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # heatmap of ac energy averaged throughout each year
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    # calculate the min/max value of the base case and realizations for coloring consistency
+    vmin = np.amin([np.amin(avg_day_energy_by_hour), np.amin(base_day_energy_by_hour)])
+    vmax = np.amax([np.amax(avg_day_energy_by_hour), np.amax(base_day_energy_by_hour)])
+
+    # transpose so the x axis is day
+    cb = ax1.pcolormesh(
+        np.arange(365), np.arange(24), avg_day_energy_by_hour.T, cmap="plasma", vmin=vmin, vmax=vmax, shading="auto"
+    )
+    ax2.pcolormesh(
+        np.arange(365), np.arange(24), base_day_energy_by_hour.T, cmap="plasma", vmin=vmin, vmax=vmax, shading="auto"
+    )
+
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Day")
+    ax1.set_ylabel("Hour")
+
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Day")
+    ax2.set_ylabel("Hour")
+
+    fig.suptitle("Yearly System Power Generated (kW)")
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([1, 0.15, 0.05, 0.7])
+    fig.colorbar(cb, cax=cbar_ax)
+
+    with warnings.catch_warnings():  # matplotlib sucks
+        warnings.simplefilter("ignore")
+        fig.tight_layout()
+
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Yearly System Power Generated.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+
+    ax1.bar(np.arange(lifetime + 1), avg_tax_cash_flow)
+    ax1.set_title("Realization Average")
+    ax1.set_xlabel("Year")
+    ax1.set_ylabel("USD")
+
+    ax2.bar(np.arange(lifetime + 1), base_tax_cash_flow)
+    ax2.set_title("Base Case")
+    ax2.set_xlabel("Year")
+    ax2.set_ylabel("USD")
+
+    fig.suptitle("After Tax Cash Flow for System Lifetime")
+    fig.tight_layout()
+    if save_path:
+        plt.savefig(
+            os.path.join(save_path, "After Tax Cash Flow for System Lifetime.png"), bbox_inches="tight", dpi=200
+        )
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # box plot for lcoe
+    lcoe = np.array([comp.lcoe for comp in results])
+    plt.boxplot(lcoe, vert=True, labels=["LCOE"])
+    plt.title("LCOE Box Plot for Realizations")
+
+    if save_path:
+        plt.savefig(os.path.join(save_path, "LCOE Box Plot.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+
+def pvrpm_sim(
+    case: SamCase,
+    save_results: bool = False,
+    save_graphs: bool = False,
+    progress_bar: bool = False,
+    threads: int = 1,
+) -> List[Components]:
+    """
+    Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.
+
+    Args:
+        case (:obj:`SamCase`): The loaded and verified case to use with the simulation
+        save_results (bool, Optional): Whether to save output csv results
+        save_graphs (bool, Optional): Whether to save output graphs
+        progress_bar (bool, Optional): Whether to display progress bar for each realization
+        threads (int, Optional): Number of threads to use for paralizing realizations
+
+    Returns:
+        :obj:`list(Components)`: Returns the list of results Component objects for each realization
+    """
+    # tqdm multiprocessing setup
+    mp.freeze_support()  # for Windows support
+    tqdm.set_lock(mp.RLock())  # for managing output contention
+
+    save_path = case.config[ck.RESULTS_FOLDER]
+    lifetime = int(case.config[ck.LIFETIME_YRS])
+    if threads == 0:
+        threads = mp.cpu_count()
+
+    logger.info("Running base case simulation...")
+    start = time.time()
+    case.base_case_sim()
+    logger.info("Base case simulation took: {:.2f} seconds".format(time.time() - start))
+
+    # realize what we are doing in life
+    results = []
+    args = [(case, True, i + 1, progress_bar) for i in range(case.config[ck.NUM_REALIZATION])]
+    with mp.Pool(threads, initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)) as p:
+        results = p.starmap(run_system_realization, args)
+
+    logger.info("Generating results...")
+
+    # gen all those results
+    summary_results, degradation_results, dc_power_results, ac_power_results, yearly_cost_results = gen_results(
+        case,
+        results,
+    )
+
+    # finally, graph results
+    if save_graphs:
+        graph_results(case, results, save_path=save_path)
+        logger.info(f"Graphs saved to {save_path}")
+    else:
+        graph_results(case, results)
+
+    # save results
+    if save_results:
+        summary_results.to_csv(os.path.join(save_path, "PVRPM_Summary_Results.csv"), index=True)
+        degradation_results.to_csv(os.path.join(save_path, "Daily_Degradation.csv"), index=True)
+        dc_power_results.to_csv(os.path.join(save_path, "Timeseries_DC_Power.csv"), index=True)
+        ac_power_results.to_csv(os.path.join(save_path, "Timeseries_AC_Power.csv"), index=True)
+        yearly_cost_results.to_csv(os.path.join(save_path, "Yearly_Costs_By_Component.csv"), index=True)
+
+        logger.info(f"Results saved to {save_path}")
+
+    return results

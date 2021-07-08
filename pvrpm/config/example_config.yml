@@ -1,7 +1,9 @@
 module_order: # the order the modules of this case should be executed
               # check to see what modules you use by the name of the json output files
-              # typically, this should be pvsystem -> grid -> utiltiy -> others
+              # typically, this should be Pvsamv1 -> grid -> utiltiy -> others
               # see https://nrel-pysam.readthedocs.io/en/master/Configs.html?highlight=belpe#sam-simulation-configurations
+# Only detailed PV models are supported, which is Pvsamv1, your case must have this module
+# Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn't support lifetime
   - Pvsamv1
   - Grid
   - Utilityrate5
@@ -44,6 +46,8 @@ use_worst_case_tracker: false
 #          std: standard deviation for this failure mode's distribution (not all distributions need std)
 #        labor_time = number of hours of labor it takes to repair this type of failure
 #        cost = parts cost to repair this type of failure
+#        cost_per_watt (optional) = USD per watt cost of failure FOR INVERTERS ONLY. This will OVERRIDE the cost if specified for a failure
+#        by multiplying this value by the inverter size. If you want to set a static cost, use the cost parameter as normal
 #        fraction (optional) = If fraction is defined, then this failure mode is a defective failure mode, and "fraction" represents the fraction of this type of component that are defective
 #      repairs (list a repair for each failure, or only 1 repair for all failures)
 #        distribution = distribution type of repair times
@@ -161,20 +165,20 @@ inverter:
       parameters:
         mean: 365
       labor_time: 0 # in hours
-      cost: 280 # in USD, typically you should do cents/watt * inverter_size (listed in SAM)
+      cost_per_watt: 0.07 # in USD, cents/watt. This will be multiplied by the inverter_size (listed in SAM). Overrides cost
     routine_failure:
       distribution: exponential
       parameters:
         mean: 365
       labor_time: 0
-      cost: 500 # USD, typically based on inverter size
+      cost: 1000 # static cost, not multiplied by inverter size
     catastrophic_failure:
       distribution: normal
       parameters:
         mean: 500
         std: 365.25
       labor_time: 0
-      cost: 1400 # cents/watt * inverter size
+      cost_per_watt: 0.35 # in USD, cents/watt. This will be multiplied by the inverter_size (listed in SAM). Overrides cost
 
   repairs:
     component_repair: # this key name can be anything you want

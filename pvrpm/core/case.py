@@ -9,7 +9,7 @@ import numpy as np
 
 from pvrpm.core.logger import logger
 from pvrpm.core.exceptions import CaseError
-from pvrpm.core.utils import filename_to_module, summarize_dc_energy
+from pvrpm.core.utils import filename_to_module, summarize_dc_energy, component_degradation
 from pvrpm.core.enums import ConfigKeys as ck
 
 
@@ -22,39 +22,21 @@ class SamCase:
         """"""
         self.ssc = pssc.PySSC()
         self.config = self.__load_config(config, type="yaml")
+        self.sam_json_dir = sam_json_dir
         self.daily_tracker_coeffs = None
-        self.modules = {}
+        self.modules = self.__load_modules()
 
         # will be calculated after base case simulation
         self.daylight_hours = None
         self.annual_daylight_hours = None
+        self.base_lcoe = None
+        self.base_ac_energy = None
+        self.base_annual_energy = None
+        self.base_dc_energy = None
 
-        # load the case jsons and pysam module objects for them
-        first_module = None
-        for path in glob(os.path.join(sam_json_dir, "*.json")):
-            module_name = os.path.basename(path)
-            try:
-                module = filename_to_module(module_name)
-            except AttributeError:
-                raise CaseError(f"Couldn't find module for file {module_name}!")
-
-            if not module:
-                raise CaseError(f"Couldn't find module for file {module_name}!")
-
-            module_name = module.__name__.replace("PySAM.", "")
-
-            if not first_module:
-                first_module = module.new()
-                module = first_module
-            else:
-                module = module.from_existing(first_module)
-
-            case_config = self.__load_config(path, type="json")
-            for k, v in case_config.items():
-                if k != "number_inputs":
-                    module.value(k, v)
-
-            self.modules[module_name] = module
+        self.base_load = None
+        self.base_tax_cash_flow = None
+        self.base_losses = {}
 
         if not (self.modules and self.config):
             raise CaseError("There are errors in the configuration files, see logs.")
@@ -94,6 +76,48 @@ class SamCase:
             return None
 
         return config
+
+    def __load_modules(self) -> dict:
+        """
+        Loads the case modules and initalizes them with parameters define in the json
+
+        Returns:
+            :obj:`dict`: A dictionary containing the loaded and configured modules
+        """
+        first_module = None
+        modules = {}
+        for path in glob(os.path.join(self.sam_json_dir, "*.json")):
+            module_name = os.path.basename(path)
+            try:
+                module = filename_to_module(module_name)
+            except AttributeError:
+                raise CaseError(f"Couldn't find module for file {module_name}!")
+
+            if not module:
+                raise CaseError(f"Couldn't find module for file {module_name}!")
+
+            module_name = module.__name__.replace("PySAM.", "")
+
+            if not first_module:
+                first_module = module.new()
+                module = first_module
+            else:
+                module = module.from_existing(first_module)
+
+            case_config = self.__load_config(path, type="json")
+            for k, v in case_config.items():
+                if k != "number_inputs":
+                    module.value(k, v)
+
+            modules[module_name] = module
+
+        # final check that required modules are present in this case
+        for required in ck.required_modules:
+            if required not in modules:
+                raise CaseError(
+                    f"PVRPM requires the module '{required}' for the simulation to run properly. Please redefine your case."
+                )
+        return modules
 
     def __verify_config(self) -> None:
         """
@@ -157,9 +181,24 @@ class SamCase:
 
             for failure, fail_config in self.config[component].get(ck.FAILURE, {}).items():
                 fails = set(ck.failure_keys)
+                if component == ck.INVERTER:
+                    # inverters may have cost_per_watt specified instead of cost
+                    fails.discard(ck.COST)
+
                 included = fails & set(fail_config.keys())
                 if included != fails:
                     missing += list(fails - included)
+
+                # update cost for inverters
+                if component == ck.INVERTER:
+                    if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
+                        missing.append(ck.COST)
+
+                    if fail_config.get(ck.COST_PER_WATT, None) is not None:
+                        # calculate costs based on cents/watt
+                        self.config[component][ck.FAILURE][failure][ck.COST] = (
+                            fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
+                        )
 
                 if fail_config.get(ck.DIST, None) in ck.dists:
                     if ck.MEAN not in fail_config[ck.PARAM]:
@@ -216,8 +255,12 @@ class SamCase:
         """
         Verifies loaded module configuration from SAM and also sets class variables for some information about the case.
         """
-        if not self.value("system_use_lifetime_output"):
-            raise CaseError("Please modify your case to use lifetime mode!")
+        # need to check that an LCOE calculator that supports lifetime is used
+        for bad_module in ck.unusable_lcoe_calcs:
+            if bad_module in self.modules:
+                raise CaseError(
+                    f"LCOE calculator {bad_module} cannot be used since it doesn't support lifetime, please fix the calculator in the case."
+                )
 
         if self.value("en_dc_lifetime_losses") or self.value("en_ac_lifetime_losses"):
             logger.warn("Lifetime daily DC and AC losses will be overridden for this run.")
@@ -238,7 +281,7 @@ class SamCase:
         # assume the number of modules per string is the same for each subarray
         self.config[ck.MODULES_PER_STR] = int(self.value("subarray1_modules_per_string"))
         self.config[ck.TRACKING] = False
-        self.config[ck.MULTI_SUBARRAY] = False
+        self.config[ck.MULTI_SUBARRAY] = 0
         for sub in range(1, 5):
             if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
                 self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
@@ -250,8 +293,7 @@ class SamCase:
                 if self.value(f"subarray{sub}_track_mode"):
                     self.config[ck.TRACKING] = True
 
-                if sub > 1:
-                    self.config[ck.MULTI_SUBARRAY] = True
+                self.config[ck.MULTI_SUBARRAY] += 1
 
         inverter = self.value("inverter_model")
         if inverter == 0:
@@ -263,7 +305,7 @@ class SamCase:
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
-        if self.config[ck.MULTI_SUBARRAY] and self.config[ck.TRACKING]:
+        if self.config[ck.MULTI_SUBARRAY] > 1 and self.config[ck.TRACKING]:
             raise CaseError(
                 "Tracker failures may only be modeled for a system consisting of a single subarray. Exiting simulation."
             )
@@ -283,6 +325,25 @@ class SamCase:
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
 
         self.config[ck.LIFETIME_YRS] = self.value("analysis_period")
+
+    # for pickling
+    def __getstate__(self) -> dict:
+        """
+        Converts the case into a dictionary for pickling
+        """
+        state = self.__dict__.copy()
+        del state["modules"]
+        del state["ssc"]
+
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        Creates the object from a dictionary
+        """
+        self.__dict__ = state
+        self.ssc = pssc.PySSC()
+        self.modules = self.__load_modules()
 
     def precalculate_tracker_losses(self):
         """
@@ -343,6 +404,58 @@ class SamCase:
         self.value("subarray1_azimuth", user_azimuth)
         self.value("subarray1_tilt", user_tilt)
 
+    def base_case_sim(self) -> None:
+        """
+        Runs the base case simulation for this case, with no failures and optimal lifetime losses
+
+        This also sets base case output parameters of this object
+        """
+        lifetime = int(self.config[ck.LIFETIME_YRS])
+
+        # run the dummy base case
+        self.value("en_dc_lifetime_losses", 0)
+        self.value("en_ac_lifetime_losses", 0)
+
+        self.value("om_fixed", [0])
+
+        module_degradation_rate = self.config[ck.MODULE].get(ck.DEGRADE, 0) / 365
+
+        degrade = [(1 - component_degradation(module_degradation_rate, i)) * 100 for i in range(lifetime * 365)]
+
+        self.value("en_dc_lifetime_losses", 1)
+        self.value("dc_lifetime_losses", degrade)
+
+        self.simulate()
+
+        self.base_lcoe = self.output("lcoe_real")
+        # ac energy
+        # remove the first element from cf_energy_net because it is always 0, representing year 0
+        self.base_annual_energy = self.output("cf_energy_net")[1:]
+        self.base_ac_energy = self.value("gen")
+        self.base_dc_energy = summarize_dc_energy(self.output("dc_net"), lifetime)
+
+        # other outputs from base case (for graphing)
+        self.base_load = self.value("load")
+        self.base_tax_cash_flow = self.output("cf_after_tax_cash_flow")
+
+        for loss in ck.losses:
+            try:
+                self.base_losses[loss] = self.output(loss)
+            except:
+                self.base_losses[loss] = 0
+
+        # calculate availability using sun hours
+        # contains every hour in the year and whether is sun up, down, sunrise, sunset
+        sunup = self.value("sunup")
+
+        # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
+        sunup = np.reshape(np.array(sunup), (365, 24))
+        # zero out every value except where the value is 1 (for sunup)
+        sunup = np.where(sunup == 1, sunup, 0)
+        # sum up daylight hours for each day
+        self.daylight_hours = np.sum(sunup, axis=1)
+        self.annual_daylight_hours = np.sum(self.daylight_hours)
+
     def simulate(self, verbose: int = 0) -> None:
         """
         Executes simulations for all modules in this case.
@@ -367,6 +480,9 @@ class SamCase:
 
         Returns:
             Value or the variable if value is None
+
+        Note:
+            Some modules have the same keys, this function will return the first key found in the module order specified in the configuration. Because of the way modules share data in PySAM, setting the value in the first module will propagate it to the other modules.
         """
         for m_name in self.modules.keys():
             try:

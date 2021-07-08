@@ -27,6 +27,7 @@ class ConfigKeys:
     STD = "std"
     LABOR = "labor_time"
     COST = "cost"
+    COST_PER_WATT = "cost_per_watt"
     FRAC = "fraction"
 
     REPAIR = "repairs"
@@ -107,4 +108,38 @@ class ConfigKeys:
         WEIBULL,
         LOGNORM,
         UNIFORM,
+    ]
+
+    # these are modules that are required for PVRPM
+    required_modules = [
+        "Pvsamv1",
+    ]
+
+    # lcoe modules that cant be used
+    unusable_lcoe_calcs = [
+        "Lcoefcr",
+    ]
+
+    # for output generation
+    losses = [
+        "annual_poa_shading_loss_percent",
+        "annual_poa_soiling_loss_percent",
+        "annual_poa_cover_loss_percent",
+        "annual_dc_module_loss_percent",
+        "annual_dc_mppt_clip_loss_percent",
+        "annual_dc_mismatch_loss_percent",
+        "annual_dc_diodes_loss_percent",
+        "annual_dc_wiring_loss_percent",
+        "annual_dc_tracking_loss_percent",
+        "annual_dc_nameplate_loss_percent",
+        "annual_dc_optimizer_loss_percent",
+        "annual_dc_perf_adj_loss_percent",
+        "annual_ac_inv_clip_loss_percent",
+        "annual_ac_inv_pso_loss_percent",
+        "annual_ac_inv_pnt_loss_percent",
+        "annual_ac_inv_eff_loss_percent",
+        "ac_loss",
+        "annual_transmission_loss_percent",
+        "annual_ac_perf_adj_loss_percent",
+        "annual_xfmr_loss_percent",
     ]

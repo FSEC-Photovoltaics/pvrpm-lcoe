@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="pvrpm",
     description="Run simulations to estimate LCOE costs for PV systems using SAM.",
-    version="1.0.0",
+    version="1.1.0",
     packages=find_packages(include=["pvrpm", "pvrpm.*"]),
     install_requires=[
         "nrel-pysam",
@@ -12,6 +12,8 @@ setup(
         "pyyaml",
         "scipy",
         "tqdm",
+        "matplotlib",
+        "python-dateutil",
     ],
     extras_require={
         "docs": [

@@ -1,6 +1,7 @@
 import logging
 
-logger = logging.getLogger("pvrpm")
+if "logger" not in locals() and "logger" not in globals():
+    logger = logging.getLogger("pvrpm")
 
 
 def init_logger():
