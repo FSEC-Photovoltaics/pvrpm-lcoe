@@ -468,23 +468,24 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
     avg_ac_energy = np.reshape(avg_ac_energy, (365, 24))  # day energy by hour
-    avg_day_energy_by_hour = avg_ac_energy.copy()
+    avg_day_energy_by_hour = avg_ac_energy.copy()  # copy for heatmap yearly energy generation
     avg_ac_energy = np.sum(avg_ac_energy, axis=1)  # energy per day
 
     base_ac_energy = np.reshape(base_ac_energy, (lifetime, 365 * 24))
     base_ac_energy = np.sum(base_ac_energy, axis=0) / lifetime
     base_ac_energy = np.reshape(base_ac_energy, (365, 24))
-    base_day_energy_by_hour = base_ac_energy.copy()
+    base_day_energy_by_hour = base_ac_energy.copy()  # copy for heatmap yearly energy generation
     base_ac_energy = np.sum(base_ac_energy, axis=1)
 
     # daily load, load is the same between realizations and base
     base_load = np.reshape(base_load, (365, 24))
     base_load = np.sum(base_load, axis=1)
 
-    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}
+    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}  # create losses dictionary
 
     # calculate per month energy averaged across every year on every realization
     current_month = datetime(datetime.utcnow().year, 1, 1)
+    # relative deltas allow dynamic month lengths such that each month has the proper number of days
     delta = relativedelta(months=1)
     start = 0
     monthly_energy = {}
@@ -492,7 +493,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     base_monthly_energy = {}
     for _ in range(12):
         month = current_month.strftime("%b")
-        num_days = ((current_month + delta) - current_month).days
+        num_days = ((current_month + delta) - current_month).days  # number of days in this month
 
         monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
         base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
@@ -560,6 +561,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     fig.set_figheight(5)
     fig.set_figwidth(10)
 
+    # add 1 to have years 1->25
     ax1.bar(np.arange(lifetime) + 1, avg_annual_energy)
     ax1.set_title("Realization Average")
     ax1.set_xlabel("Year")

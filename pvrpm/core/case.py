@@ -347,7 +347,7 @@ class SamCase:
 
     def precalculate_tracker_losses(self):
         """
-        {recalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
+        Precalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
         """
         if self.value("subarray1_tilt") != 0:
             raise CaseError("This script can only model tracker failures for 0 degree tilt trackers.")
