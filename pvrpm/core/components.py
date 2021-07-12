@@ -21,15 +21,19 @@ class Components:
         self.case = case
 
         self.comps = {}
-        self.uptime = {}
         self.costs = {}
 
-        lifetime = int(self.case.config[ck.LIFETIME_YRS])
+        # keep track of total days spent on monitoring and repairs
+        self.total_repair_time = {}
+        self.total_monitor_time = {}
+
+        lifetime = self.case.config[ck.LIFETIME_YRS]
         # every component level will contain a dataframe containing the data for all the components in that level
         for c in ck.component_keys:
             if self.case.config.get(c, None):
                 self.comps[c] = self.initialize_components(c)
-                self.uptime[c] = 0
+                self.total_repair_time[c] = 0
+                self.total_monitor_time[c] = 0
                 self.costs[c] = np.zeros(lifetime * 365)
 
         # additional aggreate data to track during simulation
@@ -51,6 +55,7 @@ class Components:
             self.tracker_power_loss_factor = np.zeros(lifetime * 365)
             self.tracker_availability = np.zeros(lifetime * 365)
             fail = list(case.config[ck.TRACKER][ck.FAILURE].keys())[0]
+            # TODO: why is this based only on the first failure?
             self.original_tracker_cost = self.case.config[ck.TRACKER][ck.FAILURE][fail].get(ck.COST, 0)
 
     @staticmethod
@@ -145,9 +150,11 @@ class Components:
         Note: Individual components have these columns:
             - state (bool): Operational (True) or failed (False)
             - defective (bool): Whehter component has a defect. True means the component is also eligible for the defective failure mode
-            - time_to_failure (int): Number of days until component fails
+            - time_to_failure (float): Number of days until component fails
             - failure_type (str): The name of the failure type time_to_failure represents
-            - time_to_repair (int): Number of days from failure until compoent is repaired
+            - time_to_repair (float): Number of days from failure until compoent is repaired
+            - repair_times (float): the total repair time for this repair
+            - monitor_times (float): the total monitoring time before repairs start
             - time_left_on_warranty (int): Number of days left on warranty (if applicable)
             - cumulative_failures (int): Total number of failures for that component
             - cumulative_oow_failures (int): Total number of out of warranty failures (if applicable)
@@ -164,6 +171,7 @@ class Components:
         df = pd.DataFrame(index=component_ind)
 
         failure_modes = list(component_info.get(ck.FAILURE, {}).keys())
+        monitor_modes = list(component_info.get(ck.MONITORING, {}).keys())
         repair_modes = list(component_info.get(ck.REPAIR, {}).keys())
 
         # operational
@@ -213,18 +221,44 @@ class Components:
         df["failure_type"] = [failure_modes[i] for i in failure_ind]
 
         # time to replacement/repair in case of failure
-        if len(repair_modes) == 1:
+        if not component_info[ck.CAN_REPAIR]:
+            df["time_to_repair"] = 1  # just initalize to 1 if no repair modes, means components cannot be repaired
+        elif len(repair_modes) == 1:
             # same repair mode for every repair
             repair = component_info[ck.REPAIR][repair_modes[0]]
             df["time_to_repair"] = self.sample(repair[ck.DIST], repair[ck.PARAM], component_info[ck.NUM_COMPONENT])
+            df["repair_times"] = df["time_to_repair"].copy()
         else:
             modes = [repair_modes[i] for i in failure_ind]
             df["time_to_repair"] = np.array(
                 [
-                    self.sample(component_info[ck.REPAIR][m][ck.DIST], component_info[ck.REPAIR][m][ck.PARAM], 1)
+                    self.sample(component_info[ck.REPAIR][m][ck.DIST], component_info[ck.REPAIR][m][ck.PARAM], 1)[0]
                     for m in modes
                 ]
             )
+            df["repair_times"] = df["time_to_repair"].copy()
+
+        # monitoring times, these will be added to the repair time for each component
+        # basically, the time until each failure is detected
+        if component_info[ck.CAN_REPAIR] and component_info[ck.CAN_MONITOR]:
+            if len(monitor_modes) == 1:
+                # same monitor mode for every failure
+                monitor = component_info[ck.MONITORING][monitor_modes[0]]
+                monitor = self.sample(monitor[ck.DIST], monitor[ck.PARAM], component_info[ck.NUM_COMPONENT])
+                df["monitor_times"] = pd.Series(monitor)
+                df["time_to_repair"] += monitor
+            elif len(monitor_modes) > 1:
+                modes = [monitor_modes[i] for i in failure_ind]
+                monitor = np.array(
+                    [
+                        self.sample(
+                            component_info[ck.MONITORING][m][ck.DIST], component_info[ck.MONITORING][m][ck.PARAM], 1
+                        )[0]
+                        for m in modes
+                    ]
+                )
+                df["monitor_times"] = pd.Series(monitor)
+                df["time_to_repair"] += monitor
 
         return df
 
@@ -362,7 +396,6 @@ class Components:
         """
         Changes the state of a component to operational once repairs are complete, only for components where the time to repair is zero
 
-
         Args:
             component_level (str): The component level of this repair
             day (int): Current day in the simulation
@@ -375,6 +408,7 @@ class Components:
 
         mask = (df["state"] == 0) & (df["time_to_repair"] < 1)
         failure_modes = list(component_info[ck.FAILURE].keys())
+        monitor_modes = list(component_info.get(ck.MONITORING, {}).keys())
         repair_modes = list(component_info[ck.REPAIR].keys())
 
         if len(df.loc[mask]) <= 0:
@@ -393,12 +427,16 @@ class Components:
                 self.costs[component_level][day] += len(df.loc[fail_mask]) * repair_cost
 
         repaired_comps = df.loc[mask].copy()
+
+        # add up the repair and monitoring times
+        self.total_repair_time[component_level] += repaired_comps["repair_times"].sum()
+        if component_info[ck.CAN_MONITOR]:
+            self.total_monitor_time[component_level] += repaired_comps["monitor_times"].sum()
+
         # reinitalize all repaired modules
         # degradation gets reset to 0 (module only)
-        try:
+        if component_level == ck.MODULE:
             repaired_comps["days_of_degradation"] = 0
-        except:
-            pass
 
         # TODO: maybe combine this with code in init component that does the same thing just on a different slice
         num_repaired = len(repaired_comps)
@@ -433,14 +471,38 @@ class Components:
             # same repair mode for every repair
             repair = component_info[ck.REPAIR][repair_modes[0]]
             repaired_comps["time_to_repair"] = self.sample(repair[ck.DIST], repair[ck.PARAM], num_repaired)
+            repaired_comps["repair_times"] = repaired_comps["time_to_repair"].copy()
         else:
             modes = [repair_modes[i] for i in failure_ind]
             repaired_comps["time_to_repair"] = np.array(
                 [
-                    self.sample(component_info[ck.REPAIR][m][ck.DIST], component_info[ck.REPAIR][m][ck.PARAM], 1)
+                    self.sample(component_info[ck.REPAIR][m][ck.DIST], component_info[ck.REPAIR][m][ck.PARAM], 1)[0]
                     for m in modes
                 ]
             )
+            repaired_comps["repair_times"] = repaired_comps["time_to_repair"].copy()
+
+        # monitoring times, these will be added to the repair time for each component
+        # basically, the time until each failure is detected
+        if component_info[ck.CAN_MONITOR]:
+            if len(monitor_modes) == 1:
+                # same monitor mode for every failure
+                monitor = component_info[ck.MONITORING][monitor_modes[0]]
+                monitor = self.sample(monitor[ck.DIST], monitor[ck.PARAM], num_repaired)
+                repaired_comps["monitor_times"] = pd.Series(monitor)
+                repaired_comps["time_to_repair"] += monitor
+            elif len(monitor_modes) > 0:
+                modes = [monitor_modes[i] for i in failure_ind]
+                monitor = np.array(
+                    [
+                        self.sample(
+                            component_info[ck.MONITORING][m][ck.DIST], component_info[ck.MONITORING][m][ck.PARAM], 1
+                        )[0]
+                        for m in modes
+                    ]
+                )
+                repaired_comps["monitor_times"] = pd.Series(monitor)
+                repaired_comps["time_to_repair"] += monitor
 
         repaired_comps["state"] = 1
         df.loc[mask] = repaired_comps

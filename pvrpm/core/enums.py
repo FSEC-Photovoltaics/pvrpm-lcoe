@@ -16,6 +16,7 @@ class ConfigKeys:
     NAME = "name"
     CAN_FAIL = "can_fail"
     CAN_REPAIR = "can_repair"
+    CAN_MONITOR = "can_monitor"
 
     WARRANTY = "warranty"
     DAYS = "days"
@@ -31,6 +32,7 @@ class ConfigKeys:
     FRAC = "fraction"
 
     REPAIR = "repairs"
+    MONITORING = "monitoring"
     DEGRADE = "degradation"
 
     STRING = "string"
@@ -95,6 +97,11 @@ class ConfigKeys:
         PARAM,
         LABOR,
         COST,
+    ]
+
+    monitoring_keys = [
+        DIST,
+        PARAM,
     ]
 
     repair_keys = [

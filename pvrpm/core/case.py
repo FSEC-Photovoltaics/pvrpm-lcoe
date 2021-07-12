@@ -164,6 +164,8 @@ class SamCase:
                 missing.append(ck.CAN_FAIL)
             if self.config[component].get(ck.CAN_REPAIR, None) is None:
                 missing.append(ck.CAN_REPAIR)
+            if self.config[component].get(ck.CAN_MONITOR, None) is None:
+                missing.append(ck.CAN_MONITOR)
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
 
@@ -171,6 +173,8 @@ class SamCase:
                 missing.append(ck.FAILURE)
             if self.config[component][ck.CAN_REPAIR] and not self.config[component].get(ck.REPAIR, None):
                 missing.append(ck.REPAIR)
+            if self.config[component][ck.CAN_MONITOR] and not self.config[component].get(ck.MONITORING, None):
+                missing.append(ck.MONITORING)
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
 
@@ -178,6 +182,22 @@ class SamCase:
                 ck.DAYS, None
             ):
                 missing.append(ck.DAYS)
+
+            # check the number of repairs / monitoring is either 1 or equal to number of failures
+            if self.config[component][ck.CAN_FAIL]:  # in case there are no failures for components that cant fail
+                num_failure_modes = len(self.config[component].get(ck.FAILURE, {}))
+                if self.config[component][ck.CAN_REPAIR]:
+                    num_repair_modes = len(self.config[component].get(ck.REPAIR, {}))
+                    if num_repair_modes != 1 and num_repair_modes != num_failure_modes:
+                        raise CaseError(
+                            f"Number of repairs for component '{component}' must be 1 or equal to the number of failures"
+                        )
+                if self.config[component][ck.CAN_MONITOR]:
+                    num_monitor_modes = len(self.config[component].get(ck.MONITORING, {}))
+                    if num_monitor_modes != 1 and num_monitor_modes != num_failure_modes:
+                        raise CaseError(
+                            f"Number of monitoring modes for component '{component}' must be 1 or equal to the number of failures"
+                        )
 
             for failure, fail_config in self.config[component].get(ck.FAILURE, {}).items():
                 fails = set(ck.failure_keys)
@@ -204,6 +224,18 @@ class SamCase:
                     if ck.MEAN not in fail_config[ck.PARAM]:
                         missing.append(ck.MEAN)
                     if fail_config[ck.DIST] != ck.EXPON and ck.STD not in fail_config[ck.PARAM]:
+                        missing.append(ck.STD)
+
+            for monitor, monitor_config in self.config[component].get(ck.MONITORING, {}).items():
+                monitor_ = set(ck.monitoring_keys)
+                included = monitor_ & set(monitor_config.keys())
+                if included != monitor_:
+                    missing += list(monitor_ - included)
+
+                if monitor_config.get(ck.DIST, None) in ck.dists:
+                    if ck.MEAN not in monitor_config[ck.PARAM]:
+                        missing.append(ck.MEAN)
+                    if monitor_config[ck.DIST] != ck.EXPON and ck.STD not in monitor_config[ck.PARAM]:
                         missing.append(ck.STD)
 
             for repair, repair_config in self.config[component].get(ck.REPAIR, {}).items():
@@ -324,7 +356,7 @@ class SamCase:
 
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
 
-        self.config[ck.LIFETIME_YRS] = self.value("analysis_period")
+        self.config[ck.LIFETIME_YRS] = int(self.value("analysis_period"))
 
     # for pickling
     def __getstate__(self) -> dict:
@@ -337,7 +369,7 @@ class SamCase:
 
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         Creates the object from a dictionary
         """
@@ -410,7 +442,7 @@ class SamCase:
 
         This also sets base case output parameters of this object
         """
-        lifetime = int(self.config[ck.LIFETIME_YRS])
+        lifetime = self.config[ck.LIFETIME_YRS]
 
         # run the dummy base case
         self.value("en_dc_lifetime_losses", 0)
