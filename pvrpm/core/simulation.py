@@ -54,6 +54,9 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         comp (:obj:`Components`): The components class containing all the outputs for this simulation
         day (int): Current day in the simulation
     """
+    # static monitoring starts the day, if available. This is updated independently of component levels
+    comp.static_monitor(day)
+
     for c in ck.component_keys:
         if not case.config.get(c, None):
             continue
@@ -67,9 +70,17 @@ def simulate_day(case: SamCase, comp: Components, day: int):
             # fail components when their time has come
             comp.fail_component(c)
 
+            # update monitoring
+            comp.monitor_component(c)
+
             if case.config[c][ck.CAN_REPAIR]:
-                # decrement time to repair for failed modules
-                df.loc[df["state"] == 0, "time_to_repair"] -= 1
+                # decrement time to repair for failed and detected modules
+                if case.config[c][ck.CAN_MONITOR] or case.config[c].get(ck.COMP_MONITOR, None):
+                    mask = (df["state"] == 0) & (df["time_to_detection"] < 1)
+                else:
+                    mask = df["state"] == 0
+
+                df.loc[mask, "time_to_repair"] -= 1
 
                 # repair components when they are done and can be repaired
                 comp.repair_component(c, day)
@@ -325,11 +336,9 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                     summary_data[f"{c}_mttr"] = [0]
 
                 # mean time to detection (mean time to acknowledge)
-                if case.config[c][ck.CAN_MONITOR]:
+                if case.config[c][ck.CAN_MONITOR] or case.config[c].get(ck.COMP_MONITOR, None):
                     # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
-                    mask = (comp.comps[c]["state"] == 0) & (
-                        comp.comps[c]["time_to_repair"] > comp.comps[c]["repair_times"]
-                    )
+                    mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
                     sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
                     summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
                 else:

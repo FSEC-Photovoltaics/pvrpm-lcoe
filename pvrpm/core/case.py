@@ -138,7 +138,7 @@ class SamCase:
         included_keys = set(self.config.keys()) & top_level_keys
         if included_keys != top_level_keys:
             raise CaseError(
-                f"Missing required configuration options in the PVRPM YML: {top_level_keys - included_keys}"
+                f"Missing required configuration options in the PVRPM configuration: {top_level_keys - included_keys}"
             )
 
         if self.config[ck.NUM_REALIZATION] < 2:
@@ -153,8 +153,54 @@ class SamCase:
         if self.config[ck.NUM_TRANSFORMERS] <= 0:
             raise CaseError("Number of transformers must be greater than 0!")
 
+        # static monitoring
+        if self.config.get(ck.STATIC_MONITOR, None):
+            needed_keys = set(ck.static_monitor_keys)
+            for name, monitor_config in self.config[ck.STATIC_MONITOR].items():
+                included_keys = set(monitor_config.keys()) & needed_keys
+                if included_keys != needed_keys:
+                    raise CaseError(f"Static monitoring for {name} is missing keys {needed_keys - included_keys}")
+                for level in monitor_config[ck.LEVELS]:
+                    if ck.STATIC_MONITOR not in self.config[level]:
+                        self.config[level][ck.STATIC_MONITOR] = {}
+                    self.config[level][ck.STATIC_MONITOR][name] = monitor_config[ck.INTERVAL]
+
+        # cross level monitoring and compounding
+        if self.config.get(ck.COMP_MONITOR, None):
+            # parse levels in order from lowest -> highest to maintain priority on monitoring
+            for component in ck.compound_levels:
+                if not self.config[ck.COMP_MONITOR].get(component, None):
+                    continue
+                monitor_component_data = self.config[ck.COMP_MONITOR][component]
+
+                for monitor_component, monitor_config in monitor_component_data.items():
+                    needed_keys = set(ck.compund_keys)
+                    included_keys = set(monitor_config.keys()) & needed_keys
+                    if included_keys != needed_keys:
+                        raise CaseError(
+                            f"Cross component monitoring under component {component}:{monitor_component} is missing keys {needed_keys - included_keys}"
+                        )
+                    # if monitor_config[ck.COMP_FUNC] not in ck.compound_funcs:
+                    #    raise CaseError(
+                    #        f"Compound function for {component}:{monitor_component} is not a valid function!"
+                    #    )
+
+                    if monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1:
+                        raise CaseError(
+                            f"Failure threshold for {component}:{monitor_component} must be between 0 and 1."
+                        )
+
+                    if monitor_config[ck.DIST] in ck.dists:
+                        if ck.MEAN not in monitor_config[ck.PARAM]:
+                            raise CaseError(f"Mean parameter for {component}:{monitor_component} is missing!")
+                        if monitor_config[ck.DIST] != ck.EXPON and ck.STD not in monitor_config[ck.PARAM]:
+                            raise CaseError(f"STD parameter for {component}:{monitor_component} is missing!")
+
+                    if not self.config[monitor_component].get(ck.COMP_MONITOR, None):
+                        self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
+
         for component in ck.component_keys:
-            if not self.config.get(component, None):  # for non-needed components
+            if not self.config.get(component, None):  # for non-needed components, needed ones checked already above
                 continue
 
             missing = []

@@ -27,6 +27,17 @@ class Components:
         self.total_repair_time = {}
         self.total_monitor_time = {}
 
+        # keep track of static monitoring for every level
+        index = []
+        data = []
+        for name, monitor_config in self.case.config.get(ck.STATIC_MONITOR, {}).items():
+            index.append(name)
+            data.append(monitor_config[ck.INTERVAL])
+        if index:
+            self.static_monitoring = pd.Series(index=index, data=data)
+        else:
+            self.static_monitoring = None
+
         lifetime = self.case.config[ck.LIFETIME_YRS]
         # every component level will contain a dataframe containing the data for all the components in that level
         for c in ck.component_keys:
@@ -137,6 +148,26 @@ class Components:
             # scipy rvs uses rou sampling method
             return dist.rvs(size=num_samples)
 
+    @staticmethod
+    def compound_failures(function: str, parameters: dict, num_fails: int):
+        """
+        Compounds the failures using the provided function and it's parameters to calculate the number of days to reduce the time to detection by
+
+        Possible functions and their parameters are:
+            - step: Failures follow a step function, each step reducing the detection time by a static amount
+                - threshold (float): fraction 0 <= threshold <= 1 that signifies the amount of modules that must fail before next step is reached. So if this is 0.2, every 0.2 * total_components components that fail will reduce detection time by step
+                - step (int): The amount of days to reduce detection time for every step. So 2 steps reduces detection time by 2 * step
+            - exponential: Failures compound on an exponential function
+                - base (float): The base for the exponential function > 0
+            - log: Failures compound on a logorithmic function
+                - base (float): The base for the log function > 0
+            - linear: Failures compound linearly
+                - slope (float): Slope of the linear function > 0
+            - constant: Each failure reduces the time to detection by a static fraction constant
+                - constant (float): fraction 0 <= frac <= 1 that specifies how much of the overall time each failure reduces. So if fraction is 0.1, a failure will reduce time to detection by "time_to_detection * 0.1"
+        """
+        pass
+
     def initialize_components(self, component_level: str) -> pd.DataFrame:
         """
         Initalizes all components for the first time
@@ -153,6 +184,7 @@ class Components:
             - time_to_failure (float): Number of days until component fails
             - failure_type (str): The name of the failure type time_to_failure represents
             - time_to_repair (float): Number of days from failure until compoent is repaired
+            - time_to_detection (float): Number of days until the component failure is detected and repairs start
             - repair_times (float): the total repair time for this repair
             - monitor_times (float): the total monitoring time before repairs start
             - time_left_on_warranty (int): Number of days left on warranty (if applicable)
@@ -240,25 +272,34 @@ class Components:
 
         # monitoring times, these will be added to the repair time for each component
         # basically, the time until each failure is detected
-        if component_info[ck.CAN_REPAIR] and component_info[ck.CAN_MONITOR]:
-            if len(monitor_modes) == 1:
-                # same monitor mode for every failure
-                monitor = component_info[ck.MONITORING][monitor_modes[0]]
-                monitor = self.sample(monitor[ck.DIST], monitor[ck.PARAM], component_info[ck.NUM_COMPONENT])
-                df["monitor_times"] = pd.Series(monitor)
-                df["time_to_repair"] += monitor
-            elif len(monitor_modes) > 1:
-                modes = [monitor_modes[i] for i in failure_ind]
-                monitor = np.array(
-                    [
-                        self.sample(
-                            component_info[ck.MONITORING][m][ck.DIST], component_info[ck.MONITORING][m][ck.PARAM], 1
-                        )[0]
-                        for m in modes
-                    ]
-                )
-                df["monitor_times"] = pd.Series(monitor)
-                df["time_to_repair"] += monitor
+        if component_info[ck.CAN_REPAIR]:
+            if component_info[ck.CAN_MONITOR]:
+                if len(monitor_modes) == 1:
+                    # same monitor mode for every failure
+                    monitor = component_info[ck.MONITORING][monitor_modes[0]]
+                    monitor = self.sample(monitor[ck.DIST], monitor[ck.PARAM], component_info[ck.NUM_COMPONENT])
+                    df["monitor_times"] = monitor
+                    df["time_to_detection"] = df["monitor_times"].copy()
+                elif len(monitor_modes) > 1:
+                    modes = [monitor_modes[i] for i in failure_ind]
+                    monitor = np.array(
+                        [
+                            self.sample(
+                                component_info[ck.MONITORING][m][ck.DIST], component_info[ck.MONITORING][m][ck.PARAM], 1
+                            )[0]
+                            for m in modes
+                        ]
+                    )
+                    df["monitor_times"] = monitor
+                    df["time_to_detection"] = df["monitor_times"].copy()
+            # monitoring across levels, only applies if properly defined and monitoring at the component level can_monitor is false
+            elif component_info.get(ck.COMP_MONITOR, None):
+                monitor = component_info[ck.COMP_MONITOR]
+                df["monitor_times"] = self.sample(monitor[ck.DIST], monitor[ck.PARAM], component_info[ck.NUM_COMPONENT])
+                df["time_to_detection"] = df["monitor_times"].copy()
+            elif component_info.get(ck.STATIC_MONITOR, None):
+                df["monitor_times"] = np.amin(list(component_info[ck.STATIC_MONITOR].values()))
+                df["time_to_detection"] = df["monitor_times"].copy()
 
         return df
 
@@ -363,6 +404,67 @@ class Components:
 
         return operational_inverters / self.case.config[ck.INVERTER][ck.NUM_COMPONENT]
 
+    def static_monitor(self, day: int):
+        """
+        Updates static monitoring which is independent of component levels by one day
+
+        Args:
+            day (int): Current day in the simulation
+        """
+        if self.static_monitoring is not None:
+            self.static_monitoring -= 1
+            mask = self.static_monitoring < 1
+            if len(self.static_monitoring.loc[mask]) > 0:
+                # static monitoring method commences, instantly detecting all failed components in their specified levels
+                # which have not been detected by other monitoring methods yet.
+                for monitor in self.static_monitoring.loc[mask].index:
+                    config = self.case.config[ck.STATIC_MONITOR][monitor]
+                    for level in config[ck.LEVELS]:
+                        df = self.comps[level]
+                        mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
+                        monitor_comps = df.loc[mask].copy()
+                        # subtract whatever time remained from the total monitoring time, only if there is other monitoring defined
+                        static_mask = monitor_comps["monitor_times"] != config[ck.INTERVAL]
+                        monitor_comps.loc[static_mask, "monitor_times"] -= monitor_comps.loc[
+                            static_mask, "time_to_detection"
+                        ]
+
+                        monitor_comps["time_to_detection"] = 0
+                        df.loc[mask] = monitor_comps
+                        # add cost to total costs (split evenly among all the levels for this day)
+                        self.costs[level][day] += config[ck.COST] / len(config[ck.LEVELS])
+
+                    # reset static monitoring time
+                    self.static_monitoring[monitor] = self.case.config[ck.STATIC_MONITOR][monitor][ck.INTERVAL]
+
+    def monitor_component(self, component_level: str):
+        """
+        Updates time to detection from component level, static, and cross component level monitoring based on number of failures
+
+        Monitoring defined for each level is unaffected, only cross level monitoring on levels with no monitoring at that level have times updated based on failures, since monitoring defined at the component level uses the defined monitoring distribution for those components instead of the cross level monitoring
+
+        Args:
+            component_level (str): The component level to check for monitoring
+
+        Note:
+            Updates the underlying dataframes in place
+        """
+        df = self.comps[component_level]
+        # only decrement monitoring on failed components where repairs have not started
+        mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
+        if self.case.config[component_level][ck.CAN_MONITOR]:
+            df.loc[mask, "time_to_detection"] -= 1
+        elif self.case.config[component_level].get(ck.COMP_MONITOR, None):
+            conf = self.case.config[component_level][ck.COMP_MONITOR]
+            frac_failed = len(df.loc[df["state"] == 0]) / len(df)
+            # only decrement time to detection once failure threshold is met
+            if frac_failed > conf[ck.FAIL_THRESH]:
+                # TODO: compound the failures... later
+                df.loc[mask, "time_to_detection"] -= 1
+            else:
+                # for calculating mttd and other data, increment the monitor times for every component by 1 to account for days where time to detection is not decremented because of the failure threshold
+                df.loc[mask, "monitor_times"] += 1
+
     def fail_component(self, component_level: str):
         """
         Changes state of a component to failed, incrementing failures and checking warranty only for failed components of each failure type
@@ -392,7 +494,7 @@ class Components:
 
             df.loc[mask] = failed_comps
 
-    def repair_component(self, component_level: str, day: int) -> pd.Series:
+    def repair_component(self, component_level: str, day: int):
         """
         Changes the state of a component to operational once repairs are complete, only for components where the time to repair is zero
 
@@ -430,7 +532,7 @@ class Components:
 
         # add up the repair and monitoring times
         self.total_repair_time[component_level] += repaired_comps["repair_times"].sum()
-        if component_info[ck.CAN_MONITOR]:
+        if component_info[ck.CAN_MONITOR] or component_info.get(ck.COMP_MONITOR, None):
             self.total_monitor_time[component_level] += repaired_comps["monitor_times"].sum()
 
         # reinitalize all repaired modules
@@ -488,9 +590,8 @@ class Components:
             if len(monitor_modes) == 1:
                 # same monitor mode for every failure
                 monitor = component_info[ck.MONITORING][monitor_modes[0]]
-                monitor = self.sample(monitor[ck.DIST], monitor[ck.PARAM], num_repaired)
-                repaired_comps["monitor_times"] = pd.Series(monitor)
-                repaired_comps["time_to_repair"] += monitor
+                repaired_comps["monitor_times"] = self.sample(monitor[ck.DIST], monitor[ck.PARAM], num_repaired)
+                repaired_comps["time_to_detection"] = repaired_comps["monitor_times"].copy()
             elif len(monitor_modes) > 0:
                 modes = [monitor_modes[i] for i in failure_ind]
                 monitor = np.array(
@@ -501,8 +602,16 @@ class Components:
                         for m in modes
                     ]
                 )
-                repaired_comps["monitor_times"] = pd.Series(monitor)
-                repaired_comps["time_to_repair"] += monitor
+                repaired_comps["monitor_times"] = monitor
+                repaired_comps["time_to_detection"] = repaired_comps["monitor_times"].copy()
+        # monitoring across levels, only applies if properly defined and monitoring at the component level can_monitor is false
+        elif component_info.get(ck.COMP_MONITOR, None):
+            monitor = component_info[ck.COMP_MONITOR]
+            repaired_comps["monitor_times"] = self.sample(monitor[ck.DIST], monitor[ck.PARAM], num_repaired)
+            repaired_comps["time_to_detection"] = repaired_comps["monitor_times"].copy()
+        elif component_info.get(ck.STATIC_MONITOR, None):
+            repaired_comps["monitor_times"] = np.amin(list(component_info[ck.STATIC_MONITOR].values()))
+            repaired_comps["time_to_detection"] = repaired_comps["monitor_times"].copy()
 
         repaired_comps["state"] = 1
         df.loc[mask] = repaired_comps

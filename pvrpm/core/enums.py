@@ -43,6 +43,26 @@ class ConfigKeys:
     GRID = "grid"
     TRACKER = "tracker"
 
+    # static monitoring
+    STATIC_MONITOR = "static_monitoring"
+    INTERVAL = "interval"
+    LEVELS = "levels"
+
+    # cross level monitoring
+    COMP_MONITOR = "component_level_monitoring"
+    FAIL_THRESH = "failure_threshold"
+    COMP_FUNC = "compounding_function"
+    COMP_PARAM = "compound_parameters"
+    # compounding functions parameters
+    THRESH = "threshold"
+    STEP = "step"
+    BASE = "base"
+    CONST = "constant"
+    SLOPE = "slope"
+    # compound functions
+    LOG = "log"
+    LINEAR = "linear"
+
     # supported distribution functions
     NORMAL = "normal"
     EXPON = "exponential"
@@ -115,6 +135,37 @@ class ConfigKeys:
         WEIBULL,
         LOGNORM,
         UNIFORM,
+    ]
+
+    static_monitor_keys = [
+        INTERVAL,
+        COST,
+        LEVELS,
+    ]
+
+    compound_funcs = [
+        STEP,
+        LOG,
+        LINEAR,
+        EXPON,
+        CONST,
+    ]
+
+    compund_keys = [
+        FAIL_THRESH,
+        #        COMP_FUNC,
+        #        COMP_PARAM,
+        DIST,
+        PARAM,
+    ]
+
+    compound_levels = [
+        STRING,
+        COMBINER,
+        INVERTER,
+        DISCONNECT,
+        TRANSFORMER,
+        GRID,
     ]
 
     # these are modules that are required for PVRPM
