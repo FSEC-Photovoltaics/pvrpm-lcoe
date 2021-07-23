@@ -145,7 +145,8 @@ def run_system_realization(
     for i in iterator:
         # calculate new labor rate each year
         if i == 1 or i % 365 == 0:
-            comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION]) / 100, i)
+            year = np.floor(i / 365)
+            comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION] / 100), year)
             if case.config[ck.TRACKING]:
                 for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
                     case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= np.power(
