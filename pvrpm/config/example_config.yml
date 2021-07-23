@@ -36,7 +36,8 @@ use_worst_case_tracker: false
 #      name = a string containing the name of the component type, used for error reporting
 #      can_fail = true if component is allowed to fail
 #      can_repair = true if component is allowed to be repaired after failing
-#      can_monitor = true if component's failures are not instantly detected
+#      can_monitor = true if component's failures use component level monitoring
+#                    This can be false and replaced with other monitoring methods, see below for static and cross level monitoring sections
 #      ### if can_repair, can_monitor or can_fail is false, you can remove their respective section below (failures, monitoring and repairs)
 #      warranty (remove if no warranty)
 #        days = number of days that the warranty is for (e.g. a 20 year warranty would be 20 * 365 days)

@@ -451,10 +451,11 @@ class Components:
         """
         df = self.comps[component_level]
         # only decrement monitoring on failed components where repairs have not started
-        mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
         if self.case.config[component_level][ck.CAN_MONITOR]:
+            mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
             df.loc[mask, "time_to_detection"] -= 1
         elif self.case.config[component_level].get(ck.COMP_MONITOR, None):
+            mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
             conf = self.case.config[component_level][ck.COMP_MONITOR]
             frac_failed = len(df.loc[df["state"] == 0]) / len(df)
             # only decrement time to detection once failure threshold is met
@@ -532,7 +533,11 @@ class Components:
 
         # add up the repair and monitoring times
         self.total_repair_time[component_level] += repaired_comps["repair_times"].sum()
-        if component_info[ck.CAN_MONITOR] or component_info.get(ck.COMP_MONITOR, None):
+        if (
+            component_info[ck.CAN_MONITOR]
+            or component_info.get(ck.COMP_MONITOR, None)
+            or component_info.get(ck.STATIC_MONITOR, None)
+        ):
             self.total_monitor_time[component_level] += repaired_comps["monitor_times"].sum()
 
         # reinitalize all repaired modules

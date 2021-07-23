@@ -75,7 +75,11 @@ def simulate_day(case: SamCase, comp: Components, day: int):
 
             if case.config[c][ck.CAN_REPAIR]:
                 # decrement time to repair for failed and detected modules
-                if case.config[c][ck.CAN_MONITOR] or case.config[c].get(ck.COMP_MONITOR, None):
+                if (
+                    case.config[c][ck.CAN_MONITOR]
+                    or case.config[c].get(ck.COMP_MONITOR, None)
+                    or case.config[c].get(ck.STATIC_MONITOR, None)
+                ):
                     mask = (df["state"] == 0) & (df["time_to_detection"] < 1)
                 else:
                     mask = df["state"] == 0
@@ -336,7 +340,11 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                     summary_data[f"{c}_mttr"] = [0]
 
                 # mean time to detection (mean time to acknowledge)
-                if case.config[c][ck.CAN_MONITOR] or case.config[c].get(ck.COMP_MONITOR, None):
+                if (
+                    case.config[c][ck.CAN_MONITOR]
+                    or case.config[c].get(ck.COMP_MONITOR, None)
+                    or case.config[c].get(ck.STATIC_MONITOR, None)
+                ):
                     # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
                     mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
                     sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
