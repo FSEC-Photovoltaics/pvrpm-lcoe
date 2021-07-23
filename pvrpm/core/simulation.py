@@ -158,7 +158,8 @@ def run_system_realization(
     for i in iterator:
         # calculate new labor rate each year
         if i == 1 or i % 365 == 0:
-            comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION]) / 100, i)
+            year = np.floor(i / 365)
+            comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION] / 100), year)
             if case.config[ck.TRACKING]:
                 for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
                     case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= np.power(
@@ -256,6 +257,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
 
     for i in range(int(lifetime)):
         summary_data[f"annual_ac_energy_{i+1}"] = [case.base_annual_energy[i]]
+    # split up so the order of columns is nicer
+    for i in range(int(lifetime)):
         summary_data[f"cumulative_ac_energy_{i+1}"] = [cumulative_ac_energy[i]]
 
     # dc energy
