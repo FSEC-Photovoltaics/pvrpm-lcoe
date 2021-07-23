@@ -499,12 +499,16 @@ class Components:
 
             # update time to detection times for component levels with only static monitoring
             # which will have None for monitor times
-            if failed_comps["monitor_times"].isnull().any():
-                # monitor and time to detection will be the time to next static monitoring
-                static_monitors = list(self.case.config[component_level][ck.STATIC_MONITOR].keys())
-                # next static monitoring is the min of the possible static monitors for this component level
-                failed_comps["monitor_times"] = np.amin(self.static_monitoring[static_monitors])
-                failed_comps["time_to_detection"] = failed_comps["monitor_times"].copy()
+            try:
+                if failed_comps["monitor_times"].isnull().any():
+                    # monitor and time to detection will be the time to next static monitoring
+                    static_monitors = list(self.case.config[component_level][ck.STATIC_MONITOR].keys())
+                    # next static monitoring is the min of the possible static monitors for this component level
+                    failed_comps["monitor_times"] = np.amin(self.static_monitoring[static_monitors])
+                    failed_comps["time_to_detection"] = failed_comps["monitor_times"].copy()
+            # fails if no monitoring defined, faster then just doing a check if the column exists or whatever
+            except KeyError:
+                pass
 
             df.loc[mask] = failed_comps
 
