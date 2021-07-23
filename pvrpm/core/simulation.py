@@ -54,6 +54,9 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         comp (:obj:`Components`): The components class containing all the outputs for this simulation
         day (int): Current day in the simulation
     """
+    # static monitoring starts the day, if available. This is updated independently of component levels
+    comp.static_monitor(day)
+
     for c in ck.component_keys:
         if not case.config.get(c, None):
             continue
@@ -61,17 +64,27 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         df = comp.comps[c]
         # if component can't fail, just continue
         if case.config[c][ck.CAN_FAIL]:
-            comp.uptime[c] += case.config[c][ck.NUM_COMPONENT]
-
             # decrement time to failures for operational modules
             df.loc[df["state"] == 1, "time_to_failure"] -= 1
 
             # fail components when their time has come
             comp.fail_component(c)
 
+            # update monitoring
+            comp.monitor_component(c)
+
             if case.config[c][ck.CAN_REPAIR]:
-                # decrement time to repair for failed modules
-                df.loc[df["state"] == 0, "time_to_repair"] -= 1
+                # decrement time to repair for failed and detected modules
+                if (
+                    case.config[c][ck.CAN_MONITOR]
+                    or case.config[c].get(ck.COMP_MONITOR, None)
+                    or case.config[c].get(ck.STATIC_MONITOR, None)
+                ):
+                    mask = (df["state"] == 0) & (df["time_to_detection"] < 1)
+                else:
+                    mask = df["state"] == 0
+
+                df.loc[mask, "time_to_repair"] -= 1
 
                 # repair components when they are done and can be repaired
                 comp.repair_component(c, day)
@@ -118,7 +131,7 @@ def run_system_realization(
 
     # data storage
     comp = Components(case)
-    lifetime = int(case.config[ck.LIFETIME_YRS])
+    lifetime = case.config[ck.LIFETIME_YRS]
 
     if case.config[ck.TRACKING]:
         comp.tracker_power_loss_factor[0] = 1
@@ -236,7 +249,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     """
     summary_index = ["Base Case"]
     summary_data = {"lcoe": [case.base_lcoe]}
-    lifetime = int(case.config[ck.LIFETIME_YRS])
+    lifetime = case.config[ck.LIFETIME_YRS]
     p_vals = [99, 95, 90, 75, 50, 10]
 
     # ac energy
@@ -244,6 +257,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
 
     for i in range(int(lifetime)):
         summary_data[f"annual_ac_energy_{i+1}"] = [case.base_annual_energy[i]]
+    # split up so the order of columns is nicer
+    for i in range(int(lifetime)):
         summary_data[f"cumulative_ac_energy_{i+1}"] = [cumulative_ac_energy[i]]
 
     # dc energy
@@ -294,13 +309,21 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         for i in range(len(dc_energy)):
             summary_data[f"dc_energy_{i+1}"] += [dc_energy[i]]
 
-        # calculate total failures, availability, mttf, mtbf, etc
+        # calculate total failures, availability, mttr, mtbf, etc
         for c in ck.component_keys:
             if not case.config.get(c, None):
                 continue
+
+            if f"{c}_total_failures" not in summary_data:
+                summary_data[f"{c}_total_failures"] = [None]  # no failures for base case
+            if f"{c}_mtbf" not in summary_data:
+                summary_data[f"{c}_mtbf"] = [None]
+            if f"{c}_mttr" not in summary_data:
+                summary_data[f"{c}_mttr"] = [None]
+            if f"{c}_mttd" not in summary_data:
+                summary_data[f"{c}_mttd"] = [None]
+
             if case.config[c][ck.CAN_FAIL]:
-                if f"{c}_total_failures" not in summary_data:
-                    summary_data[f"{c}_total_failures"] = [None]  # no failures for base case
                 sum_fails = comp.comps[c]["cumulative_failures"].sum()
                 summary_data[f"{c}_total_failures"] += [sum_fails]
                 for fail in case.config[c].get(ck.FAILURE, {}).keys():
@@ -309,14 +332,34 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                     summary_data[f"{c}_failures_by_type_{fail}"] += [comp.comps[c][f"failure_by_type_{fail}"].sum()]
 
                 # mean time between failure
-                if f"{c}_mtbf" not in summary_data:
-                    summary_data[f"{c}_mtbf"] = [None]
-                summary_data[f"{c}_mtbf"] += [comp.uptime[c] / sum_fails]
+                summary_data[f"{c}_mtbf"] += [lifetime * 365 * case.config[c][ck.NUM_COMPONENT] / sum_fails]
+
+                # mean time to repair
+                if case.config[c][ck.CAN_REPAIR]:
+                    # take the number of fails minus whatever components have not been repaired by the end of the simulation to get the number of repairs
+                    sum_repairs = sum_fails - len(comp.comps[c].loc[(comp.comps[c]["state"] == 0)])
+                    summary_data[f"{c}_mttr"] += [comp.total_repair_time[c] / sum_repairs]
+                else:
+                    summary_data[f"{c}_mttr"] = [0]
+
+                # mean time to detection (mean time to acknowledge)
+                if (
+                    case.config[c][ck.CAN_MONITOR]
+                    or case.config[c].get(ck.COMP_MONITOR, None)
+                    or case.config[c].get(ck.STATIC_MONITOR, None)
+                ):
+                    # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
+                    mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
+                    sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
+                    summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
+                else:
+                    summary_data[f"{c}_mttd"] += [0]
             else:
                 # mean time between failure
-                if f"{c}_mtbf" not in summary_data:
-                    summary_data[f"{c}_mtbf"] = [None]
-                summary_data[f"{c}_mtbf"] += [comp.uptime[c]]
+                summary_data[f"{c}_total_failures"] += [0]
+                summary_data[f"{c}_mtbf"] += [lifetime * 365]
+                summary_data[f"{c}_mttr"] += [0]
+                summary_data[f"{c}_mttd"] += [0]
 
             # availability
             if f"{c}_availability" not in summary_data:
@@ -417,7 +460,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
         results (:obj:`list(Components)`): List of component objects that contain the results for each realization
         save_path (str, Optional): Path to save graphs to, if provided
     """
-    lifetime = int(case.config[ck.LIFETIME_YRS])
+    lifetime = case.config[ck.LIFETIME_YRS]
     colors = [
         "r",
         "g",
@@ -469,23 +512,24 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
     avg_ac_energy = np.reshape(avg_ac_energy, (365, 24))  # day energy by hour
-    avg_day_energy_by_hour = avg_ac_energy.copy()
+    avg_day_energy_by_hour = avg_ac_energy.copy()  # copy for heatmap yearly energy generation
     avg_ac_energy = np.sum(avg_ac_energy, axis=1)  # energy per day
 
     base_ac_energy = np.reshape(base_ac_energy, (lifetime, 365 * 24))
     base_ac_energy = np.sum(base_ac_energy, axis=0) / lifetime
     base_ac_energy = np.reshape(base_ac_energy, (365, 24))
-    base_day_energy_by_hour = base_ac_energy.copy()
+    base_day_energy_by_hour = base_ac_energy.copy()  # copy for heatmap yearly energy generation
     base_ac_energy = np.sum(base_ac_energy, axis=1)
 
     # daily load, load is the same between realizations and base
     base_load = np.reshape(base_load, (365, 24))
     base_load = np.sum(base_load, axis=1)
 
-    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}
+    avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}  # create losses dictionary
 
     # calculate per month energy averaged across every year on every realization
     current_month = datetime(datetime.utcnow().year, 1, 1)
+    # relative deltas allow dynamic month lengths such that each month has the proper number of days
     delta = relativedelta(months=1)
     start = 0
     monthly_energy = {}
@@ -493,7 +537,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     base_monthly_energy = {}
     for _ in range(12):
         month = current_month.strftime("%b")
-        num_days = ((current_month + delta) - current_month).days
+        num_days = ((current_month + delta) - current_month).days  # number of days in this month
 
         monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
         base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
@@ -561,6 +605,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     fig.set_figheight(5)
     fig.set_figwidth(10)
 
+    # add 1 to have years 1->25
     ax1.bar(np.arange(lifetime) + 1, avg_annual_energy)
     ax1.set_title("Realization Average")
     ax1.set_xlabel("Year")
@@ -743,7 +788,7 @@ def pvrpm_sim(
     tqdm.set_lock(mp.RLock())  # for managing output contention
 
     save_path = case.config[ck.RESULTS_FOLDER]
-    lifetime = int(case.config[ck.LIFETIME_YRS])
+    lifetime = case.config[ck.LIFETIME_YRS]
     if threads == 0:
         threads = mp.cpu_count()
 

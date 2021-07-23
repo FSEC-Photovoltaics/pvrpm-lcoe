@@ -1,5 +1,4 @@
 import click
-import sys
 
 from pvrpm.core.logger import logger, init_logger
 from pvrpm.core.exceptions import CaseError
