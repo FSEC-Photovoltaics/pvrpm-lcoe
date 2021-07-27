@@ -123,6 +123,17 @@ class SamCase:
         """
         Verifies loaded YAML configuration file.
         """
+        # helper function to check distribution parameters
+        def check_params(component: str, name: str, config: dict):
+            if ck.MEAN not in config[ck.PARAM]:
+                raise CaseError(f"Mean parameter for {name} is missing!")
+
+            if config[ck.DIST] == ck.WEIBULL:
+                if ck.STD not in config[ck.PARAM] and ck.SHAPE not in config[ck.PARAM]:
+                    raise CaseError(f"STD or SHAPE parameter for {name} is missing!")
+            elif config[ck.DIST] != ck.EXPON and ck.STD not in config[ck.PARAM]:
+                raise CaseError(f"STD parameter for {name} is missing!")
+
         # tracking check
         if self.config[ck.TRACKING] and not self.config.get(ck.TRACKER, False):
             raise CaseError(
@@ -191,10 +202,7 @@ class SamCase:
                         )
 
                     if monitor_config[ck.DIST] in ck.dists:
-                        if ck.MEAN not in monitor_config[ck.PARAM]:
-                            raise CaseError(f"Mean parameter for {component}:{monitor_component} is missing!")
-                        if monitor_config[ck.DIST] != ck.EXPON and ck.STD not in monitor_config[ck.PARAM]:
-                            raise CaseError(f"STD parameter for {component}:{monitor_component} is missing!")
+                        check_params(component, monitor_component, monitor_config)
 
                     if not self.config[monitor_component].get(ck.COMP_MONITOR, None):
                         self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
@@ -267,10 +275,7 @@ class SamCase:
                         )
 
                 if fail_config.get(ck.DIST, None) in ck.dists:
-                    if ck.MEAN not in fail_config[ck.PARAM]:
-                        missing.append(ck.MEAN)
-                    if fail_config[ck.DIST] != ck.EXPON and ck.STD not in fail_config[ck.PARAM]:
-                        missing.append(ck.STD)
+                    check_params(component, failure, fail_config)
 
             for monitor, monitor_config in self.config[component].get(ck.MONITORING, {}).items():
                 monitor_ = set(ck.monitoring_keys)
@@ -279,10 +284,7 @@ class SamCase:
                     missing += list(monitor_ - included)
 
                 if monitor_config.get(ck.DIST, None) in ck.dists:
-                    if ck.MEAN not in monitor_config[ck.PARAM]:
-                        missing.append(ck.MEAN)
-                    if monitor_config[ck.DIST] != ck.EXPON and ck.STD not in monitor_config[ck.PARAM]:
-                        missing.append(ck.STD)
+                    check_params(component, monitor, monitor_config)
 
             for repair, repair_config in self.config[component].get(ck.REPAIR, {}).items():
                 repairs_ = set(ck.repair_keys)
@@ -291,10 +293,7 @@ class SamCase:
                     missing += list(repairs_ - included)
 
                 if repair_config.get(ck.DIST, None) in ck.dists:
-                    if ck.MEAN not in repair_config[ck.PARAM]:
-                        missing.append(ck.MEAN)
-                    if repair_config[ck.DIST] != ck.EXPON and ck.STD not in repair_config[ck.PARAM]:
-                        missing.append(ck.STD)
+                    check_params(component, repair, repair_config)
 
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")

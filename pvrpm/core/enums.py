@@ -26,6 +26,7 @@ class ConfigKeys:
     PARAM = "parameters"
     MEAN = "mean"
     STD = "std"
+    SHAPE = "shape"
     LABOR = "labor_time"
     COST = "cost"
     COST_PER_WATT = "cost_per_watt"

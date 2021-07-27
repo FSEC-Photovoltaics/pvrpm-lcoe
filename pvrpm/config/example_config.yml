@@ -76,8 +76,11 @@ use_worst_case_tracker: false
 #  - normal
 #  - uniform
 #  - lognormal
-#  - weibull
+#  - weibull (can also provide shape for this distribution, see below)
 # If using one of these distributions, you can simply provide the mean and std in days.
+# **For the weibull distribution**: instead of standard deviation (std) you can provide the mean and shape
+# See here: https://en.wikipedia.org/wiki/Weibull_distribution the shape parameter is k, and lambda is calculated by solving for it using the gamma function and the provided mean.
+# Otherwise, if you provide the STD for the weibull distribution, it should be a large number otherwise you'll get values extremely close to the mean only
 
 # You can also override this, and change the distribution to match the function name of any of the distributions listed here:
 # https://docs.scipy.org/doc/scipy/reference/stats.html
@@ -248,7 +251,7 @@ disconnect: # A/C disconnect
       distribution: weibull
       parameters:
         mean: 1095
-        std: 540
+        std: 1200
       labor_time: 4 # in hours
       cost: 500 # in USD
 
@@ -276,7 +279,7 @@ transformer:
       distribution: weibull
       parameters:
         mean: 365
-        std: 184
+        shape: 0.3477
       labor_time: 10 # in hours
       cost: 32868 # in USD
 
@@ -304,7 +307,7 @@ grid:
       distribution: weibull
       parameters:
         mean: 100
-        std: 20
+        shape: 0.75
       labor_time: 0 # in hours
       cost: 0 # in USD
 
@@ -414,7 +417,7 @@ component_level_monitoring:
 #      compounding_function: step # function to used to compound multiple failures at this level, and how that reduces the time to detection
 #      compound_parameters: # parameters for above compounding function (make sure to confirm what is needed for the function!)
 #        threshold: 0.5 # fraction threshold on [0, 1] that represents amount of failed components needed to reduce detection time by step
-        step: 168 # number of days to detection that each step reduces.
+#        step: 168 # number of days to detection that each step reduces.
       distribution: normal # distribution that defines how long this monitoring takes to detect a failure at this level (independent)
                            # the value calculated from this distribution will be reduced by the compounding factor for every failure in this level
       parameters:

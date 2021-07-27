@@ -331,29 +331,35 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                         summary_data[f"{c}_failures_by_type_{fail}"] = [None]
                     summary_data[f"{c}_failures_by_type_{fail}"] += [comp.comps[c][f"failure_by_type_{fail}"].sum()]
 
-                # mean time between failure
-                summary_data[f"{c}_mtbf"] += [lifetime * 365 * case.config[c][ck.NUM_COMPONENT] / sum_fails]
-
-                # mean time to repair
-                if case.config[c][ck.CAN_REPAIR]:
-                    # take the number of fails minus whatever components have not been repaired by the end of the simulation to get the number of repairs
-                    sum_repairs = sum_fails - len(comp.comps[c].loc[(comp.comps[c]["state"] == 0)])
-                    summary_data[f"{c}_mttr"] += [comp.total_repair_time[c] / sum_repairs]
-                else:
-                    summary_data[f"{c}_mttr"] = [0]
-
-                # mean time to detection (mean time to acknowledge)
-                if (
-                    case.config[c][ck.CAN_MONITOR]
-                    or case.config[c].get(ck.COMP_MONITOR, None)
-                    or case.config[c].get(ck.STATIC_MONITOR, None)
-                ):
-                    # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
-                    mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
-                    sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
-                    summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
-                else:
+                # if the component had no failures, set everything here and continue
+                if sum_fails == 0:
+                    summary_data[f"{c}_mtbf"] += [lifetime * 365]
+                    summary_data[f"{c}_mttr"] += [0]
                     summary_data[f"{c}_mttd"] += [0]
+                else:
+                    # mean time between failure
+                    summary_data[f"{c}_mtbf"] += [lifetime * 365 * case.config[c][ck.NUM_COMPONENT] / sum_fails]
+
+                    # mean time to repair
+                    if case.config[c][ck.CAN_REPAIR]:
+                        # take the number of fails minus whatever components have not been repaired by the end of the simulation to get the number of repairs
+                        sum_repairs = sum_fails - len(comp.comps[c].loc[(comp.comps[c]["state"] == 0)])
+                        summary_data[f"{c}_mttr"] += [comp.total_repair_time[c] / sum_repairs]
+                    else:
+                        summary_data[f"{c}_mttr"] = [0]
+
+                    # mean time to detection (mean time to acknowledge)
+                    if (
+                        case.config[c][ck.CAN_MONITOR]
+                        or case.config[c].get(ck.COMP_MONITOR, None)
+                        or case.config[c].get(ck.STATIC_MONITOR, None)
+                    ):
+                        # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
+                        mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
+                        sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
+                        summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
+                    else:
+                        summary_data[f"{c}_mttd"] += [0]
             else:
                 # mean time between failure
                 summary_data[f"{c}_total_failures"] += [0]

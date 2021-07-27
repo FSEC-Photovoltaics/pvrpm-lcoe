@@ -117,20 +117,24 @@ class Components:
                 r = np.exp(gammaln(2 / c) - 2 * gammaln(1 / c))
                 return np.sqrt(1 / (2 * c * r - 1))
 
-            mean, std = parameters[ck.MEAN], parameters[ck.STD]
-            c0 = 1.27 * np.sqrt(mean / std)
-            c, info, ier, msg = scipy.optimize.fsolve(
-                lambda t: _h(t) - (mean / std),
-                c0,
-                xtol=1e-10,
-                full_output=True,
-            )
+            if ck.STD in parameters:
+                mean, std = parameters[ck.MEAN], parameters[ck.STD]
+                c0 = 1.27 * np.sqrt(mean / std)
+                c, info, ier, msg = scipy.optimize.fsolve(
+                    lambda t: _h(t) - (mean / std),
+                    c0,
+                    xtol=1e-10,
+                    full_output=True,
+                )
 
-            # Test residual rather than error code.
-            if np.abs(info["fvec"][0]) > 1e-8:
-                raise RuntimeError(f"with mean={mean} and std={std}, solve failed: {msg}")
+                # Test residual rather than error code.
+                if np.abs(info["fvec"][0]) > 1e-8:
+                    raise RuntimeError(f"with mean={mean} and std={std}, solve failed: {msg}")
 
-            c = c[0]
+                c = c[0]
+            else:
+                mean, c = parameters[ck.MEAN], parameters[ck.SHAPE]
+
             scale = mean / gamma(1 + 1 / c)
             dist = stats.weibull_min(c=c, scale=scale)
         elif distribution == "exponential":
