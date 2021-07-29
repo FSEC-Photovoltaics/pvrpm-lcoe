@@ -196,15 +196,34 @@ class SamCase:
                     #        f"Compound function for {component}:{monitor_component} is not a valid function!"
                     #    )
 
-                    if monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1:
+                    if (
+                        not monitor_config.get(ck.FAIL_THRESH, None) is not None
+                        and not monitor_config.get(ck.FAIL_PER_THRESH, None) is not None
+                    ):
                         raise CaseError(
-                            f"Failure threshold for {component}:{monitor_component} must be between 0 and 1."
+                            f"You must specify at least {ck.FAIL_THRESH} or {ck.FAIL_PER_THRESH} for {component}:{monitor_component}"
+                        )
+
+                    if monitor_config.get(ck.FAIL_THRESH, None) is not None and (
+                        monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1
+                    ):
+                        raise CaseError(
+                            f"Global failure threshold for {component}:{monitor_component} must be between 0 and 1."
+                        )
+
+                    if monitor_config.get(ck.FAIL_PER_THRESH, None) is not None and (
+                        monitor_config[ck.FAIL_PER_THRESH] < 0 or monitor_config[ck.FAIL_PER_THRESH] > 1
+                    ):
+                        raise CaseError(
+                            f"{ck.FAIL_PER_THRESH} for {component}:{monitor_component} must be between 0 and 1."
                         )
 
                     if monitor_config[ck.DIST] in ck.dists:
                         check_params(component, monitor_component, monitor_config)
 
                     if not self.config[monitor_component].get(ck.COMP_MONITOR, None):
+                        # add what level is monitoring this component level for compounding later
+                        monitor_config[ck.LEVELS] = component
                         self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
 
         for component in ck.component_keys:
@@ -398,6 +417,8 @@ class SamCase:
         self.num_disconnects = self.num_inverters
 
         self.config[ck.STR_PER_COMBINER] = int(np.floor(self.num_strings / self.config[ck.NUM_COMBINERS]))
+
+        self.config[ck.COMBINER_PER_INVERTER] = int(np.floor(self.config[ck.NUM_COMBINERS] / self.num_inverters))
 
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
 

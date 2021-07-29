@@ -51,7 +51,8 @@ class ConfigKeys:
 
     # cross level monitoring
     COMP_MONITOR = "component_level_monitoring"
-    FAIL_THRESH = "failure_threshold"
+    FAIL_THRESH = "global_threshold"
+    FAIL_PER_THRESH = "failure_per_threshold"
     COMP_FUNC = "compounding_function"
     COMP_PARAM = "compound_parameters"
     # compounding functions parameters
@@ -77,6 +78,7 @@ class ConfigKeys:
     MULTI_SUBARRAY = "has_multiple_subarrays"
     MODULES_PER_STR = "num_modules_per_string"
     INVERTER_SIZE = "inverter_size"
+    COMBINER_PER_INVERTER = "num_combiners_per_inverter"
     STR_PER_COMBINER = "num_strings_per_combiner"
     INVERTER_PER_TRANS = "num_inverters_per_transformer"
     LIFETIME_YRS = "system_lifetime_yrs"
@@ -153,7 +155,7 @@ class ConfigKeys:
     ]
 
     compund_keys = [
-        FAIL_THRESH,
+        #        FAIL_THRESH,
         #        COMP_FUNC,
         #        COMP_PARAM,
         DIST,

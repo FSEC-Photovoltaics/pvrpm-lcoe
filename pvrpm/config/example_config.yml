@@ -251,7 +251,7 @@ disconnect: # A/C disconnect
       distribution: weibull
       parameters:
         mean: 1095
-        std: 1200
+        std: 1200 # use a large STD for weibull
       labor_time: 4 # in hours
       cost: 500 # in USD
 
@@ -278,8 +278,8 @@ transformer:
     failure: # this key name can be anything you want
       distribution: weibull
       parameters:
-        mean: 365
-        shape: 0.3477
+        mean: 365 # can optionally provide the shape which is K parameter on wikipedia page
+        shape: 0.3477 # lambda is calculated from the mean
       labor_time: 10 # in hours
       cost: 32868 # in USD
 
@@ -374,22 +374,23 @@ static_monitoring:
 # This next section will define optional cross level component monitoring. This means that you can define monitoring at higher component
 # levels for the component levels below it (i.e inverter monitoring modules). These come with extra parameters to define failure dependence,
 # meaning how more failures contribute to quicker detection times from monitoring. This is done by user defined functions and parameters.
-# This is only available for all levels except tracker and module. The monitoring defined here is also overrided by monitoring at the level defined above, meaning that if you define monitoring for modules above under the module section, monitoring of modules defined below will be ignored.
+# This is only available for all levels except tracker, grid, and module. The monitoring defined here is also overrided by monitoring at the level defined above, meaning that if you define monitoring for modules above under the module section, monitoring of modules defined below will be ignored.
 # Also, each level can only be monitored by one higher component level, meaning that if you define monitoring of modules at both the string and inverter level, PVRPM will only use the monitoring distribution and compounding of the monitoring at the string level for modules.
 
 # component_level: The level in which monitors levels below it
 #   component_monitoring: The level being monitored, must be a level below the component level defined above
-#     failure_threshold (float): fraction on [0, 1] that defines how many of the components must fail before monitoring can start detecting
-#                               failures. Component failures will never be detected, and therefore not repaired, until this fraction of
-#                               failed components is met
-#     compounding_function (str): The function used to defined how more failures reduce the time to detection from monitoring
-#     compound_parameters: parameters for the function above, see below for list of functions and their parameters
+#     YOU MUST PROVIDE EITHER GLOBAL_THRESHOLD OR FAILURE_PER_THRESHOLD, or you can provide both
+#     global_threshold (float): fraction on [0, 1] that defines how many of the components must fail across ALL MONITORED COMPONENTS before monitoring can start detecting failures. Component failures will never be detected, and therefore not repaired, until this fraction of failed components is met.
+#     failure_per_threshold (float): fraction on [0, 1] that defines how many components must fail under EACH COMPONENT BEING MONITORED AT THIS LEVEL. This means that if there are 8 combiners that monitor 64 strings, every combiner will monitor 8 strings, and the defined failure_per_threshold must fail under that combiner in order for those failures to start being detected, as such you can define a total number of failures across all the monitored components and also the number of failures per monitor level component.
+#     As another example, if there 8 combiners monitoring 64 strings, and enough strings fail under combiner 1 to detect those failures, but not enough to meet the global_threshold total, if strings fail under combiner 2 they wont be detected until they either reach failure_per_threshold for that combiner or the global global_threshold
+#     compounding_function (str): The function used to defined how more failures reduce the time to detection from monitoring (NOT IMPLEMENTED)
+#     compound_parameters: parameters for the function above, see below for list of functions and their parameters (NOT IMPLEMENTED)
 #     distribution = distribution type of monitoring times
 #        parameters = parameters of the monitoring distribution
 #          mean: mean in days for this monitoring mode's distribution
 #          std: standard deviation for this monitoring mode's distribution (not all distributions need std)
 
-### Compounding functions ###
+### Compounding functions ### (NOT IMPLEMENTED)
 # Possible functions and their parameters are:
 #  - step: Failures follow a step function, each step reducing the detection time by a static amount
 #      - threshold (float): fraction 0 <= threshold <= 1 that signifies the amount of modules that must fail before next step is reached. So
@@ -411,9 +412,10 @@ component_level_monitoring:
   # this is for cross level monitoring only, for defining monitoring at each level use the monitoring distributions above
   string: # component level that has the monitoring for levels below
     module: # componenet level that is below's key. same keys used above: module, string, combiner, inverter, disconnect, grid, transformer
-      failure_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      global_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
                              # this means that until this threshold is met, component failures can never be detected
                              # In the simulation, the time to detection doesn't count down until this threshold is met, which at that point the compouning function will be used along with the distribution as normal
+      failure_per_threshold: 0.1 # the fraction of modules that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above
 #      compounding_function: step # function to used to compound multiple failures at this level, and how that reduces the time to detection
 #      compound_parameters: # parameters for above compounding function (make sure to confirm what is needed for the function!)
 #        threshold: 0.5 # fraction threshold on [0, 1] that represents amount of failed components needed to reduce detection time by step
@@ -426,7 +428,8 @@ component_level_monitoring:
 
   combiner:
     string:
-        failure_threshold: 0.1 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+        failure_per_threshold: 0.2 # this fraction of strings must fail on a specific combiner for detection for those to start
+        # failures are not compounded globally in this case, only per each combiner
 #        compounding_function: exponential # failures reduce detection time exponentially
 #        compound_parameters:
 #          base: 1.4 # base to the exponential function b^x - 1
@@ -436,7 +439,8 @@ component_level_monitoring:
           std: 365
 
     module: # since module level monitoring is defined for strings, this will be ignored as the higher level takes precedant
-      failure_threshold: 0.4 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      global_threshold: 0.4 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      failure_per_threshold: 0.3
 #      compounding_function: constant # each failure reduces overall deteciton for all failed components in this level by a constant percent
 #      compound_parameters:
 #        constant: 0.1 # constant fraction percentage [0, 1] of the detection time to reduce for each failure
@@ -447,7 +451,7 @@ component_level_monitoring:
 
   inverter:
     combiner:
-      failure_threshold: 0.1 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      global_threshold: 0.1 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
 #      compounding_function: log # log function logb(x)
 #      compound_parameters:
 #        base: 5 # the base to the log function logb(x + 1) # shifts so x=0, y=0
@@ -457,7 +461,7 @@ component_level_monitoring:
         std: 365
 
     string:
-      failure_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      global_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
 #      compounding_function: linear # linear function y = mx
 #      compound_parameters:
 #        slope: 2 # the slope to the linear function y = mx
@@ -466,7 +470,7 @@ component_level_monitoring:
         mean: 3650
 
     module:
-      failure_threshold: 0.5 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
+      global_threshold: 0.5 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
 #      compounding_function: log
 #      compound_parameters:
 #        base: 10 # the base to the log function logb(x - 1)

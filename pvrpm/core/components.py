@@ -10,6 +10,7 @@ from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
 from pvrpm.core.utils import summarize_dc_energy
 from pvrpm.core.logger import logger
+import time
 
 
 class Components:
@@ -26,6 +27,31 @@ class Components:
         # keep track of total days spent on monitoring and repairs
         self.total_repair_time = {}
         self.total_monitor_time = {}
+
+        # monitoring level bins to keep track of number of failures per top level monitoring
+        self.monitor_bins = {}
+
+        # the number of disconnects equals the number of inverters, if this every changes this would need to be changed
+        # otherwise, the inverter per trans is the same for disconnects
+        # dictionaries to make is easier transitioning between levels
+        self.component_per = {
+            ck.TRANSFORMER: self.case.config[ck.INVERTER_PER_TRANS],
+            ck.DISCONNECT: 1,
+            ck.INVERTER: self.case.config[ck.COMBINER_PER_INVERTER],
+            ck.COMBINER: self.case.config[ck.STR_PER_COMBINER],
+            ck.STRING: self.case.config[ck.MODULES_PER_STR],
+            ck.MODULE: 1,
+        }
+
+        # hierarchy of component levels:
+        self.component_hier = {
+            ck.MODULE: 0,
+            ck.STRING: 1,
+            ck.COMBINER: 2,
+            ck.INVERTER: 3,
+            ck.DISCONNECT: 4,
+            ck.TRANSFORMER: 5,
+        }
 
         # keep track of static monitoring for every level
         index = []
@@ -46,6 +72,21 @@ class Components:
                 self.total_repair_time[c] = 0
                 self.total_monitor_time[c] = 0
                 self.costs[c] = np.zeros(lifetime * 365)
+
+                if (
+                    self.case.config[c].get(ck.COMP_MONITOR, None)
+                    and self.case.config[c][ck.COMP_MONITOR].get(ck.FAIL_PER_THRESH, None) is not None
+                ):
+                    top_level = self.case.config[c][ck.COMP_MONITOR][ck.LEVELS]
+                    bins = np.zeros(len(self.comps[c]))
+                    num_per_top = self.get_higher_components(top_level, c)
+                    indicies = np.floor(self.comps[c].index / num_per_top)
+                    self.monitor_bins[c] = {
+                        "top_level": top_level,
+                        "indicies": indicies,
+                        "bins": bins,
+                        "num_per_top": num_per_top,
+                    }
 
         # additional aggreate data to track during simulation
         self.module_degradation_factor = np.zeros(lifetime * 365)
@@ -171,6 +212,45 @@ class Components:
                 - constant (float): fraction 0 <= frac <= 1 that specifies how much of the overall time each failure reduces. So if fraction is 0.1, a failure will reduce time to detection by "time_to_detection * 0.1"
         """
         pass
+
+    def get_higher_components(
+        self,
+        top_level: str,
+        start_level: str,
+        start_level_df: pd.DataFrame = None,
+    ) -> Tuple[np.array, np.array, int]:
+        """
+        Calculates the indicies of the top level that correspond to the given level df indicies and returns the given level indicies count per top level component and the total number of start_level components per top_level component
+
+        Args:
+            top_level (str): The string name of the component level to calculate indicies for
+            start_level (str): The string name of the component level to start at
+            start_level_df (:obj:`pd.DataFrame`, Optional): The dataframe of the component level for which to find the corresponding top level indicies for
+
+        Returns:
+            tuple(:obj:`np.array`, :obj:`np.array`, int): If start_level_df is given, returns the top level indicies, the number of start_level components in start_level_df per top level index, and the total number of start_level components per top_level component. If start_level_df is None this only returns the total number of start_level components per top_level component.
+        """
+
+        above_levels = [
+            c
+            for c in self.component_hier.keys()
+            if self.component_hier[c] > self.component_hier[start_level]
+            and self.component_hier[c] <= self.component_hier[top_level]
+        ]
+
+        total_comp = 1
+        # above levels is ordered ascending
+        for level in above_levels:
+            total_comp *= self.component_per[level]
+
+        if start_level_df is not None:
+            indicies = start_level_df.index
+            indicies = np.floor(indicies / total_comp)
+            # sum up the number of occurences for each index and return with total number of components at start level per top level
+            indicies, counts = np.unique(indicies, return_counts=True)
+            return indicies.astype(np.int64), counts.astype(np.int64), int(total_comp)
+        else:
+            return int(total_comp)
 
     def initialize_components(self, component_level: str) -> pd.DataFrame:
         """
@@ -455,21 +535,61 @@ class Components:
             Updates the underlying dataframes in place
         """
         df = self.comps[component_level]
+
         # only decrement monitoring on failed components where repairs have not started
         if self.case.config[component_level][ck.CAN_MONITOR]:
             mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
             df.loc[mask, "time_to_detection"] -= 1
         elif self.case.config[component_level].get(ck.COMP_MONITOR, None):
-            mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
+            # fraction failed is number of failed components, no matter if its being repaired, etc
+            mask = df["state"] == 0
+            num_failed = len(mask)
+            mask = mask & (df["time_to_detection"] > 1)
+
             conf = self.case.config[component_level][ck.COMP_MONITOR]
-            frac_failed = len(df.loc[df["state"] == 0]) / len(df)
-            # only decrement time to detection once failure threshold is met
-            if frac_failed > conf[ck.FAIL_THRESH]:
-                # TODO: compound the failures... later
-                df.loc[mask, "time_to_detection"] -= 1
-            else:
+            global_threshold = False
+            if conf.get(ck.FAIL_THRESH, None) is not None:
+                frac_failed = num_failed / len(df)
+                # only decrement time to detection once failure threshold is met
+                if frac_failed > conf[ck.FAIL_THRESH]:
+                    # TODO: compound the failures... later
+                    df.loc[mask, "time_to_detection"] -= 1
+                    global_threshold = True
+
+            if conf.get(ck.FAIL_PER_THRESH, None) is not None and not global_threshold:
+                # TODO: idk how to make this more efficent, if i can reduce this down to just a single iloc or loc, and try to elimate the call to get_higher_components i can bump up run time, cause right now it doubles runtime per realization
+                # first, need to get the proper components of this level under the top monitor level
+                data = self.monitor_bins[component_level]
+                undetected_failed = df.loc[mask].copy()
+                indicies, counts, total = self.get_higher_components(
+                    data["top_level"],
+                    component_level,
+                    start_level_df=undetected_failed,
+                )
+                # calculate failure threshold for each top level monitoring component for the monitoried components
+                subtract = []
+                add = []
+                prev_cnt = 0
+                # here, cnt is the number of failed components per top level component, no matter if its being repaired, etc
+                for ind, cnt in zip(indicies, counts):
+                    # total currently failed regardless of detected, being repaired, etc
+                    frac_failed = data["bins"][ind] / total
+                    if frac_failed > conf[ck.FAIL_PER_THRESH]:
+                        subtract += np.arange(ind * prev_cnt, ind * prev_cnt + cnt).tolist()
+                    else:
+                        add += np.arange(ind * prev_cnt, ind * prev_cnt + cnt).tolist()
+                    prev_cnt = cnt
+
+                if subtract:
+                    undetected_failed.iloc[subtract, undetected_failed.columns.get_loc("time_to_detection")] -= 1
+                if add:
+                    undetected_failed.iloc[add, undetected_failed.columns.get_loc("monitor_times")] += 1
+                df.loc[mask] = undetected_failed
+            elif conf.get(ck.FAIL_THRESH, None) is not None and not global_threshold:
                 # for calculating mttd and other data, increment the monitor times for every component by 1 to account for days where time to detection is not decremented because of the failure threshold
+                mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
                 df.loc[mask, "monitor_times"] += 1
+
         elif self.case.config[component_level].get(ck.STATIC_MONITOR, None):
             mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
             df.loc[mask, "time_to_detection"] -= 1
@@ -500,6 +620,16 @@ class Components:
             failed_comps.loc[warranty_mask, "cumulative_oow_failures"] += 1
 
             failed_comps["state"] = 0
+
+            # update bins for monitoring per component for cross component monitoring
+            if component_level in self.monitor_bins:
+                data = self.monitor_bins[component_level]
+                indicies, counts, _ = self.get_higher_components(
+                    data["top_level"],
+                    component_level,
+                    start_level_df=failed_comps,
+                )
+                data["bins"][indicies] += counts  # counts should line up with bins already
 
             # update time to detection times for component levels with only static monitoring
             # which will have None for monitor times
@@ -551,6 +681,16 @@ class Components:
                 self.costs[component_level][day] += len(df.loc[fail_mask]) * repair_cost
 
         repaired_comps = df.loc[mask].copy()
+
+        # update bins for monitoring per component for cross component monitoring
+        if component_level in self.monitor_bins:
+            data = self.monitor_bins[component_level]
+            indicies, counts, _ = self.get_higher_components(
+                data["top_level"],
+                component_level,
+                start_level_df=repaired_comps,
+            )
+            data["bins"][indicies] -= counts  # counts should line up with bins already
 
         # add up the repair and monitoring times
         self.total_repair_time[component_level] += repaired_comps["repair_times"].sum()
