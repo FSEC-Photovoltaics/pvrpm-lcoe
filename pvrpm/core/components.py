@@ -575,10 +575,10 @@ class Components:
                     # total currently failed regardless of detected, being repaired, etc
                     frac_failed = data["bins"][ind] / total
                     if frac_failed > conf[ck.FAIL_PER_THRESH]:
-                        subtract += np.arange(ind * prev_cnt, ind * prev_cnt + cnt).tolist()
+                        subtract += np.arange(prev_cnt, prev_cnt + cnt).tolist()
                     else:
-                        add += np.arange(ind * prev_cnt, ind * prev_cnt + cnt).tolist()
-                    prev_cnt = cnt
+                        add += np.arange(prev_cnt, prev_cnt + cnt).tolist()
+                    prev_cnt += cnt
 
                 if subtract:
                     undetected_failed.iloc[subtract, undetected_failed.columns.get_loc("time_to_detection")] -= 1
@@ -629,7 +629,7 @@ class Components:
                     component_level,
                     start_level_df=failed_comps,
                 )
-                data["bins"][indicies] += counts  # counts should line up with bins already
+                data["bins"][indicies] += counts
 
             # update time to detection times for component levels with only static monitoring
             # which will have None for monitor times
@@ -690,7 +690,7 @@ class Components:
                 component_level,
                 start_level_df=repaired_comps,
             )
-            data["bins"][indicies] -= counts  # counts should line up with bins already
+            data["bins"][indicies] -= counts
 
         # add up the repair and monitoring times
         self.total_repair_time[component_level] += repaired_comps["repair_times"].sum()
