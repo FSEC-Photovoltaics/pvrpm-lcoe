@@ -62,7 +62,7 @@ class SamCase:
                     config = yaml.full_load(f)
                 elif type.lower().strip() == "json":
                     config = json.load(f)
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError as e:
             logger.error(f"Theres an error reading the JSON configuration file: {e}")
             return None
         except yaml.scanner.ScannerError as e:
@@ -397,7 +397,7 @@ class SamCase:
         elif inverter == 1:
             self.config[ck.INVERTER_SIZE] = self.value("inv_ds_paco")
         elif inverter == 2:
-            sself.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
+            self.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
@@ -469,7 +469,7 @@ class SamCase:
 
         if self.config[ck.WORST_TRACKER]:
             # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
-            worse_case_az = user_azimuth
+            worst_case_az = user_azimuth
 
             if user_azimuth < 180:
                 worst_case_az -= 90
@@ -547,7 +547,15 @@ class SamCase:
         sunup = self.value("sunup")
 
         # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
-        sunup = np.reshape(np.array(sunup), (365, 24))
+        sunup = np.array(sunup)
+        # sometimes it gives half hourly or quater hourly data, so just pull out the hourly
+        if len(sunup) == 8760 * 2:
+            sunup = np.reshape(sunup[0::2], (365, 24))
+        elif len(sunup) == 8760 * 3:
+            sunup = np.reshape(sunup[0::3], (365, 24))
+        else:
+            sunup = np.reshape(sunup, (365, 24))
+
         # zero out every value except where the value is 1 (for sunup)
         sunup = np.where(sunup == 1, sunup, 0)
         # sum up daylight hours for each day

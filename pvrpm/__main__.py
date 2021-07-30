@@ -23,7 +23,8 @@ def main():
     help="Number of threads to use for paralized simulations, set to 0 to use all CPU threads",
     default=1,
 )
-def run(case: str, threads: int, config: str):
+@click.option("--debug", default=False, is_flag=True, help="Enable debug stack traces")
+def run(case: str, threads: int, config: str, debug: bool):
     """
     Run the PVRPM LCOE cost model for the case
 
@@ -35,10 +36,13 @@ def run(case: str, threads: int, config: str):
         logger.error(f"Error loading and verifying case: {e}")
         return
 
-    try:
+    if debug:
         pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=True)
-    except Exception as e:
-        logger.error(f"There was an error in performing the simulation: {e}")
+    else:
+        try:
+            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=True)
+        except Exception as e:
+            logger.error(f"There was an error in performing the simulation: {e}")
 
 
 @main.command()
