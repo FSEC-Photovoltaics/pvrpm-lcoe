@@ -159,12 +159,11 @@ def run_system_realization(
         # calculate new labor rate each year
         if i == 1 or i % 365 == 0:
             year = np.floor(i / 365)
-            comp.labor_rate = case.config[ck.LABOR_RATE] * np.power((1 + case.config[ck.INFLATION] / 100), year)
+            inflation = np.power(1 + case.config[ck.INFLATION] / 100, year)
+            comp.labor_rate = case.config[ck.LABOR_RATE] * inflation
             if case.config[ck.TRACKING]:
                 for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
-                    case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= np.power(
-                        (1 + case.config[ck.INFLATION]) / 100, i
-                    )
+                    case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
 
         # timestep is applied each day
         simulate_day(case, comp, i)

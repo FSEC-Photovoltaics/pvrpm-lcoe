@@ -24,7 +24,8 @@ def main():
     default=1,
 )
 @click.option("--debug", default=False, is_flag=True, help="Enable debug stack traces")
-def run(case: str, threads: int, config: str, debug: bool):
+@click.option("--progress", default=True, is_flag=True, help="Enable or disable progress bars for realizations")
+def run(case: str, threads: int, config: str, debug: bool, progress: bool):
     """
     Run the PVRPM LCOE cost model for the case
 
@@ -37,10 +38,10 @@ def run(case: str, threads: int, config: str, debug: bool):
         return
 
     if debug:
-        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=True)
+        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=progress)
     else:
         try:
-            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=True)
+            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=progress)
         except Exception as e:
             logger.error(f"There was an error in performing the simulation: {e}")
 

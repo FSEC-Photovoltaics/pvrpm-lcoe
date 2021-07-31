@@ -92,7 +92,7 @@ class Components:
         self.module_degradation_factor = np.zeros(lifetime * 365)
         self.dc_power_availability = np.zeros(lifetime * 365)
         self.ac_power_availability = np.zeros(lifetime * 365)
-        self.labor_rate = 0
+        self.labor_rate = self.case.config[ck.LABOR_RATE]
 
         # Data from simulation at end of realization
         self.timeseries_dc_power = None
@@ -543,7 +543,7 @@ class Components:
         elif self.case.config[component_level].get(ck.COMP_MONITOR, None):
             # fraction failed is number of failed components, no matter if its being repaired, etc
             mask = df["state"] == 0
-            num_failed = len(mask)
+            num_failed = len(df.loc[mask])
             mask = mask & (df["time_to_detection"] > 1)
 
             conf = self.case.config[component_level][ck.COMP_MONITOR]
