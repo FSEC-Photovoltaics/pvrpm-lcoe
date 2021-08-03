@@ -18,7 +18,7 @@ class SamCase:
     SAM Case loader, verifier, and simulation
     """
 
-    def __init__(self, sam_json_dir: str, config: str):
+    def __init__(self, sam_json_dir: str, config: str, num_realizations: int = None, results_folder: str = None):
         """"""
         self.ssc = pssc.PySSC()
         self.config = self.__load_config(config, type="yaml")
@@ -40,6 +40,12 @@ class SamCase:
 
         if not (self.modules and self.config):
             raise CaseError("There are errors in the configuration files, see logs.")
+
+        # override results folder and number of realizations
+        if num_realizations is not None:
+            self.config[ck.NUM_REALIZATION] = num_realizations
+        if results_folder is not None:
+            self.config[ck.RESULTS_FOLDER] = results_folder
 
         self.__verify_case()
         self.__verify_config()

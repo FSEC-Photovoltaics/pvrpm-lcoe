@@ -23,25 +23,37 @@ def main():
     help="Number of threads to use for paralized simulations, set to 0 to use all CPU threads",
     default=1,
 )
+@click.option(
+    "--realization",
+    metavar="<num_realizations>",
+    help="Set the number of realizations for this run, overrides configuration file value",
+    default=None,
+)
+@click.option(
+    "--results",
+    metavar="<path/to/results/folder>",
+    help="Folder to use for saving the results, overrides configuration file value",
+    default=None,
+)
 @click.option("--debug", default=False, is_flag=True, help="Enable debug stack traces")
-@click.option("--progress", default=True, is_flag=True, help="Enable or disable progress bars for realizations")
-def run(case: str, threads: int, config: str, debug: bool, progress: bool):
+@click.option("--noprogress", default=False, is_flag=True, help="Disable progress bars for realizations")
+def run(case: str, threads: int, realization: int, results: str, config: str, debug: bool, noprogress: bool):
     """
     Run the PVRPM LCOE cost model for the case
 
     The config YAML file should specify module order of simulation
     """
     try:
-        sam_case = SamCase(case, config)
+        sam_case = SamCase(case, config, num_realizations=int(realization), results_folder=results)
     except CaseError as e:
         logger.error(f"Error loading and verifying case: {e}")
         return
 
     if debug:
-        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=progress)
+        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=not noprogress)
     else:
         try:
-            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=progress)
+            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=not noprogress)
         except Exception as e:
             logger.error(f"There was an error in performing the simulation: {e}")
 
