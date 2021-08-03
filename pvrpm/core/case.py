@@ -18,7 +18,7 @@ class SamCase:
     SAM Case loader, verifier, and simulation
     """
 
-    def __init__(self, sam_json_dir: str, config: str):
+    def __init__(self, sam_json_dir: str, config: str, num_realizations: int = None, results_folder: str = None):
         """"""
         self.ssc = pssc.PySSC()
         self.config = self.__load_config(config, type="yaml")
@@ -41,6 +41,12 @@ class SamCase:
         if not (self.modules and self.config):
             raise CaseError("There are errors in the configuration files, see logs.")
 
+        # override results folder and number of realizations
+        if num_realizations is not None:
+            self.config[ck.NUM_REALIZATION] = num_realizations
+        if results_folder is not None:
+            self.config[ck.RESULTS_FOLDER] = results_folder
+
         self.__verify_case()
         self.__verify_config()
 
@@ -62,7 +68,7 @@ class SamCase:
                     config = yaml.full_load(f)
                 elif type.lower().strip() == "json":
                     config = json.load(f)
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError as e:
             logger.error(f"Theres an error reading the JSON configuration file: {e}")
             return None
         except yaml.scanner.ScannerError as e:
@@ -196,15 +202,34 @@ class SamCase:
                     #        f"Compound function for {component}:{monitor_component} is not a valid function!"
                     #    )
 
-                    if monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1:
+                    if (
+                        not monitor_config.get(ck.FAIL_THRESH, None) is not None
+                        and not monitor_config.get(ck.FAIL_PER_THRESH, None) is not None
+                    ):
                         raise CaseError(
-                            f"Failure threshold for {component}:{monitor_component} must be between 0 and 1."
+                            f"You must specify at least {ck.FAIL_THRESH} or {ck.FAIL_PER_THRESH} for {component}:{monitor_component}"
+                        )
+
+                    if monitor_config.get(ck.FAIL_THRESH, None) is not None and (
+                        monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1
+                    ):
+                        raise CaseError(
+                            f"Global failure threshold for {component}:{monitor_component} must be between 0 and 1."
+                        )
+
+                    if monitor_config.get(ck.FAIL_PER_THRESH, None) is not None and (
+                        monitor_config[ck.FAIL_PER_THRESH] < 0 or monitor_config[ck.FAIL_PER_THRESH] > 1
+                    ):
+                        raise CaseError(
+                            f"{ck.FAIL_PER_THRESH} for {component}:{monitor_component} must be between 0 and 1."
                         )
 
                     if monitor_config[ck.DIST] in ck.dists:
                         check_params(component, monitor_component, monitor_config)
 
                     if not self.config[monitor_component].get(ck.COMP_MONITOR, None):
+                        # add what level is monitoring this component level for compounding later
+                        monitor_config[ck.LEVELS] = component
                         self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
 
         for component in ck.component_keys:
@@ -378,7 +403,7 @@ class SamCase:
         elif inverter == 1:
             self.config[ck.INVERTER_SIZE] = self.value("inv_ds_paco")
         elif inverter == 2:
-            sself.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
+            self.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
@@ -398,6 +423,8 @@ class SamCase:
         self.num_disconnects = self.num_inverters
 
         self.config[ck.STR_PER_COMBINER] = int(np.floor(self.num_strings / self.config[ck.NUM_COMBINERS]))
+
+        self.config[ck.COMBINER_PER_INVERTER] = int(np.floor(self.config[ck.NUM_COMBINERS] / self.num_inverters))
 
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
 
@@ -448,7 +475,7 @@ class SamCase:
 
         if self.config[ck.WORST_TRACKER]:
             # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
-            worse_case_az = user_azimuth
+            worst_case_az = user_azimuth
 
             if user_azimuth < 180:
                 worst_case_az -= 90
@@ -526,7 +553,15 @@ class SamCase:
         sunup = self.value("sunup")
 
         # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
-        sunup = np.reshape(np.array(sunup), (365, 24))
+        sunup = np.array(sunup)
+        # sometimes it gives half hourly or quater hourly data, so just pull out the hourly
+        if len(sunup) == 8760 * 2:
+            sunup = np.reshape(sunup[0::2], (365, 24))
+        elif len(sunup) == 8760 * 3:
+            sunup = np.reshape(sunup[0::3], (365, 24))
+        else:
+            sunup = np.reshape(sunup, (365, 24))
+
         # zero out every value except where the value is 1 (for sunup)
         sunup = np.where(sunup == 1, sunup, 0)
         # sum up daylight hours for each day
