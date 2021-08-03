@@ -381,6 +381,9 @@ class Components:
                 monitor = component_info[ck.COMP_MONITOR]
                 df["monitor_times"] = self.sample(monitor[ck.DIST], monitor[ck.PARAM], component_info[ck.NUM_COMPONENT])
                 df["time_to_detection"] = df["monitor_times"].copy()
+                # also add in the index of the higher level component that is monitoring this level
+                # num_per_top = self.get_higher_components(monitor[ck.LEVELS], component_level)
+                # df["monitor_top_level"] = df.index // num_per_top
             # only static detection available
             elif component_info.get(ck.STATIC_MONITOR, None):
                 # the proper detection time with only static monitoring is the difference between the static monitoring that occurs after the failure
