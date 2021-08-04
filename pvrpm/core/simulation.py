@@ -68,7 +68,7 @@ def simulate_day(case: SamCase, comp: Components, day: int):
             df.loc[df["state"] == 1, "time_to_failure"] -= 1
 
             # fail components when their time has come
-            comp.fail_component(c)
+            comp.fail_component(c, day)
 
             # update monitoring
             comp.monitor_component(c)
@@ -274,6 +274,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     timeseries_dc_data = {}
     timeseries_ac_data = {}
     yearly_cost_data = {}
+    yearly_fail_data = {}
     for i, comp in enumerate(results):
         # daily degradation
         degradation_data[f"Realization {i+1}"] = comp.module_degradation_factor
@@ -282,14 +283,22 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         timeseries_dc_data[f"Realization {i+1}"] = comp.timeseries_dc_power
         timeseries_ac_data[f"Realization {i+1}"] = comp.timeseries_ac_power
 
-        # yearly cost
+        # yearly cost and total fails for each component
         yearly_cost_index.append(f"Realization {i+1}")
         for c in ck.component_keys:
             if not case.config.get(c, None):
                 continue
             if c not in yearly_cost_data:
                 yearly_cost_data[c] = []
+            if c not in yearly_fail_data:
+                yearly_fail_data[c] = []
+
             yearly_cost_data[c] += list(np.sum(np.reshape(comp.costs[c], (lifetime, 365)), axis=1))
+            # add total fails per year for each failure mode for this component level
+            total_fails = np.zeros(lifetime * 365)
+            for f in comp.fails_per_day[c].values():
+                total_fails += f
+            yearly_fail_data[c] += list(np.sum(np.reshape(total_fails, (lifetime, 365)), axis=1))
 
         # summary
         summary_index.append(f"Realization {i+1}")
@@ -397,6 +406,10 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     yearly_cost_results = pd.DataFrame(index=cost_index, data=yearly_cost_data)
     yearly_cost_results["total"] = yearly_cost_results.sum(axis=1)
 
+    # fails per year, same multi index as cost
+    yearly_fail_results = pd.DataFrame(index=cost_index, data=yearly_fail_data)
+    yearly_fail_results["total"] = yearly_fail_results.sum(axis=1)
+
     stats_append = []
     summary_no_base = summary_results.iloc[1:]
     min = summary_no_base.min()
@@ -453,6 +466,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         dc_power_results,
         ac_power_results,
         yearly_cost_results,
+        yearly_fail_results,
     ]
 
 
@@ -500,6 +514,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     avg_annual_energy = np.zeros(lifetime)
     avg_losses = np.zeros(len(ck.losses))
     avg_tax_cash_flow = np.zeros(lifetime + 1)  # add 1 for year 0
+    avg_failures = np.zeros((7, lifetime * 365))  # 7 types of components
 
     # computing the average across every realization
     for comp in results:
@@ -507,12 +522,21 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
         avg_annual_energy += np.array(comp.annual_energy)
         avg_losses += np.array(list(comp.losses.values()))
         avg_tax_cash_flow += np.array(comp.tax_cash_flow)
+        for i, c in enumerate(ck.component_keys):
+            if not case.config.get(c, None):
+                continue
+            for f in comp.fails_per_day[c].values():
+                avg_failures[i] += f
 
     # monthly and annual energy
     avg_ac_energy /= len(results)
     avg_annual_energy /= len(results)
     avg_losses /= len(results)
     avg_tax_cash_flow /= len(results)
+    avg_failures /= len(results)
+
+    # sum up failures to be per year
+    avg_failures = np.sum(np.reshape(avg_failures, (7, lifetime, 365)), axis=2)
 
     avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
@@ -759,9 +783,50 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     lcoe = np.array([comp.lcoe for comp in results])
     plt.boxplot(lcoe, vert=True, labels=["LCOE"])
     plt.title("LCOE Box Plot for Realizations")
+    plt.tight_layout()
 
     if save_path:
         plt.savefig(os.path.join(save_path, "LCOE Box Plot.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    # number of failures per component per year averaged across the realizations
+    for i, c in enumerate(ck.component_keys):
+        if not case.config.get(c, None) or np.count_nonzero(avg_failures[i]) == 0:
+            continue
+        plt.plot(np.arange(lifetime) + 1, avg_failures[i], marker="o", markersize=5, color=colors[i])
+        plt.xlabel("Year")
+        plt.ylabel("Number of Failures")
+        plt.title(f"Number of failures for {c} per year")
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(
+                os.path.join(save_path, f"{c.capitalize()} Failures Per Year.png"), bbox_inches="tight", dpi=200
+            )
+        else:
+            plt.show()
+
+        plt.close()
+
+    # plot total number of failures
+    plt.plot(
+        np.arange(lifetime) + 1, np.sum(avg_failures, axis=0).T, label="total", marker="o", markersize=5, color="lime"
+    )
+    plt.xlabel("Year")
+    plt.ylabel("Number of Failures")
+    plt.title(f"Total number of failures per year")
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(os.path.join(save_path, f"Total Failures Per Year.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()
+
+    if save_path:
+        plt.savefig(os.path.join(save_path, "Failures per Year.png"), bbox_inches="tight", dpi=200)
     else:
         plt.show()
 
@@ -811,7 +876,14 @@ def pvrpm_sim(
     logger.info("Generating results...")
 
     # gen all those results
-    summary_results, degradation_results, dc_power_results, ac_power_results, yearly_cost_results = gen_results(
+    (
+        summary_results,
+        degradation_results,
+        dc_power_results,
+        ac_power_results,
+        yearly_cost_results,
+        yearly_fail_results,
+    ) = gen_results(
         case,
         results,
     )
@@ -830,7 +902,7 @@ def pvrpm_sim(
         dc_power_results.to_csv(os.path.join(save_path, "Timeseries_DC_Power.csv"), index=True)
         ac_power_results.to_csv(os.path.join(save_path, "Timeseries_AC_Power.csv"), index=True)
         yearly_cost_results.to_csv(os.path.join(save_path, "Yearly_Costs_By_Component.csv"), index=True)
-
+        yearly_fail_results.to_csv(os.path.join(save_path, "Yearly_Failures_By_Component.csv"), index=True)
         logger.info(f"Results saved to {save_path}")
 
     return results
