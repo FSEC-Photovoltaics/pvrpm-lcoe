@@ -27,7 +27,7 @@ def main():
     "--realization",
     metavar="<num_realizations>",
     help="Set the number of realizations for this run, overrides configuration file value",
-    default=None,
+    default=0,
 )
 @click.option(
     "--results",

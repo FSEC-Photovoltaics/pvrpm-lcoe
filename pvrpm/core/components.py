@@ -23,6 +23,7 @@ class Components:
 
         self.comps = {}
         self.costs = {}
+        self.fails_per_day = {}
 
         # keep track of total days spent on monitoring and repairs
         self.total_repair_time = {}
@@ -68,11 +69,11 @@ class Components:
         # every component level will contain a dataframe containing the data for all the components in that level
         for c in ck.component_keys:
             if self.case.config.get(c, None):
-                self.comps[c] = self.initialize_components(c)
+                self.fails_per_day[c] = {}
                 self.total_repair_time[c] = 0
                 self.total_monitor_time[c] = 0
                 self.costs[c] = np.zeros(lifetime * 365)
-
+                self.comps[c] = self.initialize_components(c)
                 if (
                     self.case.config[c].get(ck.COMP_MONITOR, None)
                     and self.case.config[c][ck.COMP_MONITOR].get(ck.FAIL_PER_THRESH, None) is not None
@@ -327,10 +328,12 @@ class Components:
 
             elif fail.get(ck.FRAC, None) is None:
                 # setup failure times for each component
-                # TODO: pvrpm instead takes a large sample once and just pulls from values from that vector, figure out if that makes a difference
                 possible_failure_times[:, i] = self.sample(
                     fail[ck.DIST], fail[ck.PARAM], component_info[ck.NUM_COMPONENT]
                 )
+
+            # initalize failures per day for this failure mode
+            self.fails_per_day[component_level][mode] = np.zeros(self.case.config[ck.LIFETIME_YRS] * 365)
 
         failure_ind = np.argmin(possible_failure_times, axis=1)
         df["time_to_failure"] = np.amin(possible_failure_times, axis=1)
@@ -597,12 +600,13 @@ class Components:
             mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
             df.loc[mask, "time_to_detection"] -= 1
 
-    def fail_component(self, component_level: str):
+    def fail_component(self, component_level: str, day: int):
         """
         Changes state of a component to failed, incrementing failures and checking warranty only for failed components of each failure type
 
         Args:
             component_level (str): The component level to check for failures
+            day (int): Current day in the simulation
 
         Note:
             Updates the underlying dataframes in place
@@ -618,6 +622,7 @@ class Components:
             for fail in failure_modes:
                 fail_mask = failed_comps["failure_type"] == fail
                 failed_comps.loc[fail_mask, f"failure_by_type_{fail}"] += 1
+                self.fails_per_day[component_level][fail][day] += len(failed_comps.loc[fail_mask])
 
             warranty_mask = failed_comps["time_left_on_warranty"] <= 0
             failed_comps.loc[warranty_mask, "cumulative_oow_failures"] += 1
@@ -735,7 +740,6 @@ class Components:
 
             elif fail.get(ck.FRAC, None) is None:
                 # setup failure times for each component
-                # TODO: pvrpm instead takes a large sample once and just pulls from values from that vector, figure out if that makes a difference
                 possible_failure_times[:, i] = self.sample(fail[ck.DIST], fail[ck.PARAM], num_repaired)
 
         failure_ind = np.argmin(possible_failure_times, axis=1)
