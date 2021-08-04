@@ -825,13 +825,6 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
 
     plt.close()
 
-    if save_path:
-        plt.savefig(os.path.join(save_path, "Failures per Year.png"), bbox_inches="tight", dpi=200)
-    else:
-        plt.show()
-
-    plt.close()  # clear plot
-
 
 def pvrpm_sim(
     case: SamCase,
