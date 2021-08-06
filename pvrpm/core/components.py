@@ -317,7 +317,7 @@ class Components:
             df[f"failure_by_type_{mode}"] = 0
             fail = component_info[ck.FAILURE][mode]
             if fail.get(ck.FRAC, None):
-                # choose a percentage of modules to be defective
+                # choose a percentage of components to be defective
                 sample = np.random.random_sample(size=component_info[ck.NUM_COMPONENT])
                 df["defective"] = sample < fail[ck.FRAC]
 
