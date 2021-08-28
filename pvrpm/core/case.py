@@ -175,8 +175,11 @@ class SamCase:
             needed_keys = set(ck.static_monitor_keys)
             for name, monitor_config in self.config[ck.STATIC_MONITOR].items():
                 included_keys = set(monitor_config.keys()) & needed_keys
+                unknown_keys = set(monitor_config.keys()) - needed_keys
                 if included_keys != needed_keys:
                     raise CaseError(f"Static monitoring for {name} is missing keys {needed_keys - included_keys}")
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in static monitoring configuration: {unknown_keys}")
                 for level in monitor_config[ck.LEVELS]:
                     if ck.STATIC_MONITOR not in self.config[level]:
                         self.config[level][ck.STATIC_MONITOR] = {}
@@ -193,6 +196,7 @@ class SamCase:
                 for monitor_component, monitor_config in monitor_component_data.items():
                     needed_keys = set(ck.compund_keys)
                     included_keys = set(monitor_config.keys()) & needed_keys
+                    unknown_keys = set(monitor_config.keys()) - needed_keys - {ck.FAIL_PER_THRESH}
                     if included_keys != needed_keys:
                         raise CaseError(
                             f"Cross component monitoring under component {component}:{monitor_component} is missing keys {needed_keys - included_keys}"
@@ -201,6 +205,8 @@ class SamCase:
                     #    raise CaseError(
                     #        f"Compound function for {component}:{monitor_component} is not a valid function!"
                     #    )
+                    if unknown_keys:
+                        logger.warning(f"Unknown keys in cross level monitoring configuration: {unknown_keys}")
 
                     if (
                         not monitor_config.get(ck.FAIL_THRESH, None) is not None
@@ -288,6 +294,10 @@ class SamCase:
                 if included != fails:
                     missing += list(fails - included)
 
+                unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT}
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in failure configuration {failure}: {unknown_keys}")
+
                 # update cost for inverters
                 if component == ck.INVERTER:
                     if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
@@ -308,6 +318,10 @@ class SamCase:
                 if included != monitor_:
                     missing += list(monitor_ - included)
 
+                unknown_keys = set(monitor_config.keys()) - monitor_
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in monitoring configuration {monitor}: {unknown_keys}")
+
                 if monitor_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, monitor, monitor_config)
 
@@ -316,6 +330,10 @@ class SamCase:
                 included = repairs_ & set(repair_config.keys())
                 if included != repairs_:
                     missing += list(repairs_ - included)
+
+                unknown_keys = set(repair_config.keys()) - repairs_
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in repair configuration {repair}: {unknown_keys}")
 
                 if repair_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, repair, repair_config)
@@ -554,13 +572,19 @@ class SamCase:
 
         # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
         sunup = np.array(sunup)
-        # sometimes it gives half hourly or quater hourly data, so just pull out the hourly
-        if len(sunup) == 8760 * 2:
-            sunup = np.reshape(sunup[0::2], (365, 24))
-        elif len(sunup) == 8760 * 3:
-            sunup = np.reshape(sunup[0::3], (365, 24))
+
+        # determine the frequency of the data, same as frequncy of supplied weather file
+        total = len(sunup)
+        if total == 8760:
+            freq = 1
         else:
-            sunup = np.reshape(sunup, (365, 24))
+            freq = 0
+            while total > 8760:
+                freq += 1
+                total /= freq
+
+        # sometimes it gives half hourly or quater hourly data, so just pull out the hourly
+        sunup = np.reshape(sunup[0::freq], (365, 24))
 
         # zero out every value except where the value is 1 (for sunup)
         sunup = np.where(sunup == 1, sunup, 0)

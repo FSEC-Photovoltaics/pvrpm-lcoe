@@ -267,7 +267,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     # TODO: also, need to clean this up, i just use dictionaries and fill in blanks for base case, but this can be much cleaner
     # per realization results
     day_index = np.arange(lifetime * 365) + 1
-    hour_index = np.arange(lifetime * 365 * 24)
+    timeseries_index = np.arange(len(results[0].timeseries_dc_power))
     year_index = np.arange(lifetime) + 1
     yearly_cost_index = []
     degradation_data = {}
@@ -396,8 +396,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     summary_results = summary_results[reorder]
 
     degradation_results = pd.DataFrame(index=day_index, data=degradation_data)
-    dc_power_results = pd.DataFrame(index=hour_index, data=timeseries_dc_data)
-    ac_power_results = pd.DataFrame(index=hour_index, data=timeseries_ac_data)
+    dc_power_results = pd.DataFrame(index=timeseries_index, data=timeseries_dc_data)
+    ac_power_results = pd.DataFrame(index=timeseries_index, data=timeseries_ac_data)
     dc_power_results.index.name = "Hour"
     ac_power_results.index.name = "Hour"
     degradation_results.index.name = "Day"
@@ -510,7 +510,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     base_tax_cash_flow = np.array(case.base_tax_cash_flow)
 
     # parse data
-    avg_ac_energy = np.zeros(lifetime * 365 * 24)
+    avg_ac_energy = np.zeros(len(case.base_ac_energy))  # since length is variable based on frequency of weather file
     avg_annual_energy = np.zeros(lifetime)
     avg_losses = np.zeros(len(ck.losses))
     avg_tax_cash_flow = np.zeros(lifetime + 1)  # add 1 for year 0
@@ -537,14 +537,23 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
 
     # sum up failures to be per year
     avg_failures = np.sum(np.reshape(avg_failures, (7, lifetime, 365)), axis=2)
+    # determine the frequency of the data, same as frequncy of supplied weather file
+    total = int(len(avg_ac_energy) / lifetime)
+    if total == 8760:
+        freq = 1
+    else:
+        freq = 0
+        while total > 8760:
+            freq += 1
+            total /= freq
 
-    avg_ac_energy = np.reshape(avg_ac_energy, (lifetime, 8760))  # yearly energy by hour
+    avg_ac_energy = np.reshape(avg_ac_energy[0::freq], (lifetime, 8760))  # yearly energy by hour
     avg_ac_energy = np.sum(avg_ac_energy, axis=0) / lifetime  # yearly energy average
     avg_ac_energy = np.reshape(avg_ac_energy, (365, 24))  # day energy by hour
     avg_day_energy_by_hour = avg_ac_energy.copy()  # copy for heatmap yearly energy generation
     avg_ac_energy = np.sum(avg_ac_energy, axis=1)  # energy per day
 
-    base_ac_energy = np.reshape(base_ac_energy, (lifetime, 365 * 24))
+    base_ac_energy = np.reshape(base_ac_energy[0::freq], (lifetime, 8760))
     base_ac_energy = np.sum(base_ac_energy, axis=0) / lifetime
     base_ac_energy = np.reshape(base_ac_energy, (365, 24))
     base_day_energy_by_hour = base_ac_energy.copy()  # copy for heatmap yearly energy generation
