@@ -10,7 +10,6 @@ from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
 from pvrpm.core.utils import summarize_dc_energy
 from pvrpm.core.logger import logger
-import time
 
 
 class Components:
@@ -31,28 +30,6 @@ class Components:
 
         # monitoring level bins to keep track of number of failures per top level monitoring
         self.monitor_bins = {}
-
-        # the number of disconnects equals the number of inverters, if this every changes this would need to be changed
-        # otherwise, the inverter per trans is the same for disconnects
-        # dictionaries to make is easier transitioning between levels
-        self.component_per = {
-            ck.TRANSFORMER: self.case.config[ck.INVERTER_PER_TRANS],
-            ck.DISCONNECT: 1,
-            ck.INVERTER: self.case.config[ck.COMBINER_PER_INVERTER],
-            ck.COMBINER: self.case.config[ck.STR_PER_COMBINER],
-            ck.STRING: self.case.config[ck.MODULES_PER_STR],
-            ck.MODULE: 1,
-        }
-
-        # hierarchy of component levels:
-        self.component_hier = {
-            ck.MODULE: 0,
-            ck.STRING: 1,
-            ck.COMBINER: 2,
-            ck.INVERTER: 3,
-            ck.DISCONNECT: 4,
-            ck.TRANSFORMER: 5,
-        }
 
         # keep track of static monitoring for every level
         index = []
@@ -214,10 +191,11 @@ class Components:
         """
         pass
 
+    @staticmethod
     def get_higher_components(
-        self,
         top_level: str,
         start_level: str,
+        case: SamCase,
         start_level_df: pd.DataFrame = None,
     ) -> Tuple[np.array, np.array, int]:
         """
@@ -226,23 +204,44 @@ class Components:
         Args:
             top_level (str): The string name of the component level to calculate indicies for
             start_level (str): The string name of the component level to start at
+            case (SamCase): The case object for this simulation
             start_level_df (:obj:`pd.DataFrame`, Optional): The dataframe of the component level for which to find the corresponding top level indicies for
 
         Returns:
             tuple(:obj:`np.array`, :obj:`np.array`, int): If start_level_df is given, returns the top level indicies, the number of start_level components in start_level_df per top level index, and the total number of start_level components per top_level component. If start_level_df is None this only returns the total number of start_level components per top_level component.
         """
+        # the number of disconnects equals the number of inverters, if this every changes this would need to be changed
+        # otherwise, the inverter per trans is the same for disconnects
+        # dictionaries to make is easier transitioning between levels
+        component_per = {
+            ck.TRANSFORMER: case.config[ck.INVERTER_PER_TRANS],
+            ck.DISCONNECT: 1,
+            ck.INVERTER: case.config[ck.COMBINER_PER_INVERTER],
+            ck.COMBINER: case.config[ck.STR_PER_COMBINER],
+            ck.STRING: case.config[ck.MODULES_PER_STR],
+            ck.MODULE: 1,
+        }
+
+        # hierarchy of component levels:
+        component_hier = {
+            ck.MODULE: 0,
+            ck.STRING: 1,
+            ck.COMBINER: 2,
+            ck.INVERTER: 3,
+            ck.DISCONNECT: 4,
+            ck.TRANSFORMER: 5,
+        }
 
         above_levels = [
             c
-            for c in self.component_hier.keys()
-            if self.component_hier[c] > self.component_hier[start_level]
-            and self.component_hier[c] <= self.component_hier[top_level]
+            for c in component_hier.keys()
+            if component_hier[c] > component_hier[start_level] and component_hier[c] <= component_hier[top_level]
         ]
 
         total_comp = 1
         # above levels is ordered ascending
         for level in above_levels:
-            total_comp *= self.component_per[level]
+            total_comp *= component_per[level]
 
         if start_level_df is not None:
             indicies = start_level_df.index
