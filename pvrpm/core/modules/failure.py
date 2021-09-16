@@ -1,11 +1,12 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
-from pvrpm.core.components import Components
+from pvrpm.core.utils import sample, get_higher_components
+from pvrpm.core.modules.monitor import StaticMonitor
 
 
 class Failure(ABC):
@@ -18,8 +19,7 @@ class Failure(ABC):
         level: str,
         comp_level_df: pd.DataFrame,
         case: SamCase,
-        static_monitoring: pd.Series = None,
-        monitor_bins: dict = None,
+        static_monitoring: StaticMonitor = None,
     ):
         """
         Initalizes a failure instance
@@ -28,8 +28,7 @@ class Failure(ABC):
             level (str): The component level this failure is apart of
             comp_level_df (:obj:`pd.DataFrame`): The component level dataframe containing the simulation data
             case (:obj:`SamCase`): The SAM case for this simulation
-            static_monitoring (:obj:`pd.Series`, Optional): For updating static monitoring during simulation
-            monitor_bins (dict, Optional): For tracking the failures per each component for cross level monitoring
+            static_monitoring (:obj:`StaticMonitoring`, Optional): For updating static monitoring during simulation
         """
         super().__init__()
         self.level = level
@@ -37,13 +36,19 @@ class Failure(ABC):
         self.case = case
         self.fails_per_day = {}
         self.static_monitoring = static_monitoring
-        self.monitor_bins = monitor_bins
         self.initialize_components()
 
     @abstractmethod
     def initialize_components(self):
         """
         Initalizes failure data for all components to be tracked during simulation for this failure type
+        """
+        pass
+
+    @abstractmethod
+    def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Reinitalize components in a dataframe similiar to the inital initalization. Used for when repairs or other things may occur
         """
         pass
 
@@ -80,19 +85,17 @@ class TotalFailure(Failure):
             fail = component_info[ck.FAILURE][mode]
             if fail.get(ck.FRAC, None):
                 # choose a percentage of components to be defective
-                sample = np.random.random_sample(size=component_info[ck.NUM_COMPONENT])
-                df["defective"] = sample < fail[ck.FRAC]
+                sample_ = np.random.random_sample(size=component_info[ck.NUM_COMPONENT])
+                df["defective"] = sample_ < fail[ck.FRAC]
 
-                sample = Components.sample(fail[ck.DIST], fail[ck.PARAM], component_info[ck.NUM_COMPONENT])
+                sample_ = sample(fail[ck.DIST], fail[ck.PARAM], component_info[ck.NUM_COMPONENT])
 
                 # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-                possible_failure_times[:, i] = np.where(list(df["defective"]), sample, np.finfo(np.float32).max)
+                possible_failure_times[:, i] = np.where(list(df["defective"]), sample_, np.finfo(np.float32).max)
 
             elif fail.get(ck.FRAC, None) is None:
                 # setup failure times for each component
-                possible_failure_times[:, i] = Components.sample(
-                    fail[ck.DIST], fail[ck.PARAM], component_info[ck.NUM_COMPONENT]
-                )
+                possible_failure_times[:, i] = sample(fail[ck.DIST], fail[ck.PARAM], component_info[ck.NUM_COMPONENT])
 
             # initalize failures per day for this failure mode
             self.fails_per_day[mode] = np.zeros(self.case.config[ck.LIFETIME_YRS] * 365)
@@ -101,9 +104,45 @@ class TotalFailure(Failure):
         df["time_to_failure"] = np.amin(possible_failure_times, axis=1)
         df["failure_type"] = [failure_modes[i] for i in failure_ind]
 
+    def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
+        component_info = self.case.config[self.level]
+        failure_modes = list(component_info.get(ck.FAILURE, {}).keys())
+
+        num_repaired = len(df)
+        possible_failure_times = np.zeros((num_repaired, len(failure_modes)))
+        for i, mode in enumerate(failure_modes):
+            fail = component_info[ck.FAILURE][mode]
+            if fail.get(ck.FRAC, None):
+                # choose a percentage of modules to be defective
+                sample_ = np.random.random_sample(size=num_repaired)
+                df["defective"] = sample_ < fail[ck.FRAC]
+
+                sample_ = sample(fail[ck.DIST], fail[ck.PARAM], num_repaired)
+
+                # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
+                possible_failure_times[:, i] = np.where(
+                    list(df["defective"]),
+                    sample_,
+                    np.finfo(np.float32).max,
+                )
+
+            elif fail.get(ck.FRAC, None) is None:
+                # setup failure times for each component
+                possible_failure_times[:, i] = sample(fail[ck.DIST], fail[ck.PARAM], num_repaired)
+
+        failure_ind = np.argmin(possible_failure_times, axis=1)
+        df["time_to_failure"] = np.amin(possible_failure_times, axis=1)
+        df["failure_type"] = [failure_modes[i] for i in failure_ind]
+
+        return df
+
     def update(self, day: int):
-        failure_modes = list(self.case.config[self.level][ck.FAILURE].keys())
         df = self.df
+
+        # decrement time to failures for operational modules
+        df.loc[df["state"] == 1, "time_to_failure"] -= 1
+
+        failure_modes = list(self.case.config[self.level][ck.FAILURE].keys())
 
         mask = (df["state"] == 1) & (df["time_to_failure"] < 1)
         failed_comps = df.loc[mask].copy()
@@ -121,16 +160,6 @@ class TotalFailure(Failure):
 
             failed_comps["state"] = 0
 
-            # update bins for monitoring per component for cross component monitoring
-            if self.monitor_bins:
-                indicies, counts, _ = Components.get_higher_components(
-                    self.monitor_bins["top_level"],
-                    self.level,
-                    self.case,
-                    start_level_df=failed_comps,
-                )
-                self.monitor_bins["bins"][indicies] += counts
-
             # update time to detection times for component levels with only static monitoring
             # which will have None for monitor times
             try:
@@ -138,7 +167,7 @@ class TotalFailure(Failure):
                     # monitor and time to detection will be the time to next static monitoring
                     static_monitors = list(self.case.config[self.level][ck.STATIC_MONITOR].keys())
                     # next static monitoring is the min of the possible static monitors for this component level
-                    failed_comps["monitor_times"] = np.amin(self.static_monitoring[static_monitors])
+                    failed_comps["monitor_times"] = np.amin(self.static_monitoring.static_monitoring[static_monitors])
                     failed_comps["time_to_detection"] = failed_comps["monitor_times"].copy()
             # fails if no monitoring defined, faster then just doing a check if the column exists or whatever
             except KeyError:

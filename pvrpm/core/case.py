@@ -30,6 +30,7 @@ class SamCase:
         self.daylight_hours = None
         self.annual_daylight_hours = None
         self.base_lcoe = None
+        self.base_npv = None
         self.base_ac_energy = None
         self.base_annual_energy = None
         self.base_dc_energy = None
@@ -194,9 +195,9 @@ class SamCase:
                 monitor_component_data = self.config[ck.COMP_MONITOR][component]
 
                 for monitor_component, monitor_config in monitor_component_data.items():
-                    needed_keys = set(ck.compund_keys)
+                    needed_keys = set(ck.compound_keys)
                     included_keys = set(monitor_config.keys()) & needed_keys
-                    unknown_keys = set(monitor_config.keys()) - needed_keys - {ck.FAIL_PER_THRESH}
+                    unknown_keys = set(monitor_config.keys()) - needed_keys - {ck.FAIL_PER_THRESH} - {ck.FAIL_THRESH}
                     if included_keys != needed_keys:
                         raise CaseError(
                             f"Cross component monitoring under component {component}:{monitor_component} is missing keys {needed_keys - included_keys}"
@@ -550,6 +551,8 @@ class SamCase:
         self.simulate()
 
         self.base_lcoe = self.output("lcoe_real")
+        self.base_npv = self.output("npv")
+
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0
         self.base_annual_energy = self.output("cf_energy_net")[1:]

@@ -154,7 +154,7 @@ class ConfigKeys:
         CONST,
     ]
 
-    compund_keys = [
+    compound_keys = [
         #        FAIL_THRESH,
         #        COMP_FUNC,
         #        COMP_PARAM,

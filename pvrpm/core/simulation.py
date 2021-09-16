@@ -55,7 +55,7 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         day (int): Current day in the simulation
     """
     # static monitoring starts the day, if available. This is updated independently of component levels
-    comp.static_monitor(day)
+    comp.update_static_monitor(day)
 
     for c in ck.component_keys:
         if not case.config.get(c, None):
@@ -65,29 +65,15 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         # if component can't fail, just continue
         if case.config[c][ck.CAN_FAIL]:
             # decrement time to failures for operational modules
-            df.loc[df["state"] == 1, "time_to_failure"] -= 1
-
             # fail components when their time has come
-            comp.fail_component(c, day)
+            comp.update_fails(c, day)
 
             # update monitoring
-            comp.monitor_component(c)
+            comp.update_monitor(c, day)
 
             if case.config[c][ck.CAN_REPAIR]:
-                # decrement time to repair for failed and detected modules
-                if (
-                    case.config[c][ck.CAN_MONITOR]
-                    or case.config[c].get(ck.COMP_MONITOR, None)
-                    or case.config[c].get(ck.STATIC_MONITOR, None)
-                ):
-                    mask = (df["state"] == 0) & (df["time_to_detection"] < 1)
-                else:
-                    mask = df["state"] == 0
-
-                df.loc[mask, "time_to_repair"] -= 1
-
                 # repair components when they are done and can be repaired
-                comp.repair_component(c, day)
+                comp.update_repairs(c, day)
 
             if case.config[c].get(ck.WARRANTY, None):
                 df["time_left_on_warranty"] -= 1
@@ -160,7 +146,7 @@ def run_system_realization(
         if i == 1 or i % 365 == 0:
             year = np.floor(i / 365)
             inflation = np.power(1 + case.config[ck.INFLATION] / 100, year)
-            comp.labor_rate = case.config[ck.LABOR_RATE] * inflation
+            comp.update_labor_rates(case.config[ck.LABOR_RATE] * inflation)
             if case.config[ck.TRACKING]:
                 for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
                     case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
@@ -212,6 +198,7 @@ def run_system_realization(
     comp.timeseries_dc_power = case.value("dc_net")
     comp.timeseries_ac_power = case.value("gen")
     comp.lcoe = case.value("lcoe_real")
+    comp.npv = case.value("npv")
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
 
@@ -247,7 +234,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
             - Yearly Costs
     """
     summary_index = ["Base Case"]
-    summary_data = {"lcoe": [case.base_lcoe]}
+    summary_data = {"lcoe": [case.base_lcoe], "npv": [case.base_npv]}
     lifetime = case.config[ck.LIFETIME_YRS]
     p_vals = [99, 95, 90, 75, 50, 10]
 
@@ -296,13 +283,14 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
             yearly_cost_data[c] += list(np.sum(np.reshape(comp.costs[c], (lifetime, 365)), axis=1))
             # add total fails per year for each failure mode for this component level
             total_fails = np.zeros(lifetime * 365)
-            for f in comp.fails_per_day[c].values():
+            for f in comp.summarize_failures(c).values():
                 total_fails += f
             yearly_fail_data[c] += list(np.sum(np.reshape(total_fails, (lifetime, 365)), axis=1))
 
         # summary
         summary_index.append(f"Realization {i+1}")
         summary_data["lcoe"] += [comp.lcoe]
+        summary_data["npv"] += [comp.npv]
 
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0
@@ -352,9 +340,12 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                     if case.config[c][ck.CAN_REPAIR]:
                         # take the number of fails minus whatever components have not been repaired by the end of the simulation to get the number of repairs
                         sum_repairs = sum_fails - len(comp.comps[c].loc[(comp.comps[c]["state"] == 0)])
-                        summary_data[f"{c}_mttr"] += [comp.total_repair_time[c] / sum_repairs]
+                        if sum_repairs > 0:
+                            summary_data[f"{c}_mttr"] += [comp.total_repair_time[c] / sum_repairs]
+                        else:
+                            summary_data[f"{c}_mttr"] += [0]
                     else:
-                        summary_data[f"{c}_mttr"] = [0]
+                        summary_data[f"{c}_mttr"] += [0]
 
                     # mean time to detection (mean time to acknowledge)
                     if (
@@ -365,7 +356,10 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                         # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
                         mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)
                         sum_monitor = sum_fails - len(comp.comps[c].loc[mask])
-                        summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
+                        if sum_monitor > 0:
+                            summary_data[f"{c}_mttd"] += [comp.total_monitor_time[c] / sum_monitor]
+                        else:
+                            summary_data[f"{c}_mttd"] += [0]
                     else:
                         summary_data[f"{c}_mttd"] += [0]
             else:
@@ -390,9 +384,9 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     summary_results = pd.DataFrame(index=summary_index, data=summary_data)
     summary_results.index.name = "Realization"
     # reorder columns for summary results
-    reorder = [summary_results.columns[0]]  # lcoe
+    reorder = list(summary_results.columns[0:2])  # lcoe and npv
     reorder += list(summary_results.columns[lifetime * 3 + 1 :])  # failures and avail
-    reorder += list(summary_results.columns[1 : lifetime * 3 + 1])  # energy
+    reorder += list(summary_results.columns[2 : lifetime * 3 + 1])  # energy
     summary_results = summary_results[reorder]
 
     degradation_results = pd.DataFrame(index=day_index, data=degradation_data)
@@ -525,7 +519,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
         for i, c in enumerate(ck.component_keys):
             if not case.config.get(c, None):
                 continue
-            for f in comp.fails_per_day[c].values():
+            for f in comp.summarize_failures(c).values():
                 avg_failures[i] += f
 
     # monthly and annual energy
