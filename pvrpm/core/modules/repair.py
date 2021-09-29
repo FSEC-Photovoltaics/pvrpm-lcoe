@@ -156,10 +156,12 @@ class TotalRepair(Repair):
         if len(df.loc[mask]) <= 0:
             return (total_monitor_time, total_repair_time)
 
+        # print(f"repairing {self.level}: {len(df.loc[mask])}")
+
         # add costs for each failure mode
         for mode in failure_modes:
             fail = component_info[ck.FAILURE][mode]
-            fail_mask = mask & (df["failure_type"] == mode)
+            fail_mask = mask & (df["failure_type"].astype(str) == mode)
             repair_cost = fail[ck.COST] + self.labor_rate * fail[ck.LABOR]
 
             if component_info.get(ck.WARRANTY, None):
@@ -169,6 +171,7 @@ class TotalRepair(Repair):
                 self.costs[day] += len(df.loc[fail_mask]) * repair_cost
 
         repaired_comps = df.loc[mask].copy()
+        # print(repaired_comps)
 
         # add up the repair and monitoring times
         total_repair_time += repaired_comps["repair_times"].sum()

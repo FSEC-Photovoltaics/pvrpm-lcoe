@@ -72,6 +72,7 @@ class LevelMonitor(Monitor):
         component_info = self.case.config[self.level]
         df = self.df
         monitor_modes = list(component_info.get(ck.MONITORING, {}).keys())
+        failure_modes = list(component_info.get(ck.FAILURE, {}).keys())
 
         # monitoring times, these will be added to the repair time for each component
         # basically, the time until each failure is detected
@@ -83,6 +84,7 @@ class LevelMonitor(Monitor):
             df["monitor_times"] = monitor
             df["time_to_detection"] = df["monitor_times"].copy()
         elif len(monitor_modes) > 1:
+            failure_ind = [failure_modes.index(m) for m in df["failure_type"]]
             modes = [monitor_modes[i] for i in failure_ind]
             monitor = np.array(
                 [
@@ -96,14 +98,15 @@ class LevelMonitor(Monitor):
     def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
         component_info = self.case.config[self.level]
         monitor_modes = list(component_info.get(ck.MONITORING, {}).keys())
+        failure_modes = list(component_info.get(ck.FAILURE, {}).keys())
 
         if len(monitor_modes) == 1:
             # same monitor mode for every failure
             monitor = component_info[ck.MONITORING][monitor_modes[0]]
             df["monitor_times"] = sample(monitor[ck.DIST], monitor[ck.PARAM], len(df))
             df["time_to_detection"] = df["monitor_times"].copy()
-        elif len(monitor_modes) > 0:
-            failure_ind = [repair_modes.index(m) for m in df["failure_type"]]
+        elif len(monitor_modes) > 1:
+            failure_ind = [failure_modes.index(m) for m in df["failure_type"]]
             modes = [monitor_modes[i] for i in failure_ind]
             monitor = np.array(
                 [
@@ -191,6 +194,8 @@ class CrossLevelMonitor(Monitor):
                 # TODO: compound the failures... later
                 df.loc[mask, "time_to_detection"] -= 1
                 global_threshold = True
+            elif conf.get(ck.FAIL_PER_THRESH, None) is None:
+                df.loc[mask, "monitor_times"] += 1
 
         if conf.get(ck.FAIL_PER_THRESH, None) is not None and not global_threshold:
             # TODO: idk how to make this more efficent, if i can reduce this down to just a single iloc or loc, and try to elimate the call to get_higher_components i can bump up run time, cause right now it doubles runtime per realization
@@ -272,6 +277,8 @@ class StaticMonitor(Monitor):
             # which have not been detected by other monitoring methods yet.
             config = self.case.config[ck.STATIC_MONITOR][monitor]
             for level in config[ck.LEVELS]:
+                if not self.case.config[level][ck.CAN_FAIL]:
+                    continue
                 df = self.comps[level]
                 mask = (df["state"] == 0) & (df["time_to_detection"] >= 1)
                 monitor_comps = df.loc[mask].copy()

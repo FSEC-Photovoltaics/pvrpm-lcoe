@@ -385,8 +385,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     summary_results.index.name = "Realization"
     # reorder columns for summary results
     reorder = list(summary_results.columns[0:2])  # lcoe and npv
-    reorder += list(summary_results.columns[lifetime * 3 + 1 :])  # failures and avail
-    reorder += list(summary_results.columns[2 : lifetime * 3 + 1])  # energy
+    reorder += list(summary_results.columns[lifetime * 3 + 2 :])  # failures and avail
+    reorder += list(summary_results.columns[2 : lifetime * 3 + 2])  # energy
     summary_results = summary_results[reorder]
 
     degradation_results = pd.DataFrame(index=day_index, data=degradation_data)
