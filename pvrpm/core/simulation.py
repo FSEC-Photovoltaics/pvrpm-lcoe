@@ -55,7 +55,7 @@ def simulate_day(case: SamCase, comp: Components, day: int):
         day (int): Current day in the simulation
     """
     # static monitoring starts the day, if available. This is updated independently of component levels
-    comp.update_static_monitor(day)
+    comp.update_indep_monitor(day)
 
     for c in ck.component_keys:
         if not case.config.get(c, None):
@@ -327,6 +327,12 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                         summary_data[f"{c}_failures_by_type_{fail}"] = [None]
                     summary_data[f"{c}_failures_by_type_{fail}"] += [comp.comps[c][f"failure_by_type_{fail}"].sum()]
 
+                # partial failures
+                for fail in case.config[c].get(ck.PARTIAL_FAIL, {}).keys():
+                    if f"{c}_failures_by_type_{fail}" not in summary_data:
+                        summary_data[f"{c}_failures_by_type_{fail}"] = [None]
+                    summary_data[f"{c}_failures_by_type_{fail}"] += [comp.comps[c][f"failure_by_type_{fail}"].sum()]
+
                 # if the component had no failures, set everything here and continue
                 if sum_fails == 0:
                     summary_data[f"{c}_mtbf"] += [lifetime * 365]
@@ -351,7 +357,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
                     if (
                         case.config[c][ck.CAN_MONITOR]
                         or case.config[c].get(ck.COMP_MONITOR, None)
-                        or case.config[c].get(ck.STATIC_MONITOR, None)
+                        or case.config[c].get(ck.INDEP_MONITOR, None)
                     ):
                         # take the number of fails minus the components that have not been repaired and also not be detected by monitoring
                         mask = (comp.comps[c]["state"] == 0) & (comp.comps[c]["time_to_detection"] > 1)

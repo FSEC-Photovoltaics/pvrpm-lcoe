@@ -1,7 +1,7 @@
 module_order: # the order the modules of this case should be executed
               # check to see what modules you use by the name of the json output files
               # typically, this should be Pvsamv1 -> grid -> utiltiy -> others
-              # see https://nrel-pysam.readthedocs.io/en/master/Configs.html?highlight=belpe#sam-simulation-configurations
+              # see https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations
 # Only detailed PV models are supported, which is Pvsamv1, your case must have this module
 # Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn't support lifetime
   - Pvsamv1
@@ -11,9 +11,10 @@ module_order: # the order the modules of this case should be executed
 
 ### Run Setup ###
 # results folder doesn't need to exist, it will be created if it doesnt already
+# For windows use single backslash. Do not need to escape spaces in folder names
 results_folder: /path/to/results/folder
-num_realizations: 2 # number of passes to make
-conf_interval: 60 #XX % confidence interval around the mean will be calculated
+num_realizations: 2 # number of realizations to run
+conf_interval: 90 #XX % confidence interval around the mean will be calculated for summary results
 
 ### Case Setup ###
 num_combiners: 2 # total number of DC combiner boxes
@@ -22,7 +23,7 @@ num_trackers: 2 # total number of trackers
 
 ### Financial Inputs ###
 present_day_labor_rate: 100 # dollars per hour
-inflation: 3 # in percent
+inflation: 2.5 # in percent
 
 ### Failure Tracker Algorithm ###
 use_worst_case_tracker: false
@@ -37,9 +38,9 @@ use_worst_case_tracker: false
 #      can_fail = true if component is allowed to fail
 #      can_repair = true if component is allowed to be repaired after failing
 #      can_monitor = true if component's failures use component level monitoring
-#                    This can be false and replaced with other monitoring methods, see below for static and cross level monitoring sections
+#                    This can be false and replaced with other monitoring methods, see below for independent and cross level monitoring sections
 #      ### if can_repair, can_monitor or can_fail is false, you can remove their respective section below (failures, monitoring and repairs)
-#      warranty (remove if no warranty)
+#      warranty (can remove this section if no warranty)
 #        days = number of days that the warranty is for (e.g. a 20 year warranty would be 20 * 365 days)
 #      failures (list as many failures as needed)
 #        distribution = distribution type of this failure mode
@@ -50,8 +51,11 @@ use_worst_case_tracker: false
 #        cost = parts cost to repair this type of failure
 #        cost_per_watt (optional) = USD per watt cost of failure FOR INVERTERS ONLY. This will OVERRIDE the cost if specified for a failure
 #        by multiplying this value by the inverter size. If you want to set a static cost, use the cost parameter as normal
-#        fraction (optional) = If fraction is defined, then this failure mode is a defective failure mode, and "fraction" represents the fraction of this type of component that are defective
-#      monitoring: this section specfies how long each failure takes to be detected by monitoring. This occurs before repair time begins. This should either be 1 section for all failures or a section for each failures
+#        fraction (optional) = If fraction is defined, then this failure mode is a defective failure mode, and "fraction" represents the fraction of this type of component that are defective. This fraction of components with this failure mode is maintained throughout the simulation.
+#        decay_fraction (optional) = Works similiarly to fraction, except the fraction of affected components decays. For example, if 0.5 is defined, then half of the components have this failure mode. Once those are repaired, half of the repaired components will have this failure mode, and so on.
+#      concurrent_failures (these failures are all tracked in parallel, meaning a component can fail with these failure modes while another failure mode like above is still counting down)
+#         list failures same as failures above
+#      monitoring: this section specfies how long each failure takes to be detected by monitoring. This occurs before repair time begins. This should either be 1 section for all failures or a section for each failure
 #        distribution = distribution type of monitoring times
 #        parameters = parameters of the monitoring distribution
 #          mean: mean in days for this monitoring mode's distribution
@@ -62,6 +66,7 @@ use_worst_case_tracker: false
 #          mean: mean in days for this repair mode's distribution
 #          std: standard deviation for this repair mode's distribution (not all distributions need std)
 #        **NOTE: If there is only ONE repair distribution (repair[0]), then ALL failure modes will use that distribution! Otherwise, # repair modes must equal # failure modes.
+#      concurrent_repairs (repairs for concurrent failure modes, same setup as repairs above)
 #      degradation (MODULES ONLY) (remove if no degradation) (%/year)
 
 ### Distribution types
@@ -108,13 +113,21 @@ module:
         std: 365 # days
       labor_time: 2 # in hours
       cost: 322 # in USD
+    normal_failures: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 365 # mean in days, or you can do 1 / (num_failures / year * 365)
+        std: 365
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+      fraction: 0.1 # > 0 and < 1, fraction of these components that are normal failures, maintained throughout the simulation
     defective_failures: # this key name can be anything you want
       distribution: exponential
       parameters:
         mean: 100 # mean in days, or you can do 1 / (num_failures / year * 365)
       labor_time: 2 # in hours
       cost: 322 # in USD
-      fraction: 0.2 # > 0 and < 1, fraction of these components that are defective
+      decay_fraction: 0.2 # > 0 and < 1, fraction of these components that are defective
 
   monitoring:
     normal_monitoring: # this key name can be anything you want
@@ -351,11 +364,12 @@ tracker: # only required for tracking systems, remove it not using trackers
         std: 10
 
 
-### Static Monitoring Practices ###
-# This section defines monitoring practices (like IR drone scans) that happen at a static invertal with a fix cost to reduce time to detection to 0 (i.e detect all failed components which are still in the detection phase from monitoring).
+### Independent Monitoring Practices ###
+# This section defines monitoring practices (like IR drone scans) that happen at an invertal or threshold with a fix cost to reduce time to detection to 0 (i.e detect all failed components which are still in the detection phase from monitoring).
+# This occurs independent of any component level
 # Here you can define the interval, cost, and what component levels this services will detect all failures on at each interval
 # Remove this section if not using it
-static_monitoring:
+indep_monitoring:
   drone_ir:  # this name can be anything you want!
     interval: 1095 # interval in days when this static monitoring occurs
     cost: 50000 # cost of this monitoring in USD
@@ -364,10 +378,13 @@ static_monitoring:
       - string
       - combiner
 
-  iv_curves: # list as many static monitoring methods as you want
-    interval: 2000
+  drone_ir2: # list as many static monitoring methods as you want
+    interval: 365 # this monitoring will happen every 365 days, alongside the threshold.
+    # a indep monitoring triggered by a threshold RESETs the countdown to the interval
+    global_threshold: 0.1 # if availability of ALL levels listed under the levels parameters decreases by this amount, run this monitoring
     cost: 100000
     levels:
+      - module
       - string
 
 ### Cross level component monitoring ###
@@ -390,22 +407,6 @@ static_monitoring:
 #          mean: mean in days for this monitoring mode's distribution
 #          std: standard deviation for this monitoring mode's distribution (not all distributions need std)
 
-### Compounding functions ### (NOT IMPLEMENTED)
-# Possible functions and their parameters are:
-#  - step: Failures follow a step function, each step reducing the detection time by a static amount
-#      - threshold (float): fraction 0 <= threshold <= 1 that signifies the amount of modules that must fail before next step is reached. So
-#        if this is 0.2, every 0.2 * total_components components that fail will reduce detection time by step
-#      - step (int): The amount of days to reduce detection time for every step. So 2 steps reduces detection time by 2 * step
-#  - exponential: Failures compound on an exponential function
-#      - base (float): The base for the exponential function > 0
-#  - log: Failures compound on a logorithmic function
-#      - base (float): The base for the log function > 0
-#  - linear: Failures compound linearly
-#      - slope (float): Slope of the linear function > 0
-#  - constant: Each failure reduces the time to detection by a static fraction constant
-#      - constant (float): fraction 0 <= frac <= 1 that specifies how much of the overall time each failure reduces. So if fraction is 0.1, a
-#        failure will reduce time to detection by "time_to_detection * 0.1"
-
 # this section below is optional, remove if you aren't using it
 component_level_monitoring:
   # lists what monitoring each component level has for levels BELOW it
@@ -416,10 +417,6 @@ component_level_monitoring:
                              # this means that until this threshold is met, component failures can never be detected
                              # In the simulation, the time to detection doesn't count down until this threshold is met, which at that point the compouning function will be used along with the distribution as normal
       failure_per_threshold: 0.1 # the fraction of modules that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above
-#      compounding_function: step # function to used to compound multiple failures at this level, and how that reduces the time to detection
-#      compound_parameters: # parameters for above compounding function (make sure to confirm what is needed for the function!)
-#        threshold: 0.5 # fraction threshold on [0, 1] that represents amount of failed components needed to reduce detection time by step
-#        step: 168 # number of days to detection that each step reduces.
       distribution: normal # distribution that defines how long this monitoring takes to detect a failure at this level (independent)
                            # the value calculated from this distribution will be reduced by the compounding factor for every failure in this level
       parameters:
@@ -430,9 +427,6 @@ component_level_monitoring:
     string:
         failure_per_threshold: 0.2 # this fraction of strings must fail on a specific combiner for detection for those to start
         # failures are not compounded globally in this case, only per each combiner
-#        compounding_function: exponential # failures reduce detection time exponentially
-#        compound_parameters:
-#          base: 1.4 # base to the exponential function b^x - 1
         distribution: normal # distribution that defines how long this monitoring takes to detect a failure at this level (independent)
         parameters:
           mean: 1825
@@ -441,9 +435,6 @@ component_level_monitoring:
     module: # since module level monitoring is defined for strings, this will be ignored as the higher level takes precedant
       global_threshold: 0.4 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
       failure_per_threshold: 0.3
-#      compounding_function: constant # each failure reduces overall deteciton for all failed components in this level by a constant percent
-#      compound_parameters:
-#        constant: 0.1 # constant fraction percentage [0, 1] of the detection time to reduce for each failure
       distribution: normal # distribution that defines how long this monitoring takes to detect a failure at this level (independent)
       parameters:
         mean: 3650
@@ -452,9 +443,6 @@ component_level_monitoring:
   inverter:
     combiner:
       global_threshold: 0.1 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
-#      compounding_function: log # log function logb(x)
-#      compound_parameters:
-#        base: 5 # the base to the log function logb(x + 1) # shifts so x=0, y=0
       distribution: lognormal
       parameters:
         mean: 365
@@ -462,18 +450,12 @@ component_level_monitoring:
 
     string:
       global_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
-#      compounding_function: linear # linear function y = mx
-#      compound_parameters:
-#        slope: 2 # the slope to the linear function y = mx
       distribution: exponential
       parameters:
         mean: 3650
 
     module:
       global_threshold: 0.5 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
-#      compounding_function: log
-#      compound_parameters:
-#        base: 10 # the base to the log function logb(x - 1)
       distribution: lognormal
       parameters:
         mean: 3650

@@ -37,6 +37,9 @@ class Monitor(ABC):
     def initialize_components(self):
         """
         Initalizes monitoring data for all components to be tracked during simulation for this monitor type
+
+        Note:
+            Updates the underlying dataframes in place
         """
         pass
 
@@ -44,6 +47,12 @@ class Monitor(ABC):
     def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Reinitalize components in a dataframe similiar to the inital initalization. Used for when repairs or other things may occur
+
+        Args:
+            df (:obj:`pd.DataFrame`): The dataframe containing the components to reinitalize
+
+        Returns:
+            :obj:`pd.DataFrame`: The reinitalized components
         """
         pass
 
@@ -137,6 +146,14 @@ class CrossLevelMonitor(Monitor):
         comp_level_df: pd.DataFrame,
         case: SamCase,
     ):
+        """
+        Initalizes a cross level monitoring instance
+
+        Args:
+            level (str): The component level this monitoring is apart of
+            comp_level_df (:obj:`pd.DataFrame`): The component level dataframe containing the simulation data
+            case (:obj:`SamCase`): The SAM case for this simulation
+        """
         super().__init__(level, comp_level_df, case)
         if self.case.config[level][ck.COMP_MONITOR].get(ck.FAIL_PER_THRESH, None) is not None:
             top_level = self.case.config[level][ck.COMP_MONITOR][ck.LEVELS]
@@ -231,9 +248,9 @@ class CrossLevelMonitor(Monitor):
             df.loc[mask] = undetected_failed
 
 
-class StaticMonitor(Monitor):
+class IndepMonitor(Monitor):
     """
-    Defines static monitoring that is component level independent
+    Defines independent monitoring that is component level independent
     """
 
     def __init__(
@@ -242,6 +259,14 @@ class StaticMonitor(Monitor):
         comps: dict,
         costs: dict,
     ):
+        """
+        Initalizes an independent monitoring instance
+
+        Args:
+            case (:obj:`SamCase`): The SAM case for this simulation
+            comps (dict): The dataframes for each component level that tracks information during the simulation
+            costs (dict): The dictionary for costs accrued for each component level
+        """
         super().__init__(None, None, case)
         self.comps = comps
         self.costs = costs
@@ -249,17 +274,19 @@ class StaticMonitor(Monitor):
         # keep track of static monitoring for every level
         index = []
         data = []
-        for name, monitor_config in self.case.config.get(ck.STATIC_MONITOR, {}).items():
+        for name, monitor_config in self.case.config.get(ck.INDEP_MONITOR, {}).items():
             index.append(name)
-            data.append(monitor_config[ck.INTERVAL])
+            if ck.INTERVAL in monitor_config:
+                data.append(monitor_config[ck.INTERVAL])
+            else:
+                data.append(np.nan)
 
         if index:
-            self.static_monitoring = pd.Series(index=index, data=data)
+            self.indep_monitoring = pd.Series(index=index, data=data)
         else:
             raise AttributeError("No static monitoring defined for any component level!")
 
     def initialize_components(self):
-        # nothing in the dataframe needs to be initialized
         pass
 
     def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -269,20 +296,21 @@ class StaticMonitor(Monitor):
         return df
 
     def update(self, day: int):
-        self.static_monitoring -= 1
-        mask = self.static_monitoring < 1
-
-        for monitor in self.static_monitoring.loc[mask].index:
+        self.indep_monitoring -= 1
+        mask = self.indep_monitoring < 1
+        current_monitors = self.indep_monitoring.loc[mask].index
+        for monitor in current_monitors:
             # static monitoring method commences, instantly detecting all failed components in their specified levels
             # which have not been detected by other monitoring methods yet.
-            config = self.case.config[ck.STATIC_MONITOR][monitor]
+            config = self.case.config[ck.INDEP_MONITOR][monitor]
             for level in config[ck.LEVELS]:
                 if not self.case.config[level][ck.CAN_FAIL]:
                     continue
                 df = self.comps[level]
-                mask = (df["state"] == 0) & (df["time_to_detection"] >= 1)
+                mask = (df["state"] == 0) & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
                 monitor_comps = df.loc[mask].copy()
-                monitor_comps["monitor_times"] -= monitor_comps["time_to_detection"]
+                if monitor_comps["time_to_detection"].isna().sum() == 0:
+                    monitor_comps["monitor_times"] -= monitor_comps["time_to_detection"]
 
                 monitor_comps["time_to_detection"] = 0
                 df.loc[mask] = monitor_comps
@@ -290,4 +318,53 @@ class StaticMonitor(Monitor):
                 self.costs[level][day] += config[ck.COST] / len(config[ck.LEVELS])
 
             # reset static monitoring time
-            self.static_monitoring[monitor] = self.case.config[ck.STATIC_MONITOR][monitor][ck.INTERVAL]
+            self.indep_monitoring[monitor] = self.case.config[ck.INDEP_MONITOR][monitor][ck.INTERVAL]
+
+        # threshold monitoring calculations
+        for name, monitor_config in self.case.config.get(ck.INDEP_MONITOR, {}).items():
+            # ignore threshold if the interval was reached for this monitor
+            if name in current_monitors or ck.FAIL_THRESH not in monitor_config:
+                continue
+
+            threshold = monitor_config[ck.FAIL_THRESH]
+            failed = 0
+            total = 0
+            for level in monitor_config[ck.LEVELS]:
+                if not self.case.config[level][ck.CAN_FAIL]:
+                    continue
+
+                df = self.comps[level]
+                mask = df["state"] == 0
+                failed += mask.sum()
+                total += len(df)
+
+            if not (failed / total) > threshold:
+                continue
+
+            # threshold met, run independent monitor
+            # for levels with interval and threshold, you can reverse engineer the day by taking current day, adding the time to indep monitoring to it, then subtracting the monitor time for the components. then you can take the difference from current day and fail day to get the monitor time
+            for level in monitor_config[ck.LEVELS]:
+                if not self.case.config[level][ck.CAN_FAIL]:
+                    continue
+
+                df = self.comps[level]
+                mask = (df["state"] == 0) & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
+                monitor_comps = df.loc[mask].copy()
+
+                if len(monitor_comps) == 0:
+                    continue
+
+                if monitor_comps["time_to_detection"].isna().sum() != 0:
+                    if ck.INTERVAL in monitor_config:
+                        monitor_comps["monitor_times"] = day - (
+                            (day + self.indep_monitoring[name]) - (monitor_comps["monitor_times"])
+                        )
+                    else:
+                        monitor_comps["monitor_times"] = day - monitor_comps["monitor_times"]
+                else:
+                    monitor_comps["monitor_times"] -= monitor_comps["time_to_detection"]
+
+                monitor_comps["time_to_detection"] = 0
+                df.loc[mask] = monitor_comps
+                # add cost to total costs (split evenly among all the levels for this day)
+                self.costs[level][day] += monitor_config[ck.COST] / len(monitor_config[ck.LEVELS])

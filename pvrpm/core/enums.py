@@ -22,6 +22,7 @@ class ConfigKeys:
     DAYS = "days"
 
     FAILURE = "failures"
+    PARTIAL_FAIL = "concurrent_failures"
     DIST = "distribution"
     PARAM = "parameters"
     MEAN = "mean"
@@ -31,8 +32,10 @@ class ConfigKeys:
     COST = "cost"
     COST_PER_WATT = "cost_per_watt"
     FRAC = "fraction"
+    DECAY_FRAC = "decay_fraction"
 
     REPAIR = "repairs"
+    PARTIAL_REPAIR = "concurrent_repairs"
     MONITORING = "monitoring"
     DEGRADE = "degradation"
 
@@ -45,7 +48,7 @@ class ConfigKeys:
     TRACKER = "tracker"
 
     # static monitoring
-    STATIC_MONITOR = "static_monitoring"
+    INDEP_MONITOR = "indep_monitoring"
     INTERVAL = "interval"
     LEVELS = "levels"
 
@@ -122,12 +125,24 @@ class ConfigKeys:
         COST,
     ]
 
+    partial_failure_keys = [
+        DIST,
+        PARAM,
+        LABOR,
+        COST,
+    ]
+
     monitoring_keys = [
         DIST,
         PARAM,
     ]
 
     repair_keys = [
+        DIST,
+        PARAM,
+    ]
+
+    partial_repair_keys = [
         DIST,
         PARAM,
     ]
@@ -140,8 +155,7 @@ class ConfigKeys:
         UNIFORM,
     ]
 
-    static_monitor_keys = [
-        INTERVAL,
+    indep_monitor_keys = [
         COST,
         LEVELS,
     ]

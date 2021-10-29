@@ -34,9 +34,9 @@ class Components:
         # static monitoring setup
         # if theres no static monitoring defined, an exception is raised
         try:
-            self.static_monitor = monitor.StaticMonitor(self.case, self.comps, self.costs)
+            self.indep_monitor = monitor.IndepMonitor(self.case, self.comps, self.costs)
         except AttributeError:
-            self.static_monitor = None
+            self.indep_monitor = None
 
         # every component level will contain a dataframe containing the data for all the components in that level
         for c in ck.component_keys:
@@ -174,7 +174,15 @@ class Components:
         if not component_info[ck.CAN_FAIL]:
             return (df, [], [], [])
 
-        fails = [failure.TotalFailure(component_level, df, self.case, self.static_monitor)]
+        if component_info.get(ck.FAILURE, None):
+            fails = [failure.TotalFailure(component_level, df, self.case, self.indep_monitor)]
+        else:
+            fails = []
+
+        partial_failures = component_info.get(ck.PARTIAL_FAIL, {})
+        partial_fails = []
+        for mode in partial_failures.keys():
+            partial_fails.append(failure.PartialFailure(component_level, df, self.case, mode, self.indep_monitor))
 
         # monitoring times, these will be added to the repair time for each component
         # basically, the time until each failure is detected
@@ -186,7 +194,7 @@ class Components:
             elif component_info.get(ck.COMP_MONITOR, None):
                 monitors.append(monitor.CrossLevelMonitor(component_level, df, self.case))
             # only static detection available
-            elif component_info.get(ck.STATIC_MONITOR, None):
+            elif component_info.get(ck.INDEP_MONITOR, None):
                 # the proper detection time with only static monitoring is the difference between the static monitoring that occurs after the failure
                 # this will be set when a component fails for simplicity sake, since multiple static monitoring schemes can be defined,
                 # and the time to detection would be the the time from the component fails to the next static monitoring occurance
@@ -198,18 +206,56 @@ class Components:
         if not component_info[ck.CAN_REPAIR]:
             repairs = []
             df["time_to_repair"] = 1  # just initalize to 1 if no repair modes, means components cannot be repaired
-        else:
-            repairs = [
+        elif component_info.get(ck.REPAIR, None):
+            repairs = []
+            repairs.append(
                 repair.TotalRepair(
                     component_level,
                     df,
                     self.case,
                     self.costs[component_level],
                     fails,
+                    repairs,
                     monitors,
-                    self.static_monitor,
+                    self.indep_monitor,
                 )
-            ]
+            )
+        else:
+            repairs = []
+            df["time_to_repair"] = 1
+
+        partial_repairs = component_info.get(ck.PARTIAL_REPAIR, {})
+        if len(partial_repairs) == 1:
+            repair_mode = list(component_info[ck.PARTIAL_REPAIR].keys())[0]
+            for i, fail_mode in enumerate(partial_failures.keys()):
+                repairs.append(
+                    repair.PartialRepair(
+                        component_level,
+                        df,
+                        self.case,
+                        self.costs[component_level],
+                        partial_fails[i],
+                        fail_mode,
+                        repair_mode,
+                        self.indep_monitor,
+                    )
+                )
+        else:
+            for i, (fail_mode, repair_mode) in enumerate(zip(partial_failures.keys(), partial_repairs.keys())):
+                repairs.append(
+                    repair.PartialRepair(
+                        component_level,
+                        df,
+                        self.case,
+                        self.costs[component_level],
+                        partial_fails[i],
+                        fail_mode,
+                        repair_mode,
+                        self.indep_monitor,
+                    )
+                )
+
+        fails += partial_fails
 
         return (df, fails, monitors, repairs)
 
@@ -339,10 +385,38 @@ class Components:
         Note:
             Updates the underlying dataframes in place
         """
+        component_info = self.case.config[component_level]
+
         for r in self.repairs[component_level]:
             monitor_time, repair_time = r.update(day)
             self.total_monitor_time[component_level] += monitor_time
             self.total_repair_time[component_level] += repair_time
+
+        # only reinitalize monitoring if the components repaired are fully availabile (state == 1)
+        # this is so that if parital failures occur while the component is already detected as failed for those partial failures, then the new partial failures occuring are instantly detected until all failures are repaired
+        df = self.comps[component_level]
+        if self.case.config[component_level].get(ck.PARTIAL_FAIL, None) and "time_to_detection" in df:
+            mask = (df["state"] == 1) & (df["time_to_detection"] < 1)
+            for mode, fail_config in self.case.config[component_level][ck.PARTIAL_FAIL].items():
+                mask &= df[f"time_to_failure_{mode}"] >= 1
+
+            repaired_comps = df.loc[mask].copy()
+            if len(repaired_comps) < 1:
+                return
+
+            if self.indep_monitor:
+                repaired_comps = self.indep_monitor.reinitialize_components(repaired_comps)
+
+            for m in self.monitors[component_level]:
+                repaired_comps = m.reinitialize_components(repaired_comps)
+            if (
+                component_info[ck.CAN_MONITOR]
+                or component_info.get(ck.COMP_MONITOR, None)
+                or component_info.get(ck.INDEP_MONITOR, None)
+            ):
+                self.total_monitor_time[component_level] += repaired_comps["monitor_times"].sum()
+
+            df.loc[mask] = repaired_comps
 
     def update_monitor(self, component_level: str, day: int):
         """
@@ -361,12 +435,12 @@ class Components:
         for m in self.monitors[component_level]:
             m.update(day)
 
-    def update_static_monitor(self, day: int):
+    def update_indep_monitor(self, day: int):
         """
-        If static monitoring is defined, check it for the current day in simulation
+        If independent monitoring is defined, check it for the current day in simulation
 
         Args:
             day (int): Current day in the simulation
         """
-        if self.static_monitor:
-            self.static_monitor.update(day)
+        if self.indep_monitor:
+            self.indep_monitor.update(day)

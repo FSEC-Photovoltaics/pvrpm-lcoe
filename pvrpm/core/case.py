@@ -172,19 +172,26 @@ class SamCase:
             raise CaseError("Number of transformers must be greater than 0!")
 
         # static monitoring
-        if self.config.get(ck.STATIC_MONITOR, None):
-            needed_keys = set(ck.static_monitor_keys)
-            for name, monitor_config in self.config[ck.STATIC_MONITOR].items():
+        if self.config.get(ck.INDEP_MONITOR, None):
+            needed_keys = set(ck.indep_monitor_keys)
+            for name, monitor_config in self.config[ck.INDEP_MONITOR].items():
                 included_keys = set(monitor_config.keys()) & needed_keys
-                unknown_keys = set(monitor_config.keys()) - needed_keys
+                unknown_keys = set(monitor_config.keys()) - needed_keys - ck.INTERVAL - ck.FAIL_THRESH
                 if included_keys != needed_keys:
-                    raise CaseError(f"Static monitoring for {name} is missing keys {needed_keys - included_keys}")
+                    raise CaseError(f"Independent monitoring for {name} is missing keys {needed_keys - included_keys}")
+                if ck.INTERVAL not in monitor_config and ck.FAIL_THRESH not in monitor_config:
+                    raise CaseError(
+                        f"Independent monitoring for {name} is missing the interval and/or global_threshold"
+                    )
                 if unknown_keys:
-                    logger.warning(f"Unknown keys in static monitoring configuration: {unknown_keys}")
+                    logger.warning(f"Unknown keys in independent monitoring configuration: {unknown_keys}")
                 for level in monitor_config[ck.LEVELS]:
-                    if ck.STATIC_MONITOR not in self.config[level]:
-                        self.config[level][ck.STATIC_MONITOR] = {}
-                    self.config[level][ck.STATIC_MONITOR][name] = monitor_config[ck.INTERVAL]
+                    if ck.INDEP_MONITOR not in self.config[level]:
+                        self.config[level][ck.INDEP_MONITOR] = {}
+                    if ck.INTERVAL in monitor_config:
+                        self.config[level][ck.INDEP_MONITOR][name] = monitor_config[ck.INTERVAL]
+                    else:
+                        self.config[level][ck.INDEP_MONITOR][name] = None
 
         # cross level monitoring and compounding
         if self.config.get(ck.COMP_MONITOR, None):
@@ -284,6 +291,14 @@ class SamCase:
                         raise CaseError(
                             f"Number of monitoring modes for component '{component}' must be 1 or equal to the number of failures"
                         )
+                # check concurrent failures and repairs
+                num_failure_modes = len(self.config[component].get(ck.PARTIAL_FAIL, {}))
+                if self.config[component][ck.CAN_REPAIR]:
+                    num_repair_modes = len(self.config[component].get(ck.PARTIAL_REPAIR, {}))
+                    if num_repair_modes != 1 and num_repair_modes != num_failure_modes:
+                        raise CaseError(
+                            f"Number of concurrent repairs for component '{component}' must be 1 or equal to the number of concurrent failures"
+                        )
 
             for failure, fail_config in self.config[component].get(ck.FAILURE, {}).items():
                 fails = set(ck.failure_keys)
@@ -295,9 +310,13 @@ class SamCase:
                 if included != fails:
                     missing += list(fails - included)
 
-                unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT}
+                unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT, ck.DECAY_FRAC}
                 if unknown_keys:
                     logger.warning(f"Unknown keys in failure configuration {failure}: {unknown_keys}")
+
+                keys = set(fail_config.keys())
+                if ck.FRAC in keys and ck.DECAY_FRAC in keys:
+                    raise CaseError(f"Must specify either `fraction` or `decay_fraction`, not both for '{component}'")
 
                 # update cost for inverters
                 if component == ck.INVERTER:
@@ -307,6 +326,39 @@ class SamCase:
                     if fail_config.get(ck.COST_PER_WATT, None) is not None:
                         # calculate costs based on cents/watt
                         self.config[component][ck.FAILURE][failure][ck.COST] = (
+                            fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
+                        )
+
+                if fail_config.get(ck.DIST, None) in ck.dists:
+                    check_params(component, failure, fail_config)
+
+            # partial failure check
+            for failure, fail_config in self.config[component].get(ck.PARTIAL_FAIL, {}).items():
+                fails = set(ck.partial_failure_keys)
+                if component == ck.INVERTER:
+                    # inverters may have cost_per_watt specified instead of cost
+                    fails.discard(ck.COST)
+
+                included = fails & set(fail_config.keys())
+                if included != fails:
+                    missing += list(fails - included)
+
+                unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT, ck.DECAY_FRAC}
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in concurrent failure configuration {failure}: {unknown_keys}")
+
+                keys = set(fail_config.keys())
+                if ck.FRAC in keys and ck.DECAY_FRAC in keys:
+                    raise CaseError(f"Must specify either `fraction` or `decay_fraction`, not both for '{component}'")
+
+                # update cost for inverters
+                if component == ck.INVERTER:
+                    if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
+                        missing.append(ck.COST)
+
+                    if fail_config.get(ck.COST_PER_WATT, None) is not None:
+                        # calculate costs based on cents/watt
+                        self.config[component][ck.PARTIAL_FAIL][failure][ck.COST] = (
                             fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
                         )
 
@@ -335,6 +387,20 @@ class SamCase:
                 unknown_keys = set(repair_config.keys()) - repairs_
                 if unknown_keys:
                     logger.warning(f"Unknown keys in repair configuration {repair}: {unknown_keys}")
+
+                if repair_config.get(ck.DIST, None) in ck.dists:
+                    check_params(component, repair, repair_config)
+
+            # partial repairs
+            for repair, repair_config in self.config[component].get(ck.PARTIAL_REPAIR, {}).items():
+                repairs_ = set(ck.partial_repair_keys)
+                included = repairs_ & set(repair_config.keys())
+                if included != repairs_:
+                    missing += list(repairs_ - included)
+
+                unknown_keys = set(repair_config.keys()) - repairs_
+                if unknown_keys:
+                    logger.warning(f"Unknown keys in concurrent repair configuration {repair}: {unknown_keys}")
 
                 if repair_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, repair, repair_config)
