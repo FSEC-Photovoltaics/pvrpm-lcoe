@@ -24,4 +24,4 @@ jobs:
           prerelease: true
           title: "PVRPM Development Build"
           files: |
-            builds/pvrpm-*.whl
+            build/pvrpm-*.whl
