@@ -15,11 +15,11 @@ jobs:
         with:
           python-version: "3.8.x"
           architecture: "x64"
-      - run: mkdir build && pip wheel . -w build/ --use-feature=in-tree-build
+      - run: mkdir build && pip install wheel && pip wheel . -w build/ --use-feature=in-tree-build
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
-            builds/pvrpm-*.whl
+            build/pvrpm-*.whl
