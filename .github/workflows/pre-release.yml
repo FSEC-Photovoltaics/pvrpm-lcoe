@@ -1,0 +1,27 @@
+name: pre-release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  pre-release:
+    name: "Pre Release"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8.x"
+          architecture: "x64"
+      - run: mkdir build && pip wheel . -w build/ --use-feature=in-tree-build
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "PVRPM Development Build"
+          files: |
+            builds/pvrpm-*.whl
