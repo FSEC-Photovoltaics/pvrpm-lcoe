@@ -1,0 +1,4 @@
+Logic Diagram
+=================================
+.. toctree::
+  :hidden:

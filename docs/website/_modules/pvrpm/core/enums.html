@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pvrpm.core.enums &mdash; PVRPM 1.5.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PVRPM
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">pvrpm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.html">pvrpm package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.core.html">pvrpm.core package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.core.modules.html">pvrpm.core.modules package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PVRPM</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pvrpm.core.enums</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pvrpm.core.enums</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="ConfigKeys"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.enums.ConfigKeys">[docs]</a><span></span><span class="k">class</span> <span class="nc">ConfigKeys</span><span class="p">:</span>
+    <span class="n">MODULE_ORDER</span> <span class="o">=</span> <span class="s2">&quot;module_order&quot;</span>
+    <span class="n">NUM_REALIZATION</span> <span class="o">=</span> <span class="s2">&quot;num_realizations&quot;</span>
+    <span class="n">NUM_COMBINERS</span> <span class="o">=</span> <span class="s2">&quot;num_combiners&quot;</span>
+    <span class="n">NUM_TRANSFORMERS</span> <span class="o">=</span> <span class="s2">&quot;num_transformers&quot;</span>
+    <span class="n">NUM_TRACKERS</span> <span class="o">=</span> <span class="s2">&quot;num_trackers&quot;</span>
+
+    <span class="n">RESULTS_FOLDER</span> <span class="o">=</span> <span class="s2">&quot;results_folder&quot;</span>
+    <span class="n">CONF_INTERVAL</span> <span class="o">=</span> <span class="s2">&quot;conf_interval&quot;</span>
+
+    <span class="n">LABOR_RATE</span> <span class="o">=</span> <span class="s2">&quot;present_day_labor_rate&quot;</span>
+    <span class="n">INFLATION</span> <span class="o">=</span> <span class="s2">&quot;inflation&quot;</span>
+    <span class="n">WORST_TRACKER</span> <span class="o">=</span> <span class="s2">&quot;use_worst_case_tracker&quot;</span>
+
+    <span class="n">MODULE</span> <span class="o">=</span> <span class="s2">&quot;module&quot;</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;name&quot;</span>
+    <span class="n">CAN_FAIL</span> <span class="o">=</span> <span class="s2">&quot;can_fail&quot;</span>
+    <span class="n">CAN_REPAIR</span> <span class="o">=</span> <span class="s2">&quot;can_repair&quot;</span>
+    <span class="n">CAN_MONITOR</span> <span class="o">=</span> <span class="s2">&quot;can_monitor&quot;</span>
+
+    <span class="n">WARRANTY</span> <span class="o">=</span> <span class="s2">&quot;warranty&quot;</span>
+    <span class="n">DAYS</span> <span class="o">=</span> <span class="s2">&quot;days&quot;</span>
+
+    <span class="n">FAILURE</span> <span class="o">=</span> <span class="s2">&quot;failures&quot;</span>
+    <span class="n">PARTIAL_FAIL</span> <span class="o">=</span> <span class="s2">&quot;concurrent_failures&quot;</span>
+    <span class="n">DIST</span> <span class="o">=</span> <span class="s2">&quot;distribution&quot;</span>
+    <span class="n">PARAM</span> <span class="o">=</span> <span class="s2">&quot;parameters&quot;</span>
+    <span class="n">MEAN</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span>
+    <span class="n">STD</span> <span class="o">=</span> <span class="s2">&quot;std&quot;</span>
+    <span class="n">SHAPE</span> <span class="o">=</span> <span class="s2">&quot;shape&quot;</span>
+    <span class="n">LABOR</span> <span class="o">=</span> <span class="s2">&quot;labor_time&quot;</span>
+    <span class="n">COST</span> <span class="o">=</span> <span class="s2">&quot;cost&quot;</span>
+    <span class="n">COST_PER_WATT</span> <span class="o">=</span> <span class="s2">&quot;cost_per_watt&quot;</span>
+    <span class="n">FRAC</span> <span class="o">=</span> <span class="s2">&quot;fraction&quot;</span>
+    <span class="n">DECAY_FRAC</span> <span class="o">=</span> <span class="s2">&quot;decay_fraction&quot;</span>
+
+    <span class="n">REPAIR</span> <span class="o">=</span> <span class="s2">&quot;repairs&quot;</span>
+    <span class="n">PARTIAL_REPAIR</span> <span class="o">=</span> <span class="s2">&quot;concurrent_repairs&quot;</span>
+    <span class="n">MONITORING</span> <span class="o">=</span> <span class="s2">&quot;monitoring&quot;</span>
+    <span class="n">DEGRADE</span> <span class="o">=</span> <span class="s2">&quot;degradation&quot;</span>
+
+    <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;string&quot;</span>
+    <span class="n">COMBINER</span> <span class="o">=</span> <span class="s2">&quot;combiner&quot;</span>
+    <span class="n">INVERTER</span> <span class="o">=</span> <span class="s2">&quot;inverter&quot;</span>
+    <span class="n">DISCONNECT</span> <span class="o">=</span> <span class="s2">&quot;disconnect&quot;</span>
+    <span class="n">TRANSFORMER</span> <span class="o">=</span> <span class="s2">&quot;transformer&quot;</span>
+    <span class="n">GRID</span> <span class="o">=</span> <span class="s2">&quot;grid&quot;</span>
+    <span class="n">TRACKER</span> <span class="o">=</span> <span class="s2">&quot;tracker&quot;</span>
+
+    <span class="c1"># static monitoring</span>
+    <span class="n">INDEP_MONITOR</span> <span class="o">=</span> <span class="s2">&quot;indep_monitoring&quot;</span>
+    <span class="n">INTERVAL</span> <span class="o">=</span> <span class="s2">&quot;interval&quot;</span>
+    <span class="n">LEVELS</span> <span class="o">=</span> <span class="s2">&quot;levels&quot;</span>
+
+    <span class="c1"># cross level monitoring</span>
+    <span class="n">COMP_MONITOR</span> <span class="o">=</span> <span class="s2">&quot;component_level_monitoring&quot;</span>
+    <span class="n">FAIL_THRESH</span> <span class="o">=</span> <span class="s2">&quot;global_threshold&quot;</span>
+    <span class="n">FAIL_PER_THRESH</span> <span class="o">=</span> <span class="s2">&quot;failure_per_threshold&quot;</span>
+    <span class="n">COMP_FUNC</span> <span class="o">=</span> <span class="s2">&quot;compounding_function&quot;</span>
+    <span class="n">COMP_PARAM</span> <span class="o">=</span> <span class="s2">&quot;compound_parameters&quot;</span>
+    <span class="c1"># compounding functions parameters</span>
+    <span class="n">THRESH</span> <span class="o">=</span> <span class="s2">&quot;threshold&quot;</span>
+    <span class="n">STEP</span> <span class="o">=</span> <span class="s2">&quot;step&quot;</span>
+    <span class="n">BASE</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span>
+    <span class="n">CONST</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span>
+    <span class="n">SLOPE</span> <span class="o">=</span> <span class="s2">&quot;slope&quot;</span>
+    <span class="c1"># compound functions</span>
+    <span class="n">LOG</span> <span class="o">=</span> <span class="s2">&quot;log&quot;</span>
+    <span class="n">LINEAR</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span>
+
+    <span class="c1"># supported distribution functions</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="s2">&quot;normal&quot;</span>
+    <span class="n">EXPON</span> <span class="o">=</span> <span class="s2">&quot;exponential&quot;</span>
+    <span class="n">WEIBULL</span> <span class="o">=</span> <span class="s2">&quot;weibull&quot;</span>
+    <span class="n">LOGNORM</span> <span class="o">=</span> <span class="s2">&quot;lognormal&quot;</span>
+    <span class="n">UNIFORM</span> <span class="o">=</span> <span class="s2">&quot;uniform&quot;</span>
+
+    <span class="c1"># added during case setup</span>
+    <span class="n">NUM_COMPONENT</span> <span class="o">=</span> <span class="s2">&quot;count&quot;</span>
+    <span class="n">TRACKING</span> <span class="o">=</span> <span class="s2">&quot;is_tracking_system&quot;</span>
+    <span class="n">MULTI_SUBARRAY</span> <span class="o">=</span> <span class="s2">&quot;has_multiple_subarrays&quot;</span>
+    <span class="n">MODULES_PER_STR</span> <span class="o">=</span> <span class="s2">&quot;num_modules_per_string&quot;</span>
+    <span class="n">INVERTER_SIZE</span> <span class="o">=</span> <span class="s2">&quot;inverter_size&quot;</span>
+    <span class="n">COMBINER_PER_INVERTER</span> <span class="o">=</span> <span class="s2">&quot;num_combiners_per_inverter&quot;</span>
+    <span class="n">STR_PER_COMBINER</span> <span class="o">=</span> <span class="s2">&quot;num_strings_per_combiner&quot;</span>
+    <span class="n">INVERTER_PER_TRANS</span> <span class="o">=</span> <span class="s2">&quot;num_inverters_per_transformer&quot;</span>
+    <span class="n">LIFETIME_YRS</span> <span class="o">=</span> <span class="s2">&quot;system_lifetime_yrs&quot;</span>
+
+    <span class="c1"># for error checking</span>
+    <span class="n">needed_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">MODULE_ORDER</span><span class="p">,</span>
+        <span class="n">NUM_REALIZATION</span><span class="p">,</span>
+        <span class="n">NUM_COMBINERS</span><span class="p">,</span>
+        <span class="n">NUM_TRANSFORMERS</span><span class="p">,</span>
+        <span class="n">NUM_TRACKERS</span><span class="p">,</span>
+        <span class="n">RESULTS_FOLDER</span><span class="p">,</span>
+        <span class="n">CONF_INTERVAL</span><span class="p">,</span>
+        <span class="n">LABOR_RATE</span><span class="p">,</span>
+        <span class="n">INFLATION</span><span class="p">,</span>
+        <span class="n">WORST_TRACKER</span><span class="p">,</span>
+        <span class="n">MODULE</span><span class="p">,</span>
+        <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">COMBINER</span><span class="p">,</span>
+        <span class="n">INVERTER</span><span class="p">,</span>
+        <span class="n">DISCONNECT</span><span class="p">,</span>
+        <span class="n">TRANSFORMER</span><span class="p">,</span>
+        <span class="n">GRID</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">component_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">MODULE</span><span class="p">,</span>
+        <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">COMBINER</span><span class="p">,</span>
+        <span class="n">INVERTER</span><span class="p">,</span>
+        <span class="n">DISCONNECT</span><span class="p">,</span>
+        <span class="n">TRANSFORMER</span><span class="p">,</span>
+        <span class="n">GRID</span><span class="p">,</span>
+        <span class="n">TRACKER</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">failure_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+        <span class="n">LABOR</span><span class="p">,</span>
+        <span class="n">COST</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">partial_failure_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+        <span class="n">LABOR</span><span class="p">,</span>
+        <span class="n">COST</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">monitoring_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">repair_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">partial_repair_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">dists</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">NORMAL</span><span class="p">,</span>
+        <span class="n">EXPON</span><span class="p">,</span>
+        <span class="n">WEIBULL</span><span class="p">,</span>
+        <span class="n">LOGNORM</span><span class="p">,</span>
+        <span class="n">UNIFORM</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">indep_monitor_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">COST</span><span class="p">,</span>
+        <span class="n">LEVELS</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">compound_funcs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">STEP</span><span class="p">,</span>
+        <span class="n">LOG</span><span class="p">,</span>
+        <span class="n">LINEAR</span><span class="p">,</span>
+        <span class="n">EXPON</span><span class="p">,</span>
+        <span class="n">CONST</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">compound_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c1">#        FAIL_THRESH,</span>
+        <span class="c1">#        COMP_FUNC,</span>
+        <span class="c1">#        COMP_PARAM,</span>
+        <span class="n">DIST</span><span class="p">,</span>
+        <span class="n">PARAM</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">compound_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">COMBINER</span><span class="p">,</span>
+        <span class="n">INVERTER</span><span class="p">,</span>
+        <span class="n">DISCONNECT</span><span class="p">,</span>
+        <span class="n">TRANSFORMER</span><span class="p">,</span>
+        <span class="n">GRID</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># these are modules that are required for PVRPM</span>
+    <span class="n">required_modules</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;Pvsamv1&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># lcoe modules that cant be used</span>
+    <span class="n">unusable_lcoe_calcs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;Lcoefcr&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># for output generation</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;annual_poa_shading_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_poa_soiling_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_poa_cover_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_module_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_mppt_clip_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_mismatch_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_diodes_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_wiring_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_tracking_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_nameplate_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_optimizer_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_dc_perf_adj_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_ac_inv_clip_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_ac_inv_pso_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_ac_inv_pnt_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_ac_inv_eff_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ac_loss&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_transmission_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_ac_perf_adj_loss_percent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annual_xfmr_loss_percent&quot;</span><span class="p">,</span>
+    <span class="p">]</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, FSEC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

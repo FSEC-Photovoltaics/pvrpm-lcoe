@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pvrpm.core.utils &mdash; PVRPM 1.5.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PVRPM
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">pvrpm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.html">pvrpm package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.core.html">pvrpm.core package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pvrpm.core.modules.html">pvrpm.core.modules package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PVRPM</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pvrpm.core.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pvrpm.core.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">gammaln</span>
+
+<span class="kn">from</span> <span class="nn">pvrpm.core.enums</span> <span class="kn">import</span> <span class="n">ConfigKeys</span> <span class="k">as</span> <span class="n">ck</span>
+
+
+<span class="c1"># override to getattr to get modules case insensitve</span>
+<div class="viewcode-block" id="getattr_override"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.getattr_override">[docs]</a><span class="k">def</span> <span class="nf">getattr_override</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO: there has to be a better way to do this...</span>
+<div class="viewcode-block" id="load_pysam_modules"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.load_pysam_modules">[docs]</a><span class="k">def</span> <span class="nf">load_pysam_modules</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads ALL of PySAM&#39;s modules manually and globalizes them</span>
+
+<span class="sd">    This is needed because PySAM is a wrapper for the ssc and sdk of SAM, which includes dynamic modules that are not properly defined for pybind, so using pkgutil&#39;s walk_packages function does not work (import error). Since the modules need to be loaded in order for getattr to find it, this must be done once when the program starts</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">pysam</span>
+    <span class="kn">import</span> <span class="nn">PySAM</span> <span class="k">as</span> <span class="nn">pysam</span>
+
+    <span class="k">for</span> <span class="n">loader</span><span class="p">,</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">is_pkg</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">(</span><span class="n">pysam</span><span class="o">.</span><span class="n">__path__</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pysam</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="filename_to_module"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.filename_to_module">[docs]</a><span class="k">def</span> <span class="nf">filename_to_module</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the filename of an exported json file from SAM, extracts the module name, and returns a callback to that module that can be used to create an object</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename (str): Filename of the exported case</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :obj:`PySAM`: PySAM object the file represents</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># SAM case file exporting should be underscores, with the last word being the module type</span>
+    <span class="n">module_str</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">getattr_override</span><span class="p">(</span><span class="n">pysam</span><span class="p">,</span> <span class="n">module_str</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="summarize_dc_energy"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.summarize_dc_energy">[docs]</a><span class="k">def</span> <span class="nf">summarize_dc_energy</span><span class="p">(</span><span class="n">dc_power_output</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the DC energy (kWh) based on an input array of timeseries DC power (kW) for the system lifetime (likely the &#39;dc_net&#39; output from SAM)</span>
+
+<span class="sd">    Can be used to summarize similar hourly, daily data to yearly</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dc_power_output (:obj:`tuple`): Tuple output from SAM simulation</span>
+<span class="sd">        split (int): The frequency to split the data too, typically this is the number of years the system was simulated for (system_lifetime_yrs)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :obj:`np.array`: Numpy array of length system_lifetime_yrs containing the yearly energy in kWh</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dc_power_output</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">split</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dc_power_output</span><span class="p">)</span> <span class="o">/</span> <span class="n">split</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="component_degradation"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.component_degradation">[docs]</a><span class="k">def</span> <span class="nf">component_degradation</span><span class="p">(</span><span class="n">percent_per_day</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the degradation of a component given the time since last replacement</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        percent_per_day (float): The percent degradation per day of the module</span>
+<span class="sd">        t (int): Time since the module was last replaced, or if its a new module installed</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: The performance of the module, between 0 and 1</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This gives the overall module performance based on degradation, so if the module has degraded 2 percent so far, this function returns 0.98</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">percent_per_day</span> <span class="o">/</span> <span class="mi">100</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="n">distribution</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rou&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sample data from a distribution. If distribution is a supported distribution, parameters should be a dictionary with keys &quot;mean&quot; and &quot;std&quot;. Otherwise, distribution should be a scipy stats function and parameters be the kwargs for the distribution.</span>
+
+<span class="sd">    Supported Distributions (only requires mean and std):</span>
+<span class="sd">        - lognormal</span>
+<span class="sd">        - normal</span>
+<span class="sd">        - uniform (one std around mean)</span>
+<span class="sd">        - weibull</span>
+<span class="sd">        - exponential</span>
+
+<span class="sd">    Supported sampling methods:</span>
+<span class="sd">        - &#39;rou&#39;: Ratio of uniforms, the default. Pretty much random sampling</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        distribution (str): Name of the distribution function</span>
+<span class="sd">        parameters (:obj:`dict`): Kwargs for the distribution (for a supported distribution should only be the mean and std)</span>
+<span class="sd">        num_samples (int): Number of samples to return from distribution</span>
+<span class="sd">        method (str, Optional): Sampling method to use, defaults to ratio of uniforms</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :obj:(list): List of floats containing samples from the distribution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;lognormal&quot;</span><span class="p">:</span>
+        <span class="c1"># lognormal uses the mean and std of the underlying normal distribution of log(X)</span>
+        <span class="c1"># so they must be normalized first</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">],</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STD</span><span class="p">]</span>
+        <span class="n">normalized_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">/</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">normalized_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="n">normalized_std</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="n">normalized_std</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">normalized_mean</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;normal&quot;</span><span class="p">:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STD</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;uniform&quot;</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">]</span> <span class="o">-</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STD</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STD</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;weibull&quot;</span><span class="p">:</span>
+        <span class="c1"># for weibull, we have to solve for c and the scale parameter</span>
+        <span class="c1"># this fails for certain parameter ranges, raising a runtime error</span>
+        <span class="c1"># see https://github.com/scipy/scipy/issues/12134 for reference</span>
+        <span class="k">def</span> <span class="nf">_h</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">gammaln</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">gammaln</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">c</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="n">r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">STD</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+            <span class="n">mean</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">],</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STD</span><span class="p">]</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="mf">1.27</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean</span> <span class="o">/</span> <span class="n">std</span><span class="p">)</span>
+            <span class="n">c</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">ier</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">_h</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">mean</span> <span class="o">/</span> <span class="n">std</span><span class="p">),</span>
+                <span class="n">c0</span><span class="p">,</span>
+                <span class="n">xtol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+                <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Test residual rather than error code.</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;fvec&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;with mean=</span><span class="si">{</span><span class="n">mean</span><span class="si">}</span><span class="s2"> and std=</span><span class="si">{</span><span class="n">std</span><span class="si">}</span><span class="s2">, solve failed: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">],</span> <span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">SHAPE</span><span class="p">]</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">/</span> <span class="n">gamma</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">weibull_min</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;exponential&quot;</span><span class="p">:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">expon</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">parameters</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MEAN</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># else, we don&#39;t know this distribution, pass the distribution directly to scipy</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">stats</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dist</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scipy stats doesn&#39;t have a distribution &#39;</span><span class="si">{</span><span class="n">distribution</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;lhs&quot;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># scipy rvs uses rou sampling method</span>
+        <span class="k">return</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_higher_components"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.get_higher_components">[docs]</a><span class="k">def</span> <span class="nf">get_higher_components</span><span class="p">(</span>
+    <span class="n">top_level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">start_level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">case</span><span class="p">,</span>
+    <span class="n">start_level_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the indicies of the top level that correspond to the given level df indicies and returns the given level indicies count per top level component and the total number of start_level components per top_level component</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        top_level (str): The string name of the component level to calculate indicies for</span>
+<span class="sd">        start_level (str): The string name of the component level to start at</span>
+<span class="sd">        case (SamCase): The case object for this simulation</span>
+<span class="sd">        start_level_df (:obj:`pd.DataFrame`, Optional): The dataframe of the component level for which to find the corresponding top level indicies for</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple(:obj:`np.array`, :obj:`np.array`, int): If start_level_df is given, returns the top level indicies, the number of start_level components in start_level_df per top level index, and the total number of start_level components per top_level component. If start_level_df is None this only returns the total number of start_level components per top_level component.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># the number of disconnects equals the number of inverters, if this every changes this would need to be changed</span>
+    <span class="c1"># otherwise, the inverter per trans is the same for disconnects</span>
+    <span class="c1"># dictionaries to make is easier transitioning between levels</span>
+    <span class="n">component_per</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">TRANSFORMER</span><span class="p">:</span> <span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">INVERTER_PER_TRANS</span><span class="p">],</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">DISCONNECT</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">INVERTER</span><span class="p">:</span> <span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">COMBINER_PER_INVERTER</span><span class="p">],</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">COMBINER</span><span class="p">:</span> <span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">STR_PER_COMBINER</span><span class="p">],</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span> <span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">MODULES_PER_STR</span><span class="p">],</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">MODULE</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># hierarchy of component levels:</span>
+    <span class="n">component_hier</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">MODULE</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">COMBINER</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">INVERTER</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">DISCONNECT</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">ck</span><span class="o">.</span><span class="n">TRANSFORMER</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">above_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">c</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">component_hier</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">component_hier</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">component_hier</span><span class="p">[</span><span class="n">start_level</span><span class="p">]</span> <span class="ow">and</span> <span class="n">component_hier</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">component_hier</span><span class="p">[</span><span class="n">top_level</span><span class="p">]</span>
+    <span class="p">]</span>
+
+    <span class="n">total_comp</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1"># above levels is ordered ascending</span>
+    <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">above_levels</span><span class="p">:</span>
+        <span class="n">total_comp</span> <span class="o">*=</span> <span class="n">component_per</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">start_level_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">indicies</span> <span class="o">=</span> <span class="n">start_level_df</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">indicies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">indicies</span> <span class="o">/</span> <span class="n">total_comp</span><span class="p">)</span>
+        <span class="c1"># sum up the number of occurences for each index and return with total number of components at start level per top level</span>
+        <span class="n">indicies</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">indicies</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">indicies</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">counts</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_comp</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_comp</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, FSEC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
