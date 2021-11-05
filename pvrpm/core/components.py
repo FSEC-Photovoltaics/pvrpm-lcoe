@@ -31,10 +31,15 @@ class Components:
 
         lifetime = self.case.config[ck.LIFETIME_YRS]
 
+        # additional aggreate data to track during simulation
+        self.module_degradation_factor = np.zeros(lifetime * 365)
+        self.dc_power_availability = np.zeros(lifetime * 365)
+        self.ac_power_availability = np.zeros(lifetime * 365)
+
         # static monitoring setup
         # if theres no static monitoring defined, an exception is raised
         try:
-            self.indep_monitor = monitor.IndepMonitor(self.case, self.comps, self.costs)
+            self.indep_monitor = monitor.IndepMonitor(self.case, self.comps, self.costs, self.dc_power_availability)
         except AttributeError:
             self.indep_monitor = None
 
@@ -49,11 +54,6 @@ class Components:
                 self.fails[c] += fails
                 self.monitors[c] += monitors
                 self.repairs[c] += repairs
-
-        # additional aggreate data to track during simulation
-        self.module_degradation_factor = np.zeros(lifetime * 365)
-        self.dc_power_availability = np.zeros(lifetime * 365)
-        self.ac_power_availability = np.zeros(lifetime * 365)
 
         # Data from simulation at end of realization
         self.timeseries_dc_power = None
@@ -115,6 +115,8 @@ class Components:
         Args:
             new_labor (float): The new labor rate
         """
+        if self.indep_monitor:
+            self.indep_monitor.update_labor_rate(new_labor)
         for c in ck.component_keys:
             if self.case.config.get(c, None):
                 for r in self.repairs[c]:
@@ -187,6 +189,8 @@ class Components:
         # monitoring times, these will be added to the repair time for each component
         # basically, the time until each failure is detected
         monitors = []
+        # for independent monitoring, may not be used if none is defined
+        df["indep_monitor"] = False
         if component_info[ck.CAN_REPAIR]:
             if component_info[ck.CAN_MONITOR]:
                 monitors.append(monitor.LevelMonitor(component_level, df, self.case))

@@ -176,13 +176,28 @@ class SamCase:
             needed_keys = set(ck.indep_monitor_keys)
             for name, monitor_config in self.config[ck.INDEP_MONITOR].items():
                 included_keys = set(monitor_config.keys()) & needed_keys
-                unknown_keys = set(monitor_config.keys()) - needed_keys - ck.INTERVAL - ck.FAIL_THRESH
+                unknown_keys = (
+                    set(monitor_config.keys())
+                    - needed_keys
+                    - {ck.INTERVAL, ck.FAIL_THRESH, ck.DIST, ck.PARAM, ck.FAIL_PER_THRESH}
+                )
                 if included_keys != needed_keys:
                     raise CaseError(f"Independent monitoring for {name} is missing keys {needed_keys - included_keys}")
-                if ck.INTERVAL not in monitor_config and ck.FAIL_THRESH not in monitor_config:
+                if ck.INTERVAL not in monitor_config and (
+                    ck.FAIL_THRESH not in monitor_config and ck.FAIL_PER_THRESH not in monitor_config
+                ):
                     raise CaseError(
-                        f"Independent monitoring for {name} is missing the interval and/or global_threshold"
+                        f"Independent monitoring for {name} is missing the interval and/or global_threshold/failure_per_threshold"
                     )
+
+                if ck.DIST in monitor_config:
+                    if not ck.PARAM in monitor_config:
+                        raise CaseError(
+                            f"Independent monitoring for {name} is missing the parameters for distribution."
+                        )
+                    if monitor_config[ck.DIST] in ck.dists:
+                        check_params("", name, monitor_config)
+
                 if unknown_keys:
                     logger.warning(f"Unknown keys in independent monitoring configuration: {unknown_keys}")
                 for level in monitor_config[ck.LEVELS]:
