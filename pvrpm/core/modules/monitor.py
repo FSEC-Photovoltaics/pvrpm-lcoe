@@ -131,7 +131,7 @@ class LevelMonitor(Monitor):
     def update(self, day: int):
         df = self.df
 
-        mask = (df["state"] == 0) & (df["time_to_detection"] > 1)
+        mask = (df["state"] == 0) & (df["time_to_detection"] > 1) & (df["indep_monitor"] == False)
         df.loc[mask, "time_to_detection"] -= 1
 
 
@@ -200,7 +200,7 @@ class CrossLevelMonitor(Monitor):
         mask = df["state"] == 0
         failed_df = df.loc[mask]
         num_failed = len(failed_df)
-        mask = mask & (df["time_to_detection"] > 1)
+        mask = mask & (df["time_to_detection"] > 1) & (df["indep_monitor"] == False)
 
         conf = self.case.config[self.level][ck.COMP_MONITOR]
         global_threshold = False
@@ -258,6 +258,7 @@ class IndepMonitor(Monitor):
         case: SamCase,
         comps: dict,
         costs: dict,
+        dc_availability: np.array,
     ):
         """
         Initalizes an independent monitoring instance
@@ -266,11 +267,13 @@ class IndepMonitor(Monitor):
             case (:obj:`SamCase`): The SAM case for this simulation
             comps (dict): The dataframes for each component level that tracks information during the simulation
             costs (dict): The dictionary for costs accrued for each component level
+            dc_availability (:obj:`np.array`): The dc availability for every day in the simulation
         """
         super().__init__(None, None, case)
         self.comps = comps
         self.costs = costs
-
+        self.labor_rate = self.case.config[ck.LABOR_RATE]
+        self.dc_availability = dc_availability
         # keep track of static monitoring for every level
         index = []
         data = []
@@ -289,33 +292,67 @@ class IndepMonitor(Monitor):
     def initialize_components(self):
         pass
 
+    def update_labor_rate(self, new: float):
+        """
+        Updates the labor rate for this repair
+
+        Args:
+            new (float): The new labor rate
+        """
+        self.labor_rate = new
+
     def reinitialize_components(self, df: pd.DataFrame) -> pd.DataFrame:
         df["monitor_times"] = None
         df["time_to_detection"] = None
+        df["indep_monitor"] = False
 
         return df
 
     def update(self, day: int):
+        # need to update time to detections for components with a distribution and need to decrement time to detection
+        # this overrides other monitoring methods, if they are defined, using the indep_monitor column
+        for name, monitor_config in self.case.config.get(ck.INDEP_MONITOR, {}).items():
+            if ck.DIST in monitor_config:  # if no dist, time to detection is None or 0
+                for level in monitor_config[ck.LEVELS]:
+                    if not self.case.config[level][ck.CAN_FAIL]:
+                        continue
+
+                    df = self.comps[level]
+                    mask = (df["state"] == 0) & (df["time_to_detection"] >= 1) & df["indep_monitor"]
+                    df.loc[mask, "time_to_detection"] -= 1
+
         self.indep_monitoring -= 1
         mask = self.indep_monitoring < 1
         current_monitors = self.indep_monitoring.loc[mask].index
         for monitor in current_monitors:
-            # static monitoring method commences, instantly detecting all failed components in their specified levels
+            # independent monitoring method commences, instantly detecting all failed components in their specified levels
             # which have not been detected by other monitoring methods yet.
             config = self.case.config[ck.INDEP_MONITOR][monitor]
             for level in config[ck.LEVELS]:
                 if not self.case.config[level][ck.CAN_FAIL]:
                     continue
                 df = self.comps[level]
-                mask = (df["state"] == 0) & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
+                mask = (
+                    (df["state"] == 0)
+                    & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
+                    & (df["indep_monitor"] == False)
+                )
                 monitor_comps = df.loc[mask].copy()
                 if monitor_comps["time_to_detection"].isna().sum() == 0:
                     monitor_comps["monitor_times"] -= monitor_comps["time_to_detection"]
 
-                monitor_comps["time_to_detection"] = 0
+                if ck.DIST in config:
+                    monitor_comps["time_to_detection"] = sample(config[ck.DIST], config[ck.PARAM], len(monitor_comps))
+                else:
+                    monitor_comps["time_to_detection"] = 0
+
+                monitor_comps["indep_monitor"] = True
+
                 df.loc[mask] = monitor_comps
                 # add cost to total costs (split evenly among all the levels for this day)
-                self.costs[level][day] += config[ck.COST] / len(config[ck.LEVELS])
+                self.costs[level][day] += (config[ck.COST] + self.labor_rate * config[ck.LABOR]) / len(
+                    config[ck.LEVELS]
+                )
 
             # reset static monitoring time
             self.indep_monitoring[monitor] = self.case.config[ck.INDEP_MONITOR][monitor][ck.INTERVAL]
@@ -323,22 +360,34 @@ class IndepMonitor(Monitor):
         # threshold monitoring calculations
         for name, monitor_config in self.case.config.get(ck.INDEP_MONITOR, {}).items():
             # ignore threshold if the interval was reached for this monitor
-            if name in current_monitors or ck.FAIL_THRESH not in monitor_config:
+            if name in current_monitors or (
+                ck.FAIL_THRESH not in monitor_config and ck.FAIL_PER_THRESH not in monitor_config
+            ):
                 continue
 
-            threshold = monitor_config[ck.FAIL_THRESH]
-            failed = 0
-            total = 0
-            for level in monitor_config[ck.LEVELS]:
-                if not self.case.config[level][ck.CAN_FAIL]:
-                    continue
+            threshold_met = False
+            if ck.FAIL_THRESH in monitor_config:
+                # calculate dc availability and determine if indep monitoring is needed
+                # this does use the previous day since this is calculated at the end of each day, but i figured
+                # that wouldn't matter in the end and saves computing it again here
+                # subtraction 1 also works since the inital dc availability is calculated for day 0
+                # and day starts at 1
+                if (1 - (self.dc_availability[day - 1])) > monitor_config[ck.FAIL_THRESH]:
+                    threshold_met = True
 
-                df = self.comps[level]
-                mask = df["state"] == 0
-                failed += mask.sum()
-                total += len(df)
+            if not threshold_met and ck.FAIL_PER_THRESH in monitor_config:
+                for level in monitor_config[ck.LEVELS]:
+                    if not self.case.config[level][ck.CAN_FAIL]:
+                        continue
 
-            if not (failed / total) > threshold:
+                    df = self.comps[level]
+                    mask = df["state"] == 0
+
+                    if (mask.sum() / len(df)) > monitor_config[ck.FAIL_PER_THRESH]:
+                        threshold_met = True
+                        break
+
+            if not threshold_met:
                 continue
 
             # threshold met, run independent monitor
@@ -348,7 +397,11 @@ class IndepMonitor(Monitor):
                     continue
 
                 df = self.comps[level]
-                mask = (df["state"] == 0) & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
+                mask = (
+                    (df["state"] == 0)
+                    & ((df["time_to_detection"] >= 1) | (df["time_to_detection"].isna()))
+                    & (df["indep_monitor"] == False)
+                )
                 monitor_comps = df.loc[mask].copy()
 
                 if len(monitor_comps) == 0:
@@ -364,7 +417,17 @@ class IndepMonitor(Monitor):
                 else:
                     monitor_comps["monitor_times"] -= monitor_comps["time_to_detection"]
 
-                monitor_comps["time_to_detection"] = 0
+                if ck.DIST in monitor_config:
+                    monitor_comps["time_to_detection"] = sample(
+                        monitor_config[ck.DIST], monitor_config[ck.PARAM], len(monitor_comps)
+                    )
+                else:
+                    monitor_comps["time_to_detection"] = 0
+
+                monitor_comps["indep_monitor"] = True
+
                 df.loc[mask] = monitor_comps
                 # add cost to total costs (split evenly among all the levels for this day)
-                self.costs[level][day] += monitor_config[ck.COST] / len(monitor_config[ck.LEVELS])
+                self.costs[level][day] += (monitor_config[ck.COST] + self.labor_rate * monitor_config[ck.LABOR]) / len(
+                    monitor_config[ck.LEVELS]
+                )

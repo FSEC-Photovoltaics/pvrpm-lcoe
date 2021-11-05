@@ -158,6 +158,7 @@ class ConfigKeys:
     indep_monitor_keys = [
         COST,
         LEVELS,
+        LABOR,
     ]
 
     compound_funcs = [

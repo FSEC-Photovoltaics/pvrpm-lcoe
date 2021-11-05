@@ -396,14 +396,20 @@ tracker: # only required for tracking systems, remove it not using trackers
 
 
 ### Independent Monitoring Practices ###
-# This section defines monitoring practices (like IR drone scans) that happen at an invertal or threshold with a fix cost to reduce time to detection to 0 (i.e detect all failed components which are still in the detection phase from monitoring).
+# This section defines monitoring practices (like IR drone scans) that happen at an invertal or threshold with a fix cost to reduce time to detection to 0 (i.e detect all failed components which are still in the detection phase from monitoring). or to the distribution sample from the defined distribution
 # This occurs independent of any component level
 # Here you can define the interval, cost, and what component levels this services will detect all failures on at each interval
 # Remove this section if not using it
+# You can also OPTIONALLY define a distribution that states how long it takes after the monitoring occurs for the failed components to be detected, instead of it being 0. You may omit the distribution to have time to detection go to 0 when monitoring occurs
 indep_monitoring:
   drone_ir:  # this name can be anything you want!
     interval: 1095 # interval in days when this static monitoring occurs
     cost: 50000 # cost of this monitoring in USD
+    labor_time: 1 # in hours
+    distribution: normal
+    parameters:
+      mean: 14
+      std: 5
     levels: # the component levels this detects on
       - module
       - string
@@ -412,11 +418,22 @@ indep_monitoring:
   drone_ir2: # list as many static monitoring methods as you want
     interval: 365 # this monitoring will happen every 365 days, alongside the threshold.
     # a indep monitoring triggered by a threshold RESETs the countdown to the interval
-    global_threshold: 0.1 # if availability of ALL levels listed under the levels parameters decreases by this amount, run this monitoring
+    global_threshold: 0.1 # if DC availability drops by this threshold amount, then this indep monitoring will occur
+    # DC availability is the DC power reaching the inverter(s), which is affected by combiners, strings, and module failures
+    failure_per_threshold: 0.2 # this threshold is PER LEVEL, people if the availability of ANY of the defined levels drops by this threshold amount, this indep monitoring will occur
     cost: 100000
+    labor_time: 1 # in hours
     levels:
       - module
+      - combiner
       - string
+
+  drone_ir3: # list as many static monitoring methods as you want
+    failure_per_threshold: 0.2 # this threshold is PER LEVEL, people if the availability of ANY of the defined levels drops by this threshold amount, this indep monitoring will occur
+    cost: 1500
+    labor_time: 1 # in hours
+    levels:
+      - module
 
 ### Cross level component monitoring ###
 # This next section will define optional cross level component monitoring. This means that you can define monitoring at higher component
