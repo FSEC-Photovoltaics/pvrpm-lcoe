@@ -1,0 +1,727 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Example YAML Configuration &mdash; PVRPM 1.5.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="pvrpm" href="api/modules.html" />
+    <link rel="prev" title="Logic Diagram" href="tutorial_logic_diagram.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> PVRPM
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_getting_started.html#running-the-simulation">Running the simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example YAML Configuration</a><ul class="simple">
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">pvrpm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.html">pvrpm package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.core.html">pvrpm.core package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.core.modules.html">pvrpm.core.modules package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PVRPM</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Example YAML Configuration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/example_pvrpm_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="example-yaml-configuration">
+<h1>Example YAML Configuration<a class="headerlink" href="#example-yaml-configuration" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>Please read all the comments carefully, there are many options for each section of PVRPM.</p>
+<div class="code yaml highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">module_order</span><span class="p">:</span> <span class="c1"># the order the modules of this case should be executed</span>
+              <span class="c1"># check to see what modules you use by the name of the json output files</span>
+              <span class="c1"># typically, this should be Pvsamv1 -&gt; grid -&gt; utiltiy -&gt; others</span>
+              <span class="c1"># see https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations</span>
+<span class="c1"># Only detailed PV models are supported, which is Pvsamv1, your case must have this module</span>
+<span class="c1"># Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn&#39;t support lifetime</span>
+  <span class="o">-</span> <span class="n">Pvsamv1</span>
+  <span class="o">-</span> <span class="n">Grid</span>
+  <span class="o">-</span> <span class="n">Utilityrate5</span>
+  <span class="o">-</span> <span class="n">Cashloan</span>
+
+<span class="c1">### Run Setup ###</span>
+<span class="c1"># results folder doesn&#39;t need to exist, it will be created if it doesnt already</span>
+<span class="c1"># For windows use single backslash. Do not need to escape spaces in folder names</span>
+<span class="n">results_folder</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">results</span><span class="o">/</span><span class="n">folder</span>
+<span class="n">num_realizations</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># number of realizations to run</span>
+<span class="n">conf_interval</span><span class="p">:</span> <span class="mi">90</span> <span class="c1">#XX % confidence interval around the mean will be calculated for summary results</span>
+
+<span class="c1">### Case Setup ###</span>
+<span class="n">num_combiners</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># total number of DC combiner boxes</span>
+<span class="n">num_transformers</span><span class="p">:</span> <span class="mi">1</span> <span class="c1"># total number of Transformers</span>
+<span class="n">num_trackers</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># total number of trackers</span>
+
+<span class="c1">### Financial Inputs ###</span>
+<span class="n">present_day_labor_rate</span><span class="p">:</span> <span class="mi">100</span> <span class="c1"># dollars per hour</span>
+<span class="n">inflation</span><span class="p">:</span> <span class="mf">2.5</span> <span class="c1"># in percent</span>
+
+<span class="c1">### Failure Tracker Algorithm ###</span>
+<span class="n">use_worst_case_tracker</span><span class="p">:</span> <span class="n">false</span>
+
+
+<span class="c1">### Component Information ###</span>
+  <span class="c1"># The structure of the user-entered component information is as follows:</span>
+  <span class="c1">#**NOTE: components currently include: module, string, combiner, inverter, disconnect, transformer, grid, and (optional) tracker</span>
+
+<span class="c1">#    component.</span>
+<span class="c1">#      name = a string containing the name of the component type, used for error reporting</span>
+<span class="c1">#      can_fail = true if component is allowed to fail</span>
+<span class="c1">#      can_repair = true if component is allowed to be repaired after failing</span>
+<span class="c1">#      can_monitor = true if component&#39;s failures use component level monitoring</span>
+<span class="c1">#                    This can be false and replaced with other monitoring methods, see below for independent and cross level monitoring sections</span>
+<span class="c1">#      ### if can_repair, can_monitor or can_fail is false, you can remove their respective section below (failures, monitoring and repairs)</span>
+<span class="c1">#      warranty (can remove this section if no warranty)</span>
+<span class="c1">#        days = number of days that the warranty is for (e.g. a 20 year warranty would be 20 * 365 days)</span>
+<span class="c1">#      failures (list as many failures as needed)</span>
+<span class="c1">#        distribution = distribution type of this failure mode</span>
+<span class="c1">#        parameters = parameters for this failure mode</span>
+<span class="c1">#          mean: mean in days for this failure mode&#39;s distribution</span>
+<span class="c1">#          std: standard deviation for this failure mode&#39;s distribution (not all distributions need std)</span>
+<span class="c1">#        labor_time = number of hours of labor it takes to repair this type of failure</span>
+<span class="c1">#        cost = parts cost to repair this type of failure</span>
+<span class="c1">#        cost_per_watt (optional) = USD per watt cost of failure FOR INVERTERS ONLY. This will OVERRIDE the cost if specified for a failure</span>
+<span class="c1">#        by multiplying this value by the inverter size. If you want to set a static cost, use the cost parameter as normal</span>
+<span class="c1">#        fraction (optional) = If fraction is defined, then this failure mode is a defective failure mode, and &quot;fraction&quot; represents the fraction of this type of component that are defective. This fraction of components with this failure mode is maintained throughout the simulation.</span>
+<span class="c1">#        decay_fraction (optional) = Works similiarly to fraction, except the fraction of affected components decays. For example, if 0.5 is defined, then half of the components have this failure mode. Once those are repaired, half of the repaired components will have this failure mode, and so on.</span>
+<span class="c1">#      concurrent_failures (these failures are all tracked in parallel, meaning a component can fail with these failure modes while another failure mode like above is still counting down)</span>
+<span class="c1">#         list failures same as failures above</span>
+<span class="c1">#      monitoring: this section specfies how long each failure takes to be detected by monitoring. This occurs before repair time begins. This should either be 1 section for all failures or a section for each failure</span>
+<span class="c1">#        distribution = distribution type of monitoring times</span>
+<span class="c1">#        parameters = parameters of the monitoring distribution</span>
+<span class="c1">#          mean: mean in days for this monitoring mode&#39;s distribution</span>
+<span class="c1">#          std: standard deviation for this monitoring mode&#39;s distribution (not all distributions need std)</span>
+<span class="c1">#      repairs (list a repair for each failure, or only 1 repair for all failures)</span>
+<span class="c1">#        distribution = distribution type of repair times</span>
+<span class="c1">#        parameters = parameters of the repair distribution</span>
+<span class="c1">#          mean: mean in days for this repair mode&#39;s distribution</span>
+<span class="c1">#          std: standard deviation for this repair mode&#39;s distribution (not all distributions need std)</span>
+<span class="c1">#        **NOTE: If there is only ONE repair distribution (repair[0]), then ALL failure modes will use that distribution! Otherwise, # repair modes must equal # failure modes.</span>
+<span class="c1">#      concurrent_repairs (repairs for concurrent failure modes, same setup as repairs above)</span>
+<span class="c1">#      degradation (MODULES ONLY) (remove if no degradation) (%/year)</span>
+
+<span class="c1">### Distribution types</span>
+<span class="c1"># PVRPM has some distributions built in, where only a mean and standard deviation is needed to</span>
+<span class="c1"># properly model the failure or repair. Under the hood, PVRPM uses scipy.stats distribution</span>
+<span class="c1"># functions to model these. However, scipy.stats documentation for each function is not very</span>
+<span class="c1"># clear on how to convert the mean and std into usable values for the distribution, which</span>
+<span class="c1"># is why PVRPM will wrap them for you.</span>
+
+<span class="c1"># However, not every single scipy distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):</span>
+<span class="c1">#  - exponential</span>
+<span class="c1">#  - normal</span>
+<span class="c1">#  - uniform</span>
+<span class="c1">#  - lognormal</span>
+<span class="c1">#  - weibull (can also provide shape for this distribution, see below)</span>
+<span class="c1"># If using one of these distributions, you can simply provide the mean and std in days.</span>
+<span class="c1"># **For the weibull distribution**: instead of standard deviation (std) you can provide the mean and shape</span>
+<span class="c1"># See here: https://en.wikipedia.org/wiki/Weibull_distribution the shape parameter is k, and lambda is calculated by solving for it using the gamma function and the provided mean.</span>
+<span class="c1"># Otherwise, if you provide the STD for the weibull distribution, it should be a large number otherwise you&#39;ll get values extremely close to the mean only</span>
+
+<span class="c1"># You can also override this, and change the distribution to match the function name of any of the distributions listed here:</span>
+<span class="c1"># https://docs.scipy.org/doc/scipy/reference/stats.html</span>
+<span class="c1"># If you do this, then the &quot;parameters&quot; option will then be a list of kwargs to the scipy function you select. For example, if you want to use the gamma distribution:</span>
+<span class="c1">#  distribution: gamma</span>
+<span class="c1">#  parameters:</span>
+<span class="c1">#    a: 1.99</span>
+<span class="c1">#    scale: 100 # 1 / beta</span>
+<span class="c1">###</span>
+
+<span class="n">module</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">module</span> <span class="c1"># can be anything you want</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span> <span class="c1"># leave true to use monitoring distributions</span>
+
+  <span class="n">warranty</span><span class="p">:</span>
+    <span class="n">days</span><span class="p">:</span> <span class="mi">7300</span> <span class="c1"># years converted to days</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">normal_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span> <span class="c1"># parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">1460</span> <span class="c1"># years converted to days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># days</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">322</span> <span class="c1"># in USD</span>
+    <span class="n">routine_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">322</span> <span class="c1"># in USD</span>
+      <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.1</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are normal failures, maintained throughout the simulation</span>
+    <span class="n">defective_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">100</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">322</span> <span class="c1"># in USD</span>
+      <span class="n">decay_fraction</span><span class="p">:</span> <span class="mf">0.2</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are defective</span>
+
+  <span class="n">concurrent_failures</span><span class="p">:</span> <span class="c1"># this happens all in parallel, independent of each other</span>
+    <span class="n">cell_failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span> <span class="c1"># parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># years converted to days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># days</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">322</span> <span class="c1"># in USD</span>
+      <span class="n">decay_fraction</span><span class="p">:</span> <span class="mf">0.2</span>
+    <span class="n">wiring_failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">322</span> <span class="c1"># in USD</span>
+      <span class="n">fraction</span><span class="p">:</span> <span class="mf">0.1</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are normal failures, maintained throughout the simulation</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+    <span class="n">defective_monitoring</span><span class="p">:</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">15</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">60</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">20</span> <span class="c1"># in days</span>
+
+  <span class="n">concurrent_repairs</span><span class="p">:</span>
+    <span class="n">cell_repair</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">7</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+
+    <span class="n">wire_repair</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+
+  <span class="n">degradation</span><span class="p">:</span> <span class="mi">20</span> <span class="c1"># modules only, how much a module degrades per year in percent</span>
+
+<span class="n">string</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">string</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mf">182.5</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">1</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">20</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">7</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+
+<span class="n">combiner</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">combiner</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">730</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">182.5</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">976</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+
+<span class="n">inverter</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">inverter</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">component_failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">0</span> <span class="c1"># in hours</span>
+      <span class="n">cost_per_watt</span><span class="p">:</span> <span class="mf">0.07</span> <span class="c1"># in USD, cents/watt. This will be multiplied by the inverter_size (listed in SAM). Overrides cost</span>
+    <span class="n">routine_failure</span><span class="p">:</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">0</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">1000</span> <span class="c1"># static cost, not multiplied by inverter size</span>
+    <span class="n">catastrophic_failure</span><span class="p">:</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">500</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">365.25</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">0</span>
+      <span class="n">cost_per_watt</span><span class="p">:</span> <span class="mf">0.35</span> <span class="c1"># in USD, cents/watt. This will be multiplied by the inverter_size (listed in SAM). Overrides cost</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">all_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">component_repair</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">1.5</span>
+    <span class="n">routine_repair</span><span class="p">:</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mf">0.5</span>
+    <span class="n">catastrophic_repair</span><span class="p">:</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">1.5</span>
+
+<span class="n">disconnect</span><span class="p">:</span> <span class="c1"># A/C disconnect</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">disconnect</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">weibull</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">1095</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">1200</span> <span class="c1"># use a large STD for weibull</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">4</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">500</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">1</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">0.5</span>
+
+<span class="n">transformer</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">transformer</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">weibull</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># can optionally provide the shape which is K parameter on wikipedia page</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="mf">0.3477</span> <span class="c1"># lambda is calculated from the mean</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">10</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">32868</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mf">0.25</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mf">0.5</span>
+
+<span class="n">grid</span><span class="p">:</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">grid</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">weibull</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">100</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="mf">0.75</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">0</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">0</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># in days</span>
+
+<span class="n">tracker</span><span class="p">:</span> <span class="c1"># only required for tracking systems, remove it not using trackers</span>
+  <span class="n">name</span><span class="p">:</span> <span class="n">tracker</span>
+  <span class="n">can_fail</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_repair</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">can_monitor</span><span class="p">:</span> <span class="n">true</span>
+
+  <span class="n">failures</span><span class="p">:</span>
+    <span class="n">failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">500</span>
+      <span class="n">labor_time</span><span class="p">:</span> <span class="mi">0</span> <span class="c1"># in hours</span>
+      <span class="n">cost</span><span class="p">:</span> <span class="mi">2000</span> <span class="c1"># in USD</span>
+
+  <span class="n">monitoring</span><span class="p">:</span>
+    <span class="n">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">5</span>
+
+  <span class="n">repairs</span><span class="p">:</span>
+    <span class="n">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">30</span> <span class="c1"># in days</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">10</span>
+
+
+<span class="c1">### Independent Monitoring Practices ###</span>
+<span class="c1"># This section defines monitoring practices (like IR drone scans) that happen at an invertal or threshold with a fix cost to reduce time to detection to 0 (i.e detect all failed components which are still in the detection phase from monitoring).</span>
+<span class="c1"># This occurs independent of any component level</span>
+<span class="c1"># Here you can define the interval, cost, and what component levels this services will detect all failures on at each interval</span>
+<span class="c1"># Remove this section if not using it</span>
+<span class="n">indep_monitoring</span><span class="p">:</span>
+  <span class="n">drone_ir</span><span class="p">:</span>  <span class="c1"># this name can be anything you want!</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="mi">1095</span> <span class="c1"># interval in days when this static monitoring occurs</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="mi">50000</span> <span class="c1"># cost of this monitoring in USD</span>
+    <span class="n">levels</span><span class="p">:</span> <span class="c1"># the component levels this detects on</span>
+      <span class="o">-</span> <span class="n">module</span>
+      <span class="o">-</span> <span class="n">string</span>
+      <span class="o">-</span> <span class="n">combiner</span>
+
+  <span class="n">drone_ir2</span><span class="p">:</span> <span class="c1"># list as many static monitoring methods as you want</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="mi">365</span> <span class="c1"># this monitoring will happen every 365 days, alongside the threshold.</span>
+    <span class="c1"># a indep monitoring triggered by a threshold RESETs the countdown to the interval</span>
+    <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.1</span> <span class="c1"># if availability of ALL levels listed under the levels parameters decreases by this amount, run this monitoring</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="mi">100000</span>
+    <span class="n">levels</span><span class="p">:</span>
+      <span class="o">-</span> <span class="n">module</span>
+      <span class="o">-</span> <span class="n">string</span>
+
+<span class="c1">### Cross level component monitoring ###</span>
+<span class="c1"># This next section will define optional cross level component monitoring. This means that you can define monitoring at higher component</span>
+<span class="c1"># levels for the component levels below it (i.e inverter monitoring modules). These come with extra parameters to define failure dependence,</span>
+<span class="c1"># meaning how more failures contribute to quicker detection times from monitoring. This is done by user defined functions and parameters.</span>
+<span class="c1"># This is only available for all levels except tracker, grid, and module. The monitoring defined here is also overrided by monitoring at the level defined above, meaning that if you define monitoring for modules above under the module section, monitoring of modules defined below will be ignored.</span>
+<span class="c1"># Also, each level can only be monitored by one higher component level, meaning that if you define monitoring of modules at both the string and inverter level, PVRPM will only use the monitoring distribution and compounding of the monitoring at the string level for modules.</span>
+
+<span class="c1"># component_level: The level in which monitors levels below it</span>
+<span class="c1">#   component_monitoring: The level being monitored, must be a level below the component level defined above</span>
+<span class="c1">#     YOU MUST PROVIDE EITHER GLOBAL_THRESHOLD OR FAILURE_PER_THRESHOLD, or you can provide both</span>
+<span class="c1">#     global_threshold (float): fraction on [0, 1] that defines how many of the components must fail across ALL MONITORED COMPONENTS before monitoring can start detecting failures. Component failures will never be detected, and therefore not repaired, until this fraction of failed components is met.</span>
+<span class="c1">#     failure_per_threshold (float): fraction on [0, 1] that defines how many components must fail under EACH COMPONENT BEING MONITORED AT THIS LEVEL. This means that if there are 8 combiners that monitor 64 strings, every combiner will monitor 8 strings, and the defined failure_per_threshold must fail under that combiner in order for those failures to start being detected, as such you can define a total number of failures across all the monitored components and also the number of failures per monitor level component.</span>
+<span class="c1">#     As another example, if there 8 combiners monitoring 64 strings, and enough strings fail under combiner 1 to detect those failures, but not enough to meet the global_threshold total, if strings fail under combiner 2 they wont be detected until they either reach failure_per_threshold for that combiner or the global global_threshold</span>
+<span class="c1">#     compounding_function (str): The function used to defined how more failures reduce the time to detection from monitoring (NOT IMPLEMENTED)</span>
+<span class="c1">#     compound_parameters: parameters for the function above, see below for list of functions and their parameters (NOT IMPLEMENTED)</span>
+<span class="c1">#     distribution = distribution type of monitoring times</span>
+<span class="c1">#        parameters = parameters of the monitoring distribution</span>
+<span class="c1">#          mean: mean in days for this monitoring mode&#39;s distribution</span>
+<span class="c1">#          std: standard deviation for this monitoring mode&#39;s distribution (not all distributions need std)</span>
+
+<span class="c1"># this section below is optional, remove if you aren&#39;t using it</span>
+<span class="n">component_level_monitoring</span><span class="p">:</span>
+  <span class="c1"># lists what monitoring each component level has for levels BELOW it</span>
+  <span class="c1"># this is for cross level monitoring only, for defining monitoring at each level use the monitoring distributions above</span>
+  <span class="n">string</span><span class="p">:</span> <span class="c1"># component level that has the monitoring for levels below</span>
+    <span class="n">module</span><span class="p">:</span> <span class="c1"># componenet level that is below&#39;s key. same keys used above: module, string, combiner, inverter, disconnect, grid, transformer</span>
+      <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.2</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+                             <span class="c1"># this means that until this threshold is met, component failures can never be detected</span>
+                             <span class="c1"># In the simulation, the time to detection doesn&#39;t count down until this threshold is met, which at that point the compouning function will be used along with the distribution as normal</span>
+      <span class="n">failure_per_threshold</span><span class="p">:</span> <span class="mf">0.1</span> <span class="c1"># the fraction of components that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span> <span class="c1"># distribution that defines how long this monitoring takes to detect a failure at this level (independent)</span>
+                           <span class="c1"># the value calculated from this distribution will be reduced by the compounding factor for every failure in this level</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">1200</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+
+  <span class="n">combiner</span><span class="p">:</span>
+    <span class="n">string</span><span class="p">:</span>
+        <span class="n">failure_per_threshold</span><span class="p">:</span> <span class="mf">0.2</span> <span class="c1"># this fraction of strings must fail on a specific combiner for detection for those to start</span>
+        <span class="c1"># failures are not compounded globally in this case, only per each combiner</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span> <span class="c1"># distribution that defines how long this monitoring takes to detect a failure at this level (independent)</span>
+        <span class="n">parameters</span><span class="p">:</span>
+          <span class="n">mean</span><span class="p">:</span> <span class="mi">1825</span>
+          <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+
+    <span class="n">module</span><span class="p">:</span> <span class="c1"># since module level monitoring is defined for strings, this will be ignored as the higher level takes precedant</span>
+      <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.4</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+      <span class="n">failure_per_threshold</span><span class="p">:</span> <span class="mf">0.3</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">normal</span> <span class="c1"># distribution that defines how long this monitoring takes to detect a failure at this level (independent)</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3650</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+
+  <span class="n">inverter</span><span class="p">:</span>
+    <span class="n">combiner</span><span class="p">:</span>
+      <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.1</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">365</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+
+    <span class="n">string</span><span class="p">:</span>
+      <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.2</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">exponential</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3650</span>
+
+    <span class="n">module</span><span class="p">:</span>
+      <span class="n">global_threshold</span><span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+      <span class="n">distribution</span><span class="p">:</span> <span class="n">lognormal</span>
+      <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="mi">3650</span>
+        <span class="n">std</span><span class="p">:</span> <span class="mi">365</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="api/modules.html" class="btn btn-neutral float-right" title="pvrpm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tutorial_logic_diagram.html" class="btn btn-neutral float-left" title="Logic Diagram" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, FSEC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

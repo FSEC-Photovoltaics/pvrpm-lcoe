@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Getting Started &mdash; PVRPM 1.5.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="tutorial_installation.html" />
+    <link rel="prev" title="SAM/PVRPM Assumptions / Limitations" href="tutorial_assumptions_limitations.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> PVRPM
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#exporting-the-sam-case">Exporting the SAM Case</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-pvrpm">Configuring PVRPM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-order">Module Order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-setup">Run Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#case-setup">Case Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#component-level-setup">Component Level Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#component-behaviors">Component Behaviors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#warranty">Warranty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distributions-for-failures-repairs-monitoring">Distributions for Failures, Repairs, Monitoring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#failure-setup">Failure Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#repair-setup">Repair Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitoring">Monitoring</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-simulation">Running the simulation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example_pvrpm_config.html">Example YAML Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">pvrpm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.html">pvrpm package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.core.html">pvrpm.core package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/pvrpm.core.modules.html">pvrpm.core.modules package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PVRPM</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/tutorial_getting_started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>PVRPM enhances SAM’s models for PV systems to obtain a more accurate LCOE compared to it’s base simulation. It also allows for studying the effects of monitoring and repair techniques on PV systems over the course of its lifetime.</p>
+<p>To get started, create a new SAM case in the SAM GUI. From there you <strong>must choose the Detailed Photovoltaic model</strong> in order for PVRPM to work. This is required because PVRPM need’s certain parameters that only exist in this model.</p>
+<p>Then, choose your financial model. It must be a financial model that supports lifetime losses. Please read SAM’s documentation for help on setting up the case.</p>
+<p>Once that is setup, you can download the example configuration and modify it as needed. Below explains from start to finish on how to run a simulation with PVRPM.</p>
+<div class="section" id="exporting-the-sam-case">
+<h2>Exporting the SAM Case<a class="headerlink" href="#exporting-the-sam-case" title="Permalink to this headline">¶</a></h2>
+<p>PVRPM works by reading the information in your SAM case, along with the PVRPM YAML configuration to properly run the simulation. For the first step you need to export your SAM case to JSON files, which is what PVRPM use’s to read in your SAM case.</p>
+<p>To do this, open up the SAM GUI, then open you <cite>.sam</cite> case file. Once it is open, click the drop down menu for the case, which is located next to the case name on the top bar. Then click <cite>Generate Code</cite>, then <cite>JSON for inputs</cite>. A file explorer window will open allowing you to select a place to save the JSON files. Select an empty folder.</p>
+<p>Once this is done, the folder you selected will contain a few JSON files. The names of these files will follow the convention of <cite>case-name_module.json</cite> where <cite>case-name</cite> is the name of the case and <cite>module</cite> is the module that JSON represents. Pay attention to what modules you have, you’ll need to know that for the next part. You can remove the <cite>.h</cite> and <cite>.so</cite> files.</p>
+</div>
+<div class="section" id="configuring-pvrpm">
+<h2>Configuring PVRPM<a class="headerlink" href="#configuring-pvrpm" title="Permalink to this headline">¶</a></h2>
+<p>This will go over every configuration option step by step to setup the case study. The example configuration is also heavily commented to help with the parameters. Also, please make sure to study the logic diagram as it can help when setting up the configuration here. <em>Also note all of the values listed in examples are completely arbitrary and do not represent a realistic case.</em></p>
+</div>
+<div class="section" id="module-order">
+<h2>Module Order<a class="headerlink" href="#module-order" title="Permalink to this headline">¶</a></h2>
+<p>In order for PVRPM to properly run simulations using PySAM (SAM’s Python interface), the modules must be simulated in the correct order. These modules correspond to the modules listed in your JSON files you obtained. A typical order is in the example, but you may need to modify it depending on your case.</p>
+<p>To make the module order easy to set up, go to this website: <a class="reference external" href="https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations">https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations</a></p>
+<p>Then, find the modules you have under <cite>SSC Compute Modules</cite> column in the table, the SAM configuration column should be one of the <cite>Detailed PV Model</cite> rows. Once you find one containing all your modules, put them in the order as they appear in the <cite>SSC Compute Modules</cite> column.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nt">module_order</span><span class="p">:</span> <span class="c1"># the order the modules of this case should be executed</span>
+<span class="linenos"> 2</span>              <span class="c1"># check to see what modules you use by the name of the json output files</span>
+<span class="linenos"> 3</span>              <span class="c1"># typically, this should be Pvsamv1 -&gt; grid -&gt; utiltiy -&gt; others</span>
+<span class="linenos"> 4</span>              <span class="c1"># see https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations</span>
+<span class="linenos"> 5</span><span class="c1"># Only detailed PV models are supported, which is Pvsamv1, your case must have this module</span>
+<span class="linenos"> 6</span><span class="c1"># Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn&#39;t support lifetime</span>
+<span class="linenos"> 7</span>  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">Pvsamv1</span>
+<span class="linenos"> 8</span>  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">Grid</span>
+<span class="linenos"> 9</span>  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">Utilityrate5</span>
+<span class="linenos">10</span>  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">Cashloan</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="run-setup">
+<h2>Run Setup<a class="headerlink" href="#run-setup" title="Permalink to this headline">¶</a></h2>
+<p>Here, set the results folder location. On Windows, use only one backslash to separate directories, you do not need to escape them or spaces. Then set the number of realizations you want to run, and then the confidence interval for calculating results.</p>
+<p>The results folder and number of realizations can be overridden from the command line.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">### Run Setup ###</span>
+<span class="linenos">2</span><span class="c1"># results folder doesn&#39;t need to exist, it will be created if it doesnt already</span>
+<span class="linenos">3</span><span class="c1"># For windows use single backslash. Do not need to escape spaces in folder names</span>
+<span class="linenos">4</span><span class="nt">results_folder</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/results/folder</span>
+<span class="linenos">5</span><span class="nt">num_realizations</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># number of realizations to run</span>
+<span class="linenos">6</span><span class="nt">conf_interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">90</span> <span class="c1">#XX % confidence interval around the mean will be calculated for summary results</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="case-setup">
+<h2>Case Setup<a class="headerlink" href="#case-setup" title="Permalink to this headline">¶</a></h2>
+<p>Set up the basics of the case. Set the number of trackers, combiners, and transformers. If you are not using trackers, set <cite>num_trackers</cite> to <cite>0</cite>. If you are using trackers, the worst case tracker can be set to true. This means that failures in tracking components results in them being stuck in the worst way: where the module is pointing the opposite of the sun’s travel arc.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">### Case Setup ###</span>
+<span class="linenos"> 2</span><span class="nt">num_combiners</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># total number of DC combiner boxes</span>
+<span class="linenos"> 3</span><span class="nt">num_transformers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span> <span class="c1"># total number of Transformers</span>
+<span class="linenos"> 4</span><span class="nt">num_trackers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># total number of trackers</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="c1">### Financial Inputs ###</span>
+<span class="linenos"> 7</span><span class="nt">present_day_labor_rate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span> <span class="c1"># dollars per hour</span>
+<span class="linenos"> 8</span><span class="nt">inflation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.5</span> <span class="c1"># in percent</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="c1">### Failure Tracker Algorithm ###</span>
+<span class="linenos">11</span><span class="nt">use_worst_case_tracker</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="component-level-setup">
+<h2>Component Level Setup<a class="headerlink" href="#component-level-setup" title="Permalink to this headline">¶</a></h2>
+<p>Each component level requires a setup of failures, monitoring, and repairs. This is required for module, string, combiner, inverter, disconnect, transformer, and grid. However, if you are not setting a component level to fail (<cite>can_fail: false</cite>), then you can remove the rest of the sections below it. For example, if string’s <cite>can_fail: false</cite>, I can remove the <cite>failure</cite>, <cite>monitoring</cite>, and <cite>repair</cite> sections.</p>
+<p>There are many options for types of failures, monitoring, and the component, alongside various combinations to get different behaviors.</p>
+<p>Keep in mind, the way these are used are as follows:
+<cite>time_to_failure</cite> counts down to 0, then <cite>time_to_detection</cite> counts down to 0 (if monitoring is defined), then <cite>time_to_repair</cite> counts down to 0 which repairs the component and resets the next failure time.</p>
+<div class="section" id="component-behaviors">
+<h3>Component Behaviors<a class="headerlink" href="#component-behaviors" title="Permalink to this headline">¶</a></h3>
+<p><cite>can_fail</cite> can be set to true or false, which dictates whether the components in the component level (module, string, etc) can fail. If this is set to false, then nothing will fail for this level. You can remove the failures, repairs, and monitoring sections.
+<cite>can_repair</cite> dictates if the components can be repaired in this level. Typically, leave this true if components can fail.
+<cite>can_monitor</cite> turns on or off component level monitoring. This signifies that at this level there is some type of monitoring in place, if you want to simulate this type of monitoring set this to <cite>true</cite>.</p>
+</div>
+<div class="section" id="warranty">
+<h3>Warranty<a class="headerlink" href="#warranty" title="Permalink to this headline">¶</a></h3>
+<p>Components can be set to have a warranty. Components covered under a warranty do not incur repair costs when they are repaired. A repaired component resets the warranty to the specified time in this section. For no warranty, remove this section.</p>
+</div>
+<div class="section" id="distributions-for-failures-repairs-monitoring">
+<h3>Distributions for Failures, Repairs, Monitoring<a class="headerlink" href="#distributions-for-failures-repairs-monitoring" title="Permalink to this headline">¶</a></h3>
+<p>Every failure, repair, and monitoring mode requires a distribution to be defined that dictates how long until the specified action occurs.</p>
+<p>PVRPM has some distributions built in, where only a mean and standard deviation is needed to properly model the distribution. Under the hood, PVRPM uses <cite>scipy.stats</cite> distributions to generate samples. However, <cite>scipy.stats</cite> documentation for each function is not very clear on how to convert the mean and std into usable values for the distribution, which is why PVRPM will do that for you.
+However, not every single <cite>scipy</cite> distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>exponential</p></li>
+<li><p>normal</p></li>
+<li><p>uniform</p></li>
+<li><p>lognormal</p></li>
+<li><p>weibull</p></li>
+</ul>
+</div></blockquote>
+<p>Using these distributions as the <cite>distribution</cite> parameter for any failure, repair, or monitoring only requires you to provide the mean and standard deviation <strong>in days</strong>. The <cite>weibull</cite> distribution also allows you to provide the <cite>shape</cite> for this distribution instead of the standard deviation. On the <cite>wikipedia page &lt;https://en.wikipedia.org/wiki/Weibull_distribution&gt;</cite> for the weibull distribution, this is the parameter <cite>k</cite>, and <cite>lambda</cite> is calculated from the mean. If you use the <cite>std</cite> option, make sure it is large, since weibull distributions have large STDs by design.</p>
+<p>If these distributions don’t properly model your data, you can use any distribution listed in the <cite>scipy.stats &lt;https://docs.scipy.org/doc/scipy/reference/stats.html&gt;</cite> module. The <cite>distribution</cite> parameter in the configuration should be set to the function name of the distribution in the <cite>scipy.stats</cite> module. The <cite>parameters</cite> key will then be keyword arguments to the function. Make sure to carefully read scipy’s documentation, as each function is different in how you need to define it. Remember, the samples from the distribution represent the number of days before that event occurs for a component.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span>
+<span class="linenos">2</span>    <span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span> <span class="c1"># parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function</span>
+<span class="linenos">3</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1460</span> <span class="c1"># years converted to days</span>
+<span class="linenos">4</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># days</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="failure-setup">
+<h3>Failure Setup<a class="headerlink" href="#failure-setup" title="Permalink to this headline">¶</a></h3>
+<p>PVRPM currently has two failure modes: total failures and concurrent failures. Total failure modes takes the shortest time to failure taken from the defined failures as the time it takes for a component to completely fail. Every component gets a different time to failure, depending on the samples drawn from the distribution.</p>
+<p>For total failure setup, the failure requires the distribution, it’s parameters, the labor time to fix a component, and the cost to fix the component.</p>
+<p>Optionally, there are two fraction modes for a failure: <cite>fraction</cite> and <cite>decay_fraction</cite>. Setting the <cite>fraction</cite> will tell PVRPM to fail that fraction (between 0 and 1) of components in the component level consistently throughout the simulation. This means PVRPM will maintain <cite>fraction</cite> of the components with this failure mode throughout the simulation. Remember, PVRPM will always pick the failure mode in this section <strong>with the shortest time to failure</strong>, so if you set two failures mode, where one is always shorter then the other, then the longer failure mode will never occur, <strong>even if the fraction is defined</strong>.
+The <cite>decay_fraction</cite> also selects <cite>decay_fraction</cite> of the components to fail, however, it decays with each failure. Meaning if you set <cite>decay_fraction</cite> to 0.5, then at first 50 percent of the components will fail with this failure mode, then 25  percent, then 12.5 percent, etc, until it goes to 0.</p>
+<p>A typical setup of failures is to have a long “end of life” failure with a large time, and failures with smaller time to failures with a <cite>fraction</cite> or <cite>decay_fraction</cite>, so some will fail with the shorter failures and most will fail with the end of life failure.</p>
+<p>Concurrent failures works the same way as above, except each failure mode is <strong>concurrent</strong>. This means that failure modes defined as concurrent failures <strong>do not have the shortest time picked among the modes, instead each failure mode will fail the component independent of each other and to the total failure mode</strong>. You can view this mode as “partial failures”, where failures of this nature happen more often then total failures, but cost less to fix and are faster to repair. You can use <cite>fraction</cite> and <cite>decay_fraction</cite> here as needed.</p>
+<p>A typical setup for concurrent failure modes is to list routine failures that happen every year or two to a <cite>fraction</cite> of the components.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nt">failures</span><span class="p">:</span>
+<span class="linenos"> 2</span>  <span class="nt">eol_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos"> 3</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span>
+<span class="linenos"> 4</span>    <span class="nt">parameters</span><span class="p">:</span> <span class="c1"># parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function</span>
+<span class="linenos"> 5</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3650</span> <span class="c1"># years converted to days</span>
+<span class="linenos"> 6</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># days</span>
+<span class="linenos"> 7</span>    <span class="nt">labor_time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># in hours</span>
+<span class="linenos"> 8</span>    <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">322</span> <span class="c1"># in USD</span>
+<span class="linenos"> 9</span>  <span class="nt">routine_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">10</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span>
+<span class="linenos">11</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">12</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+<span class="linenos">13</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span>
+<span class="linenos">14</span>    <span class="nt">labor_time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># in hours</span>
+<span class="linenos">15</span>    <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">322</span> <span class="c1"># in USD</span>
+<span class="linenos">16</span>    <span class="nt">fraction</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are normal failures, maintained throughout the simulation</span>
+<span class="linenos">17</span>  <span class="nt">defective_failures</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">18</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">exponential</span>
+<span class="linenos">19</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">20</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+<span class="linenos">21</span>    <span class="nt">labor_time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># in hours</span>
+<span class="linenos">22</span>    <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">322</span> <span class="c1"># in USD</span>
+<span class="linenos">23</span>    <span class="nt">decay_fraction</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are defective</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="nt">concurrent_failures</span><span class="p">:</span> <span class="c1"># this happens all in parallel, independent of each other</span>
+<span class="linenos">26</span>  <span class="nt">cell_failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">27</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span>
+<span class="linenos">28</span>    <span class="nt">parameters</span><span class="p">:</span> <span class="c1"># parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function</span>
+<span class="linenos">29</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># years converted to days</span>
+<span class="linenos">30</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># days</span>
+<span class="linenos">31</span>    <span class="nt">labor_time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># in hours</span>
+<span class="linenos">32</span>    <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">322</span> <span class="c1"># in USD</span>
+<span class="linenos">33</span>    <span class="nt">decay_fraction</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="linenos">34</span>  <span class="nt">wiring_failure</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">35</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span>
+<span class="linenos">36</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">37</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># mean in days, or you can do 1 / (num_failures / year * 365)</span>
+<span class="linenos">38</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span>
+<span class="linenos">39</span>    <span class="nt">labor_time</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span> <span class="c1"># in hours</span>
+<span class="linenos">40</span>    <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">322</span> <span class="c1"># in USD</span>
+<span class="linenos">41</span>    <span class="nt">fraction</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span> <span class="c1"># &gt; 0 and &lt; 1, fraction of these components that are normal failures, maintained throughout the simulation</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="repair-setup">
+<h3>Repair Setup<a class="headerlink" href="#repair-setup" title="Permalink to this headline">¶</a></h3>
+<p>Repairs are much more simple. They only need the distribution and it’s parameters defined for every repair mode. You can either have one repair mode, that applies to all failures, or a repair mode for each failure mode. You also must list repairs for total failures and concurrent failures separately.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nt">repairs</span><span class="p">:</span>
+<span class="linenos"> 2</span>  <span class="nt">all_repairs</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos"> 3</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">lognormal</span>
+<span class="linenos"> 4</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos"> 5</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span> <span class="c1"># in days</span>
+<span class="linenos"> 6</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span> <span class="c1"># in days</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="nt">concurrent_repairs</span><span class="p">:</span>
+<span class="linenos"> 9</span>  <span class="nt">cell_repair</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">10</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">lognormal</span>
+<span class="linenos">11</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">12</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">7</span> <span class="c1"># in days</span>
+<span class="linenos">13</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span> <span class="c1"># in days</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>  <span class="nt">wire_repair</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">16</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">lognormal</span>
+<span class="linenos">17</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">18</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span> <span class="c1"># in days</span>
+<span class="linenos">19</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span> <span class="c1"># in days</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="monitoring">
+<h3>Monitoring<a class="headerlink" href="#monitoring" title="Permalink to this headline">¶</a></h3>
+<p>There are multiple monitoring modes that are available for components. It is also optional, you can disable all monitoring, in which components that failure are immediately repaired. You can remove any section you are not using. The modes available are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Component Level: monitoring at the level of the component which usually offers quick time to detection.</p></li>
+<li><p>Cross Level: monitoring done at a higher level to lower level components. Meaning inverter monitoring string, combiner, etc.</p></li>
+<li><p>Independent: monitoring done independent of any component level, such as drone IR imaging.</p></li>
+</ul>
+</div></blockquote>
+<p>Component level monitoring is defined under each component level’s configuration. It simply requires a distribution and parameters that signify the time to detection in days to detect a failed component in this level.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="nt">monitoring</span><span class="p">:</span>
+<span class="linenos">2</span>  <span class="nt">normal_monitoring</span><span class="p">:</span> <span class="c1"># this key name can be anything you want</span>
+<span class="linenos">3</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">exponential</span>
+<span class="linenos">4</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">5</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+</div>
+<p>Cross level monitoring is a bit more complex. Alongside the distribution and parameters, there are thresholds which give more control of how the monitoring works. A <cite>global_threshold</cite> option defines the fraction of components in the level being monitored <strong>must fail</strong> before monitoring can detect failed components. This can be seen as enough modules must fail before monitoring at the inverter can start detecting those failures, for example. In PVRPM, this is replicated by the <cite>global_threshold</cite> must be met before time to detection counts down. There is also a <cite>failure_per_threshold</cite>, which is the fraction of <strong>lower level</strong> components that must fail <strong>per upper level component</strong>. For example, if monitoring at the string with a <cite>failure_per_threshold</cite> of 0.1, then 10 percent of modules under a single string must fail before the string monitoring can detect module failures. Both thresholds can be defined at the same time, but one must be defined for this monitoring to work.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nt">component_level_monitoring</span><span class="p">:</span>
+<span class="linenos"> 2</span><span class="c1"># lists what monitoring each component level has for levels BELOW it</span>
+<span class="linenos"> 3</span><span class="c1"># this is for cross level monitoring only, for defining monitoring at each level use the monitoring distributions above</span>
+<span class="linenos"> 4</span><span class="nt">string</span><span class="p">:</span> <span class="c1"># component level that has the monitoring for levels below</span>
+<span class="linenos"> 5</span>  <span class="nt">module</span><span class="p">:</span> <span class="c1"># componenet level that is below&#39;s key. same keys used above: module, string, combiner, inverter, disconnect, grid, transformer</span>
+<span class="linenos"> 6</span>    <span class="nt">global_threshold</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span> <span class="c1"># fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.</span>
+<span class="linenos"> 7</span>                           <span class="c1"># this means that until this threshold is met, component failures can never be detected</span>
+<span class="linenos"> 8</span>                           <span class="c1"># In the simulation, the time to detection doesn&#39;t count down until this threshold is met, which at that point the compouning function will be used along with the distribution as normal</span>
+<span class="linenos"> 9</span>    <span class="nt">failure_per_threshold</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span> <span class="c1"># the fraction of components that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above</span>
+<span class="linenos">10</span>    <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span> <span class="c1"># distribution that defines how long this monitoring takes to detect a failure at this level (independent)</span>
+<span class="linenos">11</span>                         <span class="c1"># the value calculated from this distribution will be reduced by the compounding factor for every failure in this level</span>
+<span class="linenos">12</span>    <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">13</span>      <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1200</span>
+<span class="linenos">14</span>      <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="nt">combiner</span><span class="p">:</span>
+<span class="linenos">17</span>  <span class="nt">string</span><span class="p">:</span>
+<span class="linenos">18</span>      <span class="nt">failure_per_threshold</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.2</span> <span class="c1"># this fraction of strings must fail on a specific combiner for detection for those to start</span>
+<span class="linenos">19</span>      <span class="c1"># failures are not compounded globally in this case, only per each combiner</span>
+<span class="linenos">20</span>      <span class="nt">distribution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">normal</span> <span class="c1"># distribution that defines how long this monitoring takes to detect a failure at this level (independent)</span>
+<span class="linenos">21</span>      <span class="nt">parameters</span><span class="p">:</span>
+<span class="linenos">22</span>        <span class="nt">mean</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1825</span>
+<span class="linenos">23</span>        <span class="nt">std</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span>
+</pre></div>
+</div>
+<p>Independent monitoring works outside of component levels. It represents monitoring that <strong>detects all failures in any component level</strong> instantly. It can happen statically every set number of days, defined by the <cite>interval</cite>, or at a threshold of failed components globally, which is the <cite>global_threshold</cite>, similar to how it works in the cross level monitoring. Multiple levels can be set under the <cite>levels</cite> parameter, which the threshold of components <strong>in all defined levels</strong> must meet the global_threshold for the monitoring to occur. Every time this monitoring occurs, the defined cost is added to the running costs.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nt">indep_monitoring</span><span class="p">:</span>
+<span class="linenos"> 2</span><span class="nt">drone_ir</span><span class="p">:</span>  <span class="c1"># this name can be anything you want!</span>
+<span class="linenos"> 3</span>  <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1095</span> <span class="c1"># interval in days when this static monitoring occurs</span>
+<span class="linenos"> 4</span>  <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">50000</span> <span class="c1"># cost of this monitoring in USD</span>
+<span class="linenos"> 5</span>  <span class="nt">levels</span><span class="p">:</span> <span class="c1"># the component levels this detects on</span>
+<span class="linenos"> 6</span>    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">module</span>
+<span class="linenos"> 7</span>    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="linenos"> 8</span>    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">combiner</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="nt">drone_ir2</span><span class="p">:</span> <span class="c1"># list as many static monitoring methods as you want</span>
+<span class="linenos">11</span>  <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">365</span> <span class="c1"># this monitoring will happen every 365 days, alongside the threshold.</span>
+<span class="linenos">12</span>  <span class="c1"># a indep monitoring triggered by a threshold RESETs the countdown to the interval</span>
+<span class="linenos">13</span>  <span class="nt">global_threshold</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span> <span class="c1"># if availability of ALL levels listed under the levels parameters decreases by this amount, run this monitoring</span>
+<span class="linenos">14</span>  <span class="nt">cost</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100000</span>
+<span class="linenos">15</span>  <span class="nt">levels</span><span class="p">:</span>
+<span class="linenos">16</span>    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">module</span>
+<span class="linenos">17</span>    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="running-the-simulation">
+<h2>Running the simulation<a class="headerlink" href="#running-the-simulation" title="Permalink to this headline">¶</a></h2>
+<p>The example configuration provided shows how all these options are defined, please consult it as necessary.</p>
+<p>Now that you have your SAM case JSONs, and your PVRPM configuration, you can run the simulation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>pvrpm run --case /path/to/directory/with/jsons /path/to/pvrpm/config.yaml
+</pre></div>
+</div>
+<p>You can also parallelize realizations, to decrease the overall run time. To use all your CPU cores to run PVRPM:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>pvrpm run --case /path/to/directory/with/jsons --threads <span class="m">0</span> /path/to/pvrpm/config.yaml
+</pre></div>
+</div>
+<p>PVRPM will alert you to unknown keys in your configuration in case you misspelled something, and also tell you any incorrect or missing parameters you may have.</p>
+<p>Once the simulation is completed, result graphs and csv files will be saved to the defined results folder.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="tutorial_installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tutorial_assumptions_limitations.html" class="btn btn-neutral float-left" title="SAM/PVRPM Assumptions / Limitations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, FSEC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

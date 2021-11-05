@@ -73,7 +73,7 @@ use_worst_case_tracker: false
 # PVRPM has some distributions built in, where only a mean and standard deviation is needed to
 # properly model the failure or repair. Under the hood, PVRPM uses scipy.stats distribution
 # functions to model these. However, scipy.stats documentation for each function is not very
-# clear on how to convert the mean and std into usuable values for the distribution, which
+# clear on how to convert the mean and std into usable values for the distribution, which
 # is why PVRPM will wrap them for you.
 
 # However, not every single scipy distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):
@@ -113,7 +113,7 @@ module:
         std: 365 # days
       labor_time: 2 # in hours
       cost: 322 # in USD
-    normal_failures: # this key name can be anything you want
+    routine_failures: # this key name can be anything you want
       distribution: normal
       parameters:
         mean: 365 # mean in days, or you can do 1 / (num_failures / year * 365)
@@ -128,6 +128,24 @@ module:
       labor_time: 2 # in hours
       cost: 322 # in USD
       decay_fraction: 0.2 # > 0 and < 1, fraction of these components that are defective
+
+  concurrent_failures: # this happens all in parallel, independent of each other
+    cell_failure: # this key name can be anything you want
+      distribution: normal
+      parameters: # parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function
+        mean: 365 # years converted to days
+        std: 365 # days
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+      decay_fraction: 0.2
+    wiring_failure: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 365 # mean in days, or you can do 1 / (num_failures / year * 365)
+        std: 365
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+      fraction: 0.1 # > 0 and < 1, fraction of these components that are normal failures, maintained throughout the simulation
 
   monitoring:
     normal_monitoring: # this key name can be anything you want
@@ -147,6 +165,19 @@ module:
       parameters:
         mean: 60 # in days
         std: 20 # in days
+
+  concurrent_repairs:
+    cell_repair: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 7 # in days
+        std: 3 # in days
+
+    wire_repair: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 3 # in days
+        std: 3 # in days
 
   degradation: 20 # modules only, how much a module degrades per year in percent
 
@@ -416,7 +447,7 @@ component_level_monitoring:
       global_threshold: 0.2 # fraction on [0, 1] that specifies how many of this component type must fail before detection can occur.
                              # this means that until this threshold is met, component failures can never be detected
                              # In the simulation, the time to detection doesn't count down until this threshold is met, which at that point the compouning function will be used along with the distribution as normal
-      failure_per_threshold: 0.1 # the fraction of modules that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above
+      failure_per_threshold: 0.1 # the fraction of components that must fail per string for failures to be detected at that specified string, or if the total number of failures reach the global_threshold above
       distribution: normal # distribution that defines how long this monitoring takes to detect a failure at this level (independent)
                            # the value calculated from this distribution will be reduced by the compounding factor for every failure in this level
       parameters:
