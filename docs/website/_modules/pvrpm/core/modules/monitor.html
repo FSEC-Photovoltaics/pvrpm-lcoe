@@ -85,7 +85,14 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
 </ul>
@@ -294,7 +301,7 @@
 <div class="viewcode-block" id="LevelMonitor.update"><a class="viewcode-back" href="../../../../api/pvrpm.core.modules.html#pvrpm.core.modules.monitor.LevelMonitor.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
 
-        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span></div></div>
 
 
@@ -363,7 +370,7 @@
         <span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="n">failed_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
         <span class="n">num_failed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_df</span><span class="p">)</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="n">conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">COMP_MONITOR</span><span class="p">]</span>
         <span class="n">global_threshold</span> <span class="o">=</span> <span class="kc">False</span>
@@ -421,6 +428,7 @@
         <span class="n">case</span><span class="p">:</span> <span class="n">SamCase</span><span class="p">,</span>
         <span class="n">comps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">costs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">dc_availability</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initalizes an independent monitoring instance</span>
@@ -429,11 +437,13 @@
 <span class="sd">            case (:obj:`SamCase`): The SAM case for this simulation</span>
 <span class="sd">            comps (dict): The dataframes for each component level that tracks information during the simulation</span>
 <span class="sd">            costs (dict): The dictionary for costs accrued for each component level</span>
+<span class="sd">            dc_availability (:obj:`np.array`): The dc availability for every day in the simulation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">case</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comps</span> <span class="o">=</span> <span class="n">comps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">costs</span> <span class="o">=</span> <span class="n">costs</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">labor_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LABOR_RATE</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dc_availability</span> <span class="o">=</span> <span class="n">dc_availability</span>
         <span class="c1"># keep track of static monitoring for every level</span>
         <span class="n">index</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
@@ -452,33 +462,67 @@
 <div class="viewcode-block" id="IndepMonitor.initialize_components"><a class="viewcode-back" href="../../../../api/pvrpm.core.modules.html#pvrpm.core.modules.monitor.IndepMonitor.initialize_components">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span></div>
 
+<div class="viewcode-block" id="IndepMonitor.update_labor_rate"><a class="viewcode-back" href="../../../../api/pvrpm.core.modules.html#pvrpm.core.modules.monitor.IndepMonitor.update_labor_rate">[docs]</a>    <span class="k">def</span> <span class="nf">update_labor_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the labor rate for this repair</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new (float): The new labor rate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labor_rate</span> <span class="o">=</span> <span class="n">new</span></div>
+
 <div class="viewcode-block" id="IndepMonitor.reinitialize_components"><a class="viewcode-back" href="../../../../api/pvrpm.core.modules.html#pvrpm.core.modules.monitor.IndepMonitor.reinitialize_components">[docs]</a>    <span class="k">def</span> <span class="nf">reinitialize_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">&quot;monitor_times&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">return</span> <span class="n">df</span></div>
 
 <div class="viewcode-block" id="IndepMonitor.update"><a class="viewcode-back" href="../../../../api/pvrpm.core.modules.html#pvrpm.core.modules.monitor.IndepMonitor.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="c1"># need to update time to detections for components with a distribution and need to decrement time to detection</span>
+        <span class="c1"># this overrides other monitoring methods, if they are defined, using the indep_monitor column</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">monitor_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">DIST</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>  <span class="c1"># if no dist, time to detection is None or 0</span>
+                <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">CAN_FAIL</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span>
+                    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitoring</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitoring</span> <span class="o">&lt;</span> <span class="mi">1</span>
         <span class="n">current_monitors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitoring</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
         <span class="k">for</span> <span class="n">monitor</span> <span class="ow">in</span> <span class="n">current_monitors</span><span class="p">:</span>
-            <span class="c1"># static monitoring method commences, instantly detecting all failed components in their specified levels</span>
+            <span class="c1"># independent monitoring method commences, instantly detecting all failed components in their specified levels</span>
             <span class="c1"># which have not been detected by other monitoring methods yet.</span>
             <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">][</span><span class="n">monitor</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">CAN_FAIL</span><span class="p">]:</span>
                     <span class="k">continue</span>
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
-                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()))</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()))</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">monitor_comps</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;monitor_times&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span>
 
-                <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">DIST</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                    <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">DIST</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">PARAM</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">monitor_comps</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
                 <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitor_comps</span>
                 <span class="c1"># add cost to total costs (split evenly among all the levels for this day)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">day</span><span class="p">]</span> <span class="o">+=</span> <span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">COST</span><span class="p">]</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">day</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">COST</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">labor_rate</span> <span class="o">*</span> <span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LABOR</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span>
+                    <span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]</span>
+                <span class="p">)</span>
 
             <span class="c1"># reset static monitoring time</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitoring</span><span class="p">[</span><span class="n">monitor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">][</span><span class="n">monitor</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">INTERVAL</span><span class="p">]</span>
@@ -486,22 +530,34 @@
         <span class="c1"># threshold monitoring calculations</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">monitor_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># ignore threshold if the interval was reached for this monitor</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">current_monitors</span> <span class="ow">or</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">current_monitors</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span> <span class="ow">and</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_PER_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span>
+            <span class="p">):</span>
                 <span class="k">continue</span>
 
-            <span class="n">threshold</span> <span class="o">=</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span><span class="p">]</span>
-            <span class="n">failed</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">CAN_FAIL</span><span class="p">]:</span>
-                    <span class="k">continue</span>
+            <span class="n">threshold_met</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                <span class="c1"># calculate dc availability and determine if indep monitoring is needed</span>
+                <span class="c1"># this does use the previous day since this is calculated at the end of each day, but i figured</span>
+                <span class="c1"># that wouldn&#39;t matter in the end and saves computing it again here</span>
+                <span class="c1"># subtracting 1 also works since the inital dc availability is calculated for day 0</span>
+                <span class="c1"># and day starts at 1</span>
+                <span class="k">if</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dc_availability</span><span class="p">[</span><span class="n">day</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span><span class="p">]:</span>
+                    <span class="n">threshold_met</span> <span class="o">=</span> <span class="kc">True</span>
 
-                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
-                <span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
-                <span class="n">failed</span> <span class="o">+=</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-                <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">threshold_met</span> <span class="ow">and</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_PER_THRESH</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">CAN_FAIL</span><span class="p">]:</span>
+                        <span class="k">continue</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">failed</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                    <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">FAIL_PER_THRESH</span><span class="p">]:</span>
+                        <span class="n">threshold_met</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">threshold_met</span><span class="p">:</span>
                 <span class="k">continue</span>
 
             <span class="c1"># threshold met, run independent monitor</span>
@@ -511,7 +567,11 @@
                     <span class="k">continue</span>
 
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
-                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()))</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()))</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">monitor_comps</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">monitor_comps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -527,10 +587,20 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;monitor_times&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span>
 
-                <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">DIST</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                    <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+                        <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">DIST</span><span class="p">],</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">PARAM</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">monitor_comps</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;time_to_detection&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="n">monitor_comps</span><span class="p">[</span><span class="s2">&quot;indep_monitor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
                 <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitor_comps</span>
                 <span class="c1"># add cost to total costs (split evenly among all the levels for this day)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">day</span><span class="p">]</span> <span class="o">+=</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">COST</span><span class="p">]</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">])</span></div></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">[</span><span class="n">level</span><span class="p">][</span><span class="n">day</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">COST</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">labor_rate</span> <span class="o">*</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LABOR</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span>
+                    <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]</span>
+                <span class="p">)</span></div></div>
 </pre></div>
 
            </div>

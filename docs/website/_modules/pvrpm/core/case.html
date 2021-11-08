@@ -85,7 +85,14 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
 </ul>
@@ -339,13 +346,28 @@
             <span class="n">needed_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ck</span><span class="o">.</span><span class="n">indep_monitor_keys</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">monitor_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">included_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">monitor_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&amp;</span> <span class="n">needed_keys</span>
-                <span class="n">unknown_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">monitor_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">needed_keys</span> <span class="o">-</span> <span class="n">ck</span><span class="o">.</span><span class="n">INTERVAL</span> <span class="o">-</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span>
+                <span class="n">unknown_keys</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">set</span><span class="p">(</span><span class="n">monitor_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                    <span class="o">-</span> <span class="n">needed_keys</span>
+                    <span class="o">-</span> <span class="p">{</span><span class="n">ck</span><span class="o">.</span><span class="n">INTERVAL</span><span class="p">,</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span><span class="p">,</span> <span class="n">ck</span><span class="o">.</span><span class="n">DIST</span><span class="p">,</span> <span class="n">ck</span><span class="o">.</span><span class="n">PARAM</span><span class="p">,</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_PER_THRESH</span><span class="p">}</span>
+                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">included_keys</span> <span class="o">!=</span> <span class="n">needed_keys</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">CaseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Independent monitoring for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is missing keys </span><span class="si">{</span><span class="n">needed_keys</span> <span class="o">-</span> <span class="n">included_keys</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">INTERVAL</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span> <span class="ow">and</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">INTERVAL</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span> <span class="ow">and</span> <span class="p">(</span>
+                    <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span> <span class="ow">and</span> <span class="n">ck</span><span class="o">.</span><span class="n">FAIL_PER_THRESH</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitor_config</span>
+                <span class="p">):</span>
                     <span class="k">raise</span> <span class="n">CaseError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Independent monitoring for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is missing the interval and/or global_threshold&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Independent monitoring for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is missing the interval and/or global_threshold/failure_per_threshold&quot;</span>
                     <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">ck</span><span class="o">.</span><span class="n">DIST</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">ck</span><span class="o">.</span><span class="n">PARAM</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">CaseError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Independent monitoring for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is missing the parameters for distribution.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">DIST</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ck</span><span class="o">.</span><span class="n">dists</span><span class="p">:</span>
+                        <span class="n">check_params</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">monitor_config</span><span class="p">)</span>
+
                 <span class="k">if</span> <span class="n">unknown_keys</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown keys in independent monitoring configuration: </span><span class="si">{</span><span class="n">unknown_keys</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">monitor_config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">LEVELS</span><span class="p">]:</span>
