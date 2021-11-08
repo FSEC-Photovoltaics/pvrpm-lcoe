@@ -370,7 +370,7 @@ class IndepMonitor(Monitor):
                 # calculate dc availability and determine if indep monitoring is needed
                 # this does use the previous day since this is calculated at the end of each day, but i figured
                 # that wouldn't matter in the end and saves computing it again here
-                # subtraction 1 also works since the inital dc availability is calculated for day 0
+                # subtracting 1 also works since the inital dc availability is calculated for day 0
                 # and day starts at 1
                 if (1 - (self.dc_availability[day - 1])) > monitor_config[ck.FAIL_THRESH]:
                     threshold_met = True

@@ -420,7 +420,7 @@ indep_monitoring:
     # a indep monitoring triggered by a threshold RESETs the countdown to the interval
     global_threshold: 0.1 # if DC availability drops by this threshold amount, then this indep monitoring will occur
     # DC availability is the DC power reaching the inverter(s), which is affected by combiners, strings, and module failures
-    failure_per_threshold: 0.2 # this threshold is PER LEVEL, people if the availability of ANY of the defined levels drops by this threshold amount, this indep monitoring will occur
+    failure_per_threshold: 0.2 # this threshold is PER LEVEL, if the availability of ANY of the defined levels drops by this threshold amount, this indep monitoring will occur
     cost: 100000
     labor_time: 1 # in hours
     levels:

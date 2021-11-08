@@ -225,13 +225,13 @@ class TotalFailure(Failure):
 
             failed_comps["state"] = 0
 
-            # update time to detection times for component levels with only static monitoring
+            # update time to detection times for component levels with only independent monitoring
             # which will have None for monitor times
             try:
                 if failed_comps["monitor_times"].isnull().any():
-                    # monitor and time to detection will be the time to next static monitoring
+                    # monitor and time to detection will be the time to next indep monitoring
                     indep_monitors = list(self.case.config[self.level][ck.INDEP_MONITOR].keys())
-                    # next static monitoring is the min of the possible static monitors for this component level
+                    # next indep monitoring is the min of the possible indep monitors for this component level
                     failed_comps["monitor_times"] = np.amin(self.indep_monitoring.indep_monitoring[indep_monitors])
                     # in order to calculate the time to detection for component levels only monitoring by an
                     # independment monitoring with a threshold (no interval), need to instead

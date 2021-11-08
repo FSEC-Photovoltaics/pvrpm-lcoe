@@ -86,7 +86,14 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../example_pvrpm_config.html">Example YAML Configuration</a></li>
 </ul>
@@ -444,12 +451,12 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pvrpm.core.modules.monitor.IndepMonitor">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pvrpm.core.modules.monitor.</span></span><span class="sig-name descname"><span class="pre">IndepMonitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="pvrpm.core.html#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comps</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/modules/monitor.html#IndepMonitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.modules.monitor.IndepMonitor" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pvrpm.core.modules.monitor.</span></span><span class="sig-name descname"><span class="pre">IndepMonitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="pvrpm.core.html#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comps</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc_availability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/modules/monitor.html#IndepMonitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.modules.monitor.IndepMonitor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pvrpm.core.modules.monitor.Monitor" title="pvrpm.core.modules.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">pvrpm.core.modules.monitor.Monitor</span></code></a></p>
 <p>Defines independent monitoring that is component level independent</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pvrpm.core.modules.monitor.IndepMonitor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="pvrpm.core.html#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comps</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/modules/monitor.html#IndepMonitor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.modules.monitor.IndepMonitor.__init__" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="pvrpm.core.html#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comps</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc_availability</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/modules/monitor.html#IndepMonitor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.modules.monitor.IndepMonitor.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initalizes an independent monitoring instance</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -457,6 +464,7 @@
 <li><p><strong>case</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">SamCase</span></code>) – The SAM case for this simulation</p></li>
 <li><p><strong>comps</strong> (<em>dict</em>) – The dataframes for each component level that tracks information during the simulation</p></li>
 <li><p><strong>costs</strong> (<em>dict</em>) – The dictionary for costs accrued for each component level</p></li>
+<li><p><strong>dc_availability</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">np.array</span></code>) – The dc availability for every day in the simulation</p></li>
 </ul>
 </dd>
 </dl>
@@ -503,6 +511,17 @@
 <p class="admonition-title">Note</p>
 <p>Updates the underlying dataframes in place</p>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pvrpm.core.modules.monitor.IndepMonitor.update_labor_rate">
+<span class="sig-name descname"><span class="pre">update_labor_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/modules/monitor.html#IndepMonitor.update_labor_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.modules.monitor.IndepMonitor.update_labor_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the labor rate for this repair</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>new</strong> (<em>float</em>) – The new labor rate</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

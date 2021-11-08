@@ -85,7 +85,14 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
 </ul>
@@ -388,13 +395,13 @@
 
             <span class="n">failed_comps</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-            <span class="c1"># update time to detection times for component levels with only static monitoring</span>
+            <span class="c1"># update time to detection times for component levels with only independent monitoring</span>
             <span class="c1"># which will have None for monitor times</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">failed_comps</span><span class="p">[</span><span class="s2">&quot;monitor_times&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                    <span class="c1"># monitor and time to detection will be the time to next static monitoring</span>
+                    <span class="c1"># monitor and time to detection will be the time to next indep monitoring</span>
                     <span class="n">indep_monitors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">INDEP_MONITOR</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-                    <span class="c1"># next static monitoring is the min of the possible static monitors for this component level</span>
+                    <span class="c1"># next indep monitoring is the min of the possible indep monitors for this component level</span>
                     <span class="n">failed_comps</span><span class="p">[</span><span class="s2">&quot;monitor_times&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indep_monitoring</span><span class="o">.</span><span class="n">indep_monitoring</span><span class="p">[</span><span class="n">indep_monitors</span><span class="p">])</span>
                     <span class="c1"># in order to calculate the time to detection for component levels only monitoring by an</span>
                     <span class="c1"># independment monitoring with a threshold (no interval), need to instead</span>
