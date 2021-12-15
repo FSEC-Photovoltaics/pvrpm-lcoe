@@ -182,8 +182,13 @@
 <h2>Installation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <p>Requires python &gt;= 3.8</p>
 <p>Works on any x64 OS.</p>
-<p><strong>Recommended</strong> using pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>pip install git+https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/@master
+<p><strong>Recommended</strong> using pip:
+(Replace <cite>&#64;master</cite> with the branch release name if you want a release version)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># for latest development branch</span>
+<span class="linenos">2</span>pip install git+https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/@master
+<span class="linenos">3</span>
+<span class="linenos">4</span><span class="c1"># for specific version</span>
+<span class="linenos">5</span>pip install git+https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/@vx.x.x
 </pre></div>
 </div>
 <p>Using the wheel file downloaded from <a class="reference external" href="https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/releases">https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/releases</a></p>
@@ -203,6 +208,13 @@
 <span class="linenos">3</span>pip install .<span class="o">[</span>docs<span class="o">]</span>
 <span class="linenos">4</span><span class="nb">cd</span> docs
 <span class="linenos">5</span>make html
+</pre></div>
+</div>
+<p>If you want to run automated tests (will take a while based on compute power):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>git clone https://github.com/FSEC-Photovoltaics/pvrpm-lcoe
+<span class="linenos">2</span><span class="nb">cd</span> pvrpm-lcoe
+<span class="linenos">3</span>pip install .<span class="o">[</span>testing<span class="o">]</span>
+<span class="linenos">4</span>pytest
 </pre></div>
 </div>
 </div>
