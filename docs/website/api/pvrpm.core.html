@@ -192,8 +192,6 @@
             
   <div class="section" id="pvrpm-core-package">
 <h1>pvrpm.core package<a class="headerlink" href="#pvrpm-core-package" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-</div>
 <div class="section" id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -429,6 +427,38 @@
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pvrpm.core.components.Components.snapshot">
+<span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/components.html#Components.snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.components.Components.snapshot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current state of the simulation including all internal dataframes, arrays, and variables for this object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A dictionary containing the simulation snapshot data</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The returned objects are copies of this components objects to avoid changing data in the simulation unintentionally</p>
+<dl class="simple">
+<dt>The returned dictionary has these keys and values:</dt><dd><ul class="simple">
+<li><p>module: DataFrame of simulation data for module level</p></li>
+<li><p>string: DataFrame of simulation data for string level</p></li>
+<li><p>combiner: DataFrame of simulation data for combiner level</p></li>
+<li><p>inverter: DataFrame of simulation data for inverter level</p></li>
+<li><p>disconnect: DataFrame of simulation data for disconnect level</p></li>
+<li><p>transformer: DataFrame of simulation data for transformer level</p></li>
+<li><p>grid: DataFrame of simulation data for grid level</p></li>
+<li><p>tracker: DataFrame of simulation data for tracker level</p></li>
+<li><p>misc_data: DataFrame containing costs (for each level), module degradation, dc and ac availability, and tracker loss/availability if tracking is used</p></li>
+</ul>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -1066,7 +1096,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pvrpm.core.simulation.pvrpm_sim">
-<span class="sig-prename descclassname"><span class="pre">pvrpm.core.simulation.</span></span><span class="sig-name descname"><span class="pre">pvrpm_sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_results</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_graphs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pvrpm.core.components.Components" title="pvrpm.core.components.Components"><span class="pre">pvrpm.core.components.Components</span></a><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../_modules/pvrpm/core/simulation.html#pvrpm_sim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.simulation.pvrpm_sim" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pvrpm.core.simulation.</span></span><span class="sig-name descname"><span class="pre">pvrpm_sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_results</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_graphs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pvrpm.core.components.Components" title="pvrpm.core.components.Components"><span class="pre">pvrpm.core.components.Components</span></a><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../_modules/pvrpm/core/simulation.html#pvrpm_sim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.simulation.pvrpm_sim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the PVRPM simulation on a specific case. Results will be saved to the folder specified in the configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1075,6 +1105,7 @@
 <li><p><strong>save_results</strong> (<em>bool</em><em>, </em><em>Optional</em>) – Whether to save output csv results</p></li>
 <li><p><strong>save_graphs</strong> (<em>bool</em><em>, </em><em>Optional</em>) – Whether to save output graphs</p></li>
 <li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>Optional</em>) – Whether to display progress bar for each realization</p></li>
+<li><p><strong>debug</strong> (<em>int</em><em>, </em><em>Optional</em>) – Whether to save simulation state every <cite>debug</cite> days (0 to turn off)</p></li>
 <li><p><strong>threads</strong> (<em>int</em><em>, </em><em>Optional</em>) – Number of threads to use for paralizing realizations</p></li>
 </ul>
 </dd>
@@ -1089,7 +1120,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pvrpm.core.simulation.run_system_realization">
-<span class="sig-prename descclassname"><span class="pre">pvrpm.core.simulation.</span></span><span class="sig-name descname"><span class="pre">run_system_realization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">realization_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pvrpm.core.components.Components" title="pvrpm.core.components.Components"><span class="pre">pvrpm.core.components.Components</span></a><a class="reference internal" href="../_modules/pvrpm/core/simulation.html#run_system_realization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.simulation.run_system_realization" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pvrpm.core.simulation.</span></span><span class="sig-name descname"><span class="pre">run_system_realization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#pvrpm.core.case.SamCase" title="pvrpm.core.case.SamCase"><span class="pre">pvrpm.core.case.SamCase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">realization_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#pvrpm.core.components.Components" title="pvrpm.core.components.Components"><span class="pre">pvrpm.core.components.Components</span></a><a class="reference internal" href="../_modules/pvrpm/core/simulation.html#run_system_realization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.simulation.run_system_realization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a full realization for calculating costs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1098,6 +1129,7 @@
 <li><p><strong>seed</strong> (<em>bool</em><em>, </em><em>Optional</em>) – Whether to seed the random number generator, for multiprocessing</p></li>
 <li><p><strong>realization_num</strong> (<em>int</em><em>, </em><em>Optional</em>) – Current realization number, used for multiprocessing</p></li>
 <li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>Optional</em>) – Whether to display progress bar during the realization</p></li>
+<li><p><strong>debug</strong> (<em>int</em><em>, </em><em>Optional</em>) – Whether to save simulation state every <cite>debug</cite> days (0 to turn off)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1135,7 +1167,7 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>percent_per_day</strong> (<em>float</em>) – The percent degradation per day of the module</p></li>
-<li><p><strong>t</strong> (<em>int</em>) – Time since the module was last replaced, or if its a new module installed</p></li>
+<li><p><strong>t</strong> (<em>int</em>) – Time since the module was last replaced, or if its a new module, installed</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1153,7 +1185,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pvrpm.core.utils.filename_to_module">
-<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">filename_to_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#filename_to_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.filename_to_module" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">filename_to_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">object</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#filename_to_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.filename_to_module" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the filename of an exported json file from SAM, extracts the module name, and returns a callback to that module that can be used to create an object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1204,7 +1236,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pvrpm.core.utils.sample">
-<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'rou'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.array</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.sample" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.array</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample data from a distribution. If distribution is a supported distribution, parameters should be a dictionary with keys “mean” and “std”. Otherwise, distribution should be a scipy stats function and parameters be the kwargs for the distribution.</p>
 <dl class="simple">
 <dt>Supported Distributions (only requires mean and std):</dt><dd><ul class="simple">
@@ -1215,10 +1247,6 @@
 <li><p>exponential</p></li>
 </ul>
 </dd>
-<dt>Supported sampling methods:</dt><dd><ul class="simple">
-<li><p>‘rou’: Ratio of uniforms, the default. Pretty much random sampling</p></li>
-</ul>
-</dd>
 </dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1226,7 +1254,6 @@
 <li><p><strong>distribution</strong> (<em>str</em>) – Name of the distribution function</p></li>
 <li><p><strong>parameters</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>) – Kwargs for the distribution (for a supported distribution should only be the mean and std)</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples to return from distribution</p></li>
-<li><p><strong>method</strong> (<em>str</em><em>, </em><em>Optional</em>) – Sampling method to use, defaults to ratio of uniforms</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1237,7 +1264,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pvrpm.core.utils.summarize_dc_energy">
-<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">summarize_dc_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dc_power_output</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#summarize_dc_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.summarize_dc_energy" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pvrpm.core.utils.</span></span><span class="sig-name descname"><span class="pre">summarize_dc_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dc_power_output</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.array</span><a class="reference internal" href="../_modules/pvrpm/core/utils.html#summarize_dc_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pvrpm.core.utils.summarize_dc_energy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the DC energy (kWh) based on an input array of timeseries DC power (kW) for the system lifetime (likely the ‘dc_net’ output from SAM)</p>
 <p>Can be used to summarize similar hourly, daily data to yearly</p>
 <dl class="field-list simple">

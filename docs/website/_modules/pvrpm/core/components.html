@@ -238,9 +238,6 @@
         <span class="k">if</span> <span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKING</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">tracker_power_loss_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lifetime</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">tracker_availability</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lifetime</span> <span class="o">*</span> <span class="mi">365</span><span class="p">)</span>
-            <span class="n">fail</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKER</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="c1"># TODO: why is this based only on the first failure?</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">original_tracker_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKER</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">][</span><span class="n">fail</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ck</span><span class="o">.</span><span class="n">COST</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Components.compound_failures"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.components.Components.compound_failures">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">compound_failures</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">num_fails</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -450,7 +447,9 @@
         <span class="n">fraction</span> <span class="o">=</span> <span class="n">operational_trackers</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="n">adjusted_factor</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKER</span><span class="p">][</span><span class="n">ck</span><span class="o">.</span><span class="n">CAN_FAIL</span><span class="p">]:</span>
-            <span class="n">adjusted_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">daily_tracker_coeffs</span><span class="p">[</span><span class="n">day</span><span class="p">]</span> <span class="o">+</span> <span class="n">fraction</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">daily_tracker_coeffs</span><span class="p">[</span><span class="n">day</span><span class="p">])</span>
+            <span class="n">adjusted_factor</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">daily_tracker_coeffs</span><span class="p">[</span><span class="n">day</span><span class="p">]</span> <span class="o">+</span> <span class="n">fraction</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">daily_tracker_coeffs</span><span class="p">[</span><span class="n">day</span><span class="p">])</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">fraction</span><span class="p">,</span> <span class="n">adjusted_factor</span></div>
 
@@ -617,7 +616,70 @@
 <span class="sd">            day (int): Current day in the simulation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitor</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitor</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">day</span><span class="p">)</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indep_monitor</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">day</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Components.snapshot"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.components.Components.snapshot">[docs]</a>    <span class="k">def</span> <span class="nf">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the current state of the simulation including all internal dataframes, arrays, and variables for this object</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :obj:`dict`: A dictionary containing the simulation snapshot data</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            The returned objects are copies of this components objects to avoid changing data in the simulation unintentionally</span>
+
+<span class="sd">            The returned dictionary has these keys and values:</span>
+<span class="sd">                * module: DataFrame of simulation data for module level</span>
+<span class="sd">                * string: DataFrame of simulation data for string level</span>
+<span class="sd">                * combiner: DataFrame of simulation data for combiner level</span>
+<span class="sd">                * inverter: DataFrame of simulation data for inverter level</span>
+<span class="sd">                * disconnect: DataFrame of simulation data for disconnect level</span>
+<span class="sd">                * transformer: DataFrame of simulation data for transformer level</span>
+<span class="sd">                * grid: DataFrame of simulation data for grid level</span>
+<span class="sd">                * tracker: DataFrame of simulation data for tracker level</span>
+<span class="sd">                * misc_data: DataFrame containing costs (for each level), module degradation, dc and ac availability, and tracker loss/availability if tracking is used</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;Module Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;String Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Combiner Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Inverter Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Disconnect Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Transformer Costs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Grid Costs&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="n">others</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;Module Degradation&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Dc Availability&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ac Availability&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKING</span><span class="p">]:</span>
+            <span class="n">costs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Tracker Costs&quot;</span><span class="p">]</span>
+            <span class="n">others</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Tracker Loss&quot;</span><span class="p">,</span> <span class="s2">&quot;Tracker Availabilty&quot;</span><span class="p">]</span>
+
+        <span class="n">misc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">costs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">others</span><span class="p">))</span>
+        <span class="n">misc</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;Day&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">cost</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">costs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="n">misc</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">misc</span><span class="p">[</span><span class="n">others</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_degradation_factor</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">misc</span><span class="p">[</span><span class="n">others</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_power_availability</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">misc</span><span class="p">[</span><span class="n">others</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ac_power_availability</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">ck</span><span class="o">.</span><span class="n">TRACKING</span><span class="p">]:</span>
+            <span class="n">misc</span><span class="p">[</span><span class="n">others</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracker_power_loss_factor</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">misc</span><span class="p">[</span><span class="n">others</span><span class="p">[</span><span class="mi">4</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracker_availability</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">comp</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;misc_data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">misc</span>
+
+        <span class="k">return</span> <span class="n">d</span></div></div>
 </pre></div>
 
            </div>
