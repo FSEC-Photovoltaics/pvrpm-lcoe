@@ -99,6 +99,7 @@ def run_system_realization(
     seed: bool = False,
     realization_num: int = 0,
     progress_bar: bool = False,
+    debug: int = 0,
 ) -> Components:
     """
     Run a full realization for calculating costs
@@ -108,6 +109,7 @@ def run_system_realization(
         seed (bool, Optional): Whether to seed the random number generator, for multiprocessing
         realization_num (int, Optional): Current realization number, used for multiprocessing
         progress_bar (bool, Optional): Whether to display progress bar during the realization
+        debug (int, Optional): Whether to save simulation state every `debug` days (0 to turn off)
 
     Returns:
         :obj:`Components`: The components object which contains all the data for this realization
@@ -151,6 +153,15 @@ def run_system_realization(
                 for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
                     case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
 
+        # save state if debugging
+        if debug > 0 and i % debug == 0:
+            state_dict = comp.snapshot()
+            folder = f"debug_day_{i}"
+            save_path = os.path.join(case.config[ck.RESULTS_FOLDER], folder)
+            os.makedirs(save_path, exist_ok=True)
+            for key, val in state_dict.items():
+                val.to_csv(os.path.join(save_path, f"{key}_state.csv"), index=True)
+
         # timestep is applied each day
         simulate_day(case, comp, i)
 
@@ -188,11 +199,6 @@ def run_system_realization(
     case.value("om_fixed", list(o_m_yearly_costs))
 
     case.simulate()
-
-    # reset tracker failure cost
-    if case.config[ck.TRACKING]:
-        for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
-            case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] = comp.original_tracker_cost
 
     # add the results of the simulation to the components class and return
     comp.timeseries_dc_power = case.value("dc_net")
@@ -514,7 +520,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     avg_annual_energy = np.zeros(lifetime)
     avg_losses = np.zeros(len(ck.losses))
     avg_tax_cash_flow = np.zeros(lifetime + 1)  # add 1 for year 0
-    avg_failures = np.zeros((7, lifetime * 365))  # 7 types of components
+    avg_failures = np.zeros((len(ck.component_keys), lifetime * 365))  # 7 types of components
 
     # computing the average across every realization
     for comp in results:
@@ -536,7 +542,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     avg_failures /= len(results)
 
     # sum up failures to be per year
-    avg_failures = np.sum(np.reshape(avg_failures, (7, lifetime, 365)), axis=2)
+    avg_failures = np.sum(np.reshape(avg_failures, (len(ck.component_keys), lifetime, 365)), axis=2)
     # determine the frequency of the data, same as frequncy of supplied weather file
     total = int(len(avg_ac_energy) / lifetime)
     if total == 8760:
@@ -840,6 +846,7 @@ def pvrpm_sim(
     save_results: bool = False,
     save_graphs: bool = False,
     progress_bar: bool = False,
+    debug: int = 0,
     threads: int = 1,
 ) -> List[Components]:
     """
@@ -850,6 +857,7 @@ def pvrpm_sim(
         save_results (bool, Optional): Whether to save output csv results
         save_graphs (bool, Optional): Whether to save output graphs
         progress_bar (bool, Optional): Whether to display progress bar for each realization
+        debug (int, Optional): Whether to save simulation state every `debug` days (0 to turn off)
         threads (int, Optional): Number of threads to use for paralizing realizations
 
     Returns:
@@ -871,7 +879,7 @@ def pvrpm_sim(
 
     # realize what we are doing in life
     results = []
-    args = [(case, True, i + 1, progress_bar) for i in range(case.config[ck.NUM_REALIZATION])]
+    args = [(case, True, i + 1, progress_bar, debug) for i in range(case.config[ck.NUM_REALIZATION])]
     with mp.Pool(threads, initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),)) as p:
         results = p.starmap(run_system_realization, args)
 

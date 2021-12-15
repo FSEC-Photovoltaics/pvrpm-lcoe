@@ -114,7 +114,12 @@ class SamCase:
             case_config = self.__load_config(path, type="json")
             for k, v in case_config.items():
                 if k != "number_inputs":
-                    module.value(k, v)
+                    try:
+                        module.value(k, v)
+                    except AttributeError:
+                        logger.warning(
+                            f"Unknown key in module {module_name}: {k}\n Most likely you used the wrong SAM version to generate the JSONs for the case!"
+                        )
 
             modules[module_name] = module
 
@@ -465,15 +470,15 @@ class SamCase:
                 )
 
         if self.value("en_dc_lifetime_losses") or self.value("en_ac_lifetime_losses"):
-            logger.warn("Lifetime daily DC and AC losses will be overridden for this run.")
+            logger.warning("Lifetime daily DC and AC losses will be overridden for this run.")
 
         if self.value("om_fixed") != [0]:
-            logger.warn(
+            logger.warning(
                 "There is a non-zero value in the fixed annual O&M costs input. These will be overwritten with the new values."
             )
 
         if self.value("dc_degradation") != [0]:
-            logger.warn(
+            logger.warning(
                 "Degradation is set by the PVRPM script, you have entered a non-zero degradation to the degradation input. This script will set the degradation input to zero."
             )
             self.value("dc_degradation", [0])

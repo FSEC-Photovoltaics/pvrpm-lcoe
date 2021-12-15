@@ -1,0 +1,317 @@
+module_order: # the order the modules of this case should be executed
+              # check to see what modules you use by the name of the json output files
+              # typically, this should be pvsystem -> grid -> utiltiy -> others
+              # see https://nrel-pysam.readthedocs.io/en/master/Configs.html?highlight=belpe#sam-simulation-configurations
+  - Belpe
+  - Pvsamv1
+  - Grid
+  - Utilityrate5
+  - Cashloan
+
+### Run Setup ###
+# results folder doesn't need to exist, it will be created if it doesnt already
+results_folder: .
+num_realizations: 2 # number of passes to make
+conf_interval: 95 #XX % confidence interval around the mean will be calculated
+
+### Case Setup ###
+num_combiners: 2 # total number of DC combiner boxes
+num_transformers: 1 # total number of Transformers
+num_trackers: 24 # total number of trackers
+
+### Financial Inputs ###
+present_day_labor_rate: 25 # dollars per hour
+inflation: 2.1 # in percent
+
+### Failure Tracker Algorithm ###
+use_worst_case_tracker: true
+
+module:
+  name: module
+  can_fail: true
+  can_repair: true
+  can_monitor: true # leave true to use monitoring distributions
+
+  warranty:
+    days: 3650 # years converted to days
+
+  failures:
+    eol_failures: # this key name can be anything you want
+      distribution: normal
+      parameters: # parameters for distribution chosen above, either mean and std for a built in distribution or kwargs to the scipy function
+        mean: 7300 # 8760 # years converted to days
+        std: 365 # days
+      labor_time: 2 # in hours
+      cost: 210 # in USD
+
+    defective_failures: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 1095 # mean in days, or you can do 1 / (num_failures / year * 365)
+        std: 365
+      labor_time: 2 # in hours
+      cost: 322 # in USD
+      fraction: 0.1 # > 0 and < 1, fraction of these components that are defective
+
+  concurrent_failures:
+    partial_fail1: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 1095 # mean in days, or you can do 1 / (num_failures / year * 365)
+        std: 365
+      labor_time: 2 # in hours
+      cost: 50 # in USD
+
+    partial_fail2: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 730 # mean in days, or you can do 1 / (num_failures / year * 365)
+        std: 365
+      labor_time: 2 # in hours
+      cost: 10 # in USD
+      fraction: 0.1 # > 0 and < 1, fraction of these components that are defective
+
+  monitoring:
+    normal_monitoring: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 3
+        std: 1
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 7 # in days
+        std: 3 # in days
+
+  concurrent_repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 7 # in days
+        std: 3 # in days
+
+  degradation: 0.5 # modules only, how much a module degrades per year in percent
+
+string:
+  name: string
+  can_fail: true
+  can_repair: true
+  can_monitor: false
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 3650
+        std: 365
+      labor_time: 1 # in hours
+      cost: 20 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 7 # in days
+        std: 3 # in days
+
+combiner:
+  name: combiner
+  can_fail: true
+  can_repair: true
+  can_monitor: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: normal
+      parameters:
+        mean: 730
+        std: 182.5
+      labor_time: 2 # in hours
+      cost: 50 # in USD
+
+  monitoring:
+    normal_monitoring: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 5
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 3 # in days
+
+inverter:
+  name: inverter
+  can_fail: true
+  can_repair: true
+  can_monitor: true
+
+  failures:
+    component_failure: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 3650
+      labor_time: 0 # in hours
+      cost: 280 # in USD, typically you should do cents/watt * inverter_size (listed in SAM)
+    routine_failure:
+      distribution: exponential
+      parameters:
+        mean: 730
+      labor_time: 0
+      cost: 500 # USD, typically based on inverter size
+    catastrophic_failure:
+      distribution: normal
+      parameters:
+        mean: 5000
+        std: 365.25
+      labor_time: 0
+      cost_per_watt: 0.05
+
+  monitoring:
+    normal_monitoring: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 5
+
+  repairs:
+    component_repair: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 3 # in days
+        std: 1.5
+    routine_repair:
+      distribution: exponential
+      parameters:
+        mean: 0.5
+    catastrophic_repair:
+      distribution: lognormal
+      parameters:
+        mean: 3
+        std: 1.5
+
+disconnect: # A/C disconnect
+  name: disconnect
+  can_fail: true
+  can_repair: true
+  can_monitor: false
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 1095
+        std: 1095
+      labor_time: 4 # in hours
+      cost: 500 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 1 # in days
+        std: 0.5
+
+transformer:
+  name: transformer
+  can_fail: true
+  can_repair: true
+  can_monitor: false
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 3650
+        shape: 3
+      labor_time: 10 # in hours
+      cost: 1000 # in USD
+
+  monitoring:
+    normal_monitoring: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 5
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 0.25 # in days
+        std: 0.5
+
+grid:
+  name: grid
+  can_fail: true
+  can_repair: true
+  can_monitor: false
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: weibull
+      parameters:
+        mean: 3650
+        std: 3650
+      labor_time: 0 # in hours
+      cost: 0 # in USD
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 0.5 # in days
+
+
+tracker: # only required for tracking systems, remove it not using trackers
+  name: tracker
+  can_fail: true
+  can_repair: true
+  can_monitor: true
+
+  failures:
+    failure: # this key name can be anything you want
+      distribution: uniform
+      parameters:
+        mean: 1095
+        std: 365
+      labor_time: 1 # in hours
+      cost: 100 # in USD
+
+  monitoring:
+    normal_monitoring: # this key name can be anything you want
+      distribution: exponential
+      parameters:
+        mean: 5
+
+  repairs:
+    all_repairs: # this key name can be anything you want
+      distribution: lognormal
+      parameters:
+        mean: 3 # in days
+        std: 1
+
+
+indep_monitoring:
+  drone_ir: # list as many static monitoring methods as you want
+    interval: 1460 # this monitoring will happen every 365 days, alongside the threshold.
+    # a indep monitoring triggered by a threshold RESETs the countdown to the interval
+    global_threshold: 0.1 # if DC availability drops by this threshold amount, then this indep monitoring will occur
+    # DC availability is the DC power reaching the inverter(s), which is affected by combiners, strings, and module failures
+    failure_per_threshold: 0.1 # this threshold is PER LEVEL, if the availability of ANY of the defined levels drops by this threshold amount, this indep monitoring will occur
+    cost: 10
+    labor_time: 1 # in hours
+    levels:
+      - module
+      - combiner
+      - string
+
+component_level_monitoring:
+  combiner:
+    string:
+      global_threshold: 0.1
+      distribution: normal
+      parameters:
+        mean: 10
+        std: 10

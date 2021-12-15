@@ -35,7 +35,7 @@ def load_pysam_modules():
             pass
 
 
-def filename_to_module(filename: str):
+def filename_to_module(filename: str) -> object:
     """
     Takes the filename of an exported json file from SAM, extracts the module name, and returns a callback to that module that can be used to create an object
 
@@ -50,7 +50,7 @@ def filename_to_module(filename: str):
     return getattr_override(pysam, module_str)
 
 
-def summarize_dc_energy(dc_power_output: tuple, split: int):
+def summarize_dc_energy(dc_power_output: tuple, split: int) -> np.array:
     """
     Calculates the DC energy (kWh) based on an input array of timeseries DC power (kW) for the system lifetime (likely the 'dc_net' output from SAM)
 
@@ -74,7 +74,7 @@ def component_degradation(percent_per_day: float, t: int) -> float:
 
     Args:
         percent_per_day (float): The percent degradation per day of the module
-        t (int): Time since the module was last replaced, or if its a new module installed
+        t (int): Time since the module was last replaced, or if its a new module, installed
 
     Returns:
         float: The performance of the module, between 0 and 1
@@ -86,7 +86,7 @@ def component_degradation(percent_per_day: float, t: int) -> float:
     return 1 / np.power((1 + percent_per_day / 100), t)
 
 
-def sample(distribution: str, parameters: dict, num_samples: int, method: str = "rou") -> np.array:
+def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
     """
     Sample data from a distribution. If distribution is a supported distribution, parameters should be a dictionary with keys "mean" and "std". Otherwise, distribution should be a scipy stats function and parameters be the kwargs for the distribution.
 
@@ -97,20 +97,15 @@ def sample(distribution: str, parameters: dict, num_samples: int, method: str = 
         - weibull
         - exponential
 
-    Supported sampling methods:
-        - 'rou': Ratio of uniforms, the default. Pretty much random sampling
-
     Args:
         distribution (str): Name of the distribution function
         parameters (:obj:`dict`): Kwargs for the distribution (for a supported distribution should only be the mean and std)
         num_samples (int): Number of samples to return from distribution
-        method (str, Optional): Sampling method to use, defaults to ratio of uniforms
 
     Returns:
         :obj:(list): List of floats containing samples from the distribution
     """
     distribution = distribution.lower().strip()
-    method = method.lower().strip()
 
     if distribution == "lognormal":
         # lognormal uses the mean and std of the underlying normal distribution of log(X)
@@ -162,11 +157,8 @@ def sample(distribution: str, parameters: dict, num_samples: int, method: str = 
             raise AttributeError(f"Scipy stats doesn't have a distribution '{distribution}'")
         dist = dist(**parameters)
 
-    if method == "lhs":
-        pass
-    else:
-        # scipy rvs uses rou sampling method
-        return dist.rvs(size=num_samples)
+    # scipy rvs uses rou sampling method
+    return dist.rvs(size=num_samples)
 
 
 def get_higher_components(
