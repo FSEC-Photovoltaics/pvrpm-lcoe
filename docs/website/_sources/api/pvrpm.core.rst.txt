@@ -1,9 +1,6 @@
 pvrpm.core package
 ==================
 
-.. toctree::
-  :hidden:
-
 Subpackages
 -----------
 

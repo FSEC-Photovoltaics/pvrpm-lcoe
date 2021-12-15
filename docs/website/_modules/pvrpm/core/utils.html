@@ -85,7 +85,14 @@
               
             
             
-              <p class="caption"><span class="caption-text">Examples:</span></p>
+              <p class="caption"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_assumptions_limitations.html">SAM/PVRPM Assumptions / Limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorial_logic_diagram.html">Logic Diagram</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../example_pvrpm_config.html">Example YAML Configuration</a></li>
 </ul>
@@ -198,7 +205,7 @@
             <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="filename_to_module"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.filename_to_module">[docs]</a><span class="k">def</span> <span class="nf">filename_to_module</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="filename_to_module"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.filename_to_module">[docs]</a><span class="k">def</span> <span class="nf">filename_to_module</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes the filename of an exported json file from SAM, extracts the module name, and returns a callback to that module that can be used to create an object</span>
 
@@ -213,7 +220,7 @@
     <span class="k">return</span> <span class="n">getattr_override</span><span class="p">(</span><span class="n">pysam</span><span class="p">,</span> <span class="n">module_str</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="summarize_dc_energy"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.summarize_dc_energy">[docs]</a><span class="k">def</span> <span class="nf">summarize_dc_energy</span><span class="p">(</span><span class="n">dc_power_output</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="summarize_dc_energy"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.summarize_dc_energy">[docs]</a><span class="k">def</span> <span class="nf">summarize_dc_energy</span><span class="p">(</span><span class="n">dc_power_output</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates the DC energy (kWh) based on an input array of timeseries DC power (kW) for the system lifetime (likely the &#39;dc_net&#39; output from SAM)</span>
 
@@ -237,7 +244,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        percent_per_day (float): The percent degradation per day of the module</span>
-<span class="sd">        t (int): Time since the module was last replaced, or if its a new module installed</span>
+<span class="sd">        t (int): Time since the module was last replaced, or if its a new module, installed</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        float: The performance of the module, between 0 and 1</span>
@@ -249,7 +256,7 @@
     <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">percent_per_day</span> <span class="o">/</span> <span class="mi">100</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="n">distribution</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rou&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+<div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="n">distribution</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sample data from a distribution. If distribution is a supported distribution, parameters should be a dictionary with keys &quot;mean&quot; and &quot;std&quot;. Otherwise, distribution should be a scipy stats function and parameters be the kwargs for the distribution.</span>
 
@@ -260,20 +267,15 @@
 <span class="sd">        - weibull</span>
 <span class="sd">        - exponential</span>
 
-<span class="sd">    Supported sampling methods:</span>
-<span class="sd">        - &#39;rou&#39;: Ratio of uniforms, the default. Pretty much random sampling</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        distribution (str): Name of the distribution function</span>
 <span class="sd">        parameters (:obj:`dict`): Kwargs for the distribution (for a supported distribution should only be the mean and std)</span>
 <span class="sd">        num_samples (int): Number of samples to return from distribution</span>
-<span class="sd">        method (str, Optional): Sampling method to use, defaults to ratio of uniforms</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :obj:(list): List of floats containing samples from the distribution</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;lognormal&quot;</span><span class="p">:</span>
         <span class="c1"># lognormal uses the mean and std of the underlying normal distribution of log(X)</span>
@@ -325,11 +327,8 @@
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scipy stats doesn&#39;t have a distribution &#39;</span><span class="si">{</span><span class="n">distribution</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
         <span class="n">dist</span> <span class="o">=</span> <span class="n">dist</span><span class="p">(</span><span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;lhs&quot;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># scipy rvs uses rou sampling method</span>
-        <span class="k">return</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div>
+    <span class="c1"># scipy rvs uses rou sampling method</span>
+    <span class="k">return</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="get_higher_components"><a class="viewcode-back" href="../../../api/pvrpm.core.html#pvrpm.core.utils.get_higher_components">[docs]</a><span class="k">def</span> <span class="nf">get_higher_components</span><span class="p">(</span>
