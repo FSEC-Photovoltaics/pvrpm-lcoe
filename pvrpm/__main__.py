@@ -36,9 +36,16 @@ def main():
     help="Folder to use for saving the results, overrides configuration file value",
     default=None,
 )
-@click.option("--debug", default=False, is_flag=True, help="Enable debug stack traces")
+@click.option("--trace", default=False, is_flag=True, help="Enable debug stack traces")
+@click.option(
+    "--debug",
+    default=0,
+    help="Save simulation state every specified number of days for debugging. Saved to results folder specified",
+)
 @click.option("--noprogress", default=False, is_flag=True, help="Disable progress bars for realizations")
-def run(case: str, threads: int, realization: int, results: str, config: str, debug: bool, noprogress: bool):
+def run(
+    case: str, threads: int, realization: int, results: str, config: str, trace: bool, debug: int, noprogress: bool
+):
     """
     Run the PVRPM LCOE cost model for the case
 
@@ -50,11 +57,15 @@ def run(case: str, threads: int, realization: int, results: str, config: str, de
         logger.error(f"Error loading and verifying case: {e}")
         return
 
-    if debug:
-        pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=not noprogress)
+    if trace:
+        pvrpm_sim(
+            sam_case, save_results=True, save_graphs=True, threads=threads, debug=debug, progress_bar=not noprogress
+        )
     else:
         try:
-            pvrpm_sim(sam_case, save_results=True, save_graphs=True, threads=threads, progress_bar=not noprogress)
+            pvrpm_sim(
+                sam_case, save_results=True, save_graphs=True, threads=threads, debug=debug, progress_bar=not noprogress
+            )
         except Exception as e:
             logger.error(f"There was an error in performing the simulation: {e}")
 

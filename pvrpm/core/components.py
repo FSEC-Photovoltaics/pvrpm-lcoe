@@ -68,9 +68,6 @@ class Components:
         if case.config[ck.TRACKING]:
             self.tracker_power_loss_factor = np.zeros(lifetime * 365)
             self.tracker_availability = np.zeros(lifetime * 365)
-            fail = list(case.config[ck.TRACKER][ck.FAILURE].keys())[0]
-            # TODO: why is this based only on the first failure?
-            self.original_tracker_cost = self.case.config[ck.TRACKER][ck.FAILURE][fail].get(ck.COST, 0)
 
     @staticmethod
     def compound_failures(function: str, parameters: dict, num_fails: int):
@@ -280,7 +277,9 @@ class Components:
         fraction = operational_trackers / len(df)
         adjusted_factor = 1
         if self.case.config[ck.TRACKER][ck.CAN_FAIL]:
-            adjusted_factor = self.case.daily_tracker_coeffs[day] + fraction * (1 - self.case.daily_tracker_coeffs[day])
+            adjusted_factor = min(
+                1, self.case.daily_tracker_coeffs[day] + fraction * (1 - self.case.daily_tracker_coeffs[day])
+            )
 
         return fraction, adjusted_factor
 
@@ -448,3 +447,66 @@ class Components:
         """
         if self.indep_monitor:
             self.indep_monitor.update(day)
+
+    def snapshot(self):
+        """
+        Returns the current state of the simulation including all internal dataframes, arrays, and variables for this object
+
+        Returns:
+            :obj:`dict`: A dictionary containing the simulation snapshot data
+
+        Note:
+            The returned objects are copies of this components objects to avoid changing data in the simulation unintentionally
+
+            The returned dictionary has these keys and values:
+                * module: DataFrame of simulation data for module level
+                * string: DataFrame of simulation data for string level
+                * combiner: DataFrame of simulation data for combiner level
+                * inverter: DataFrame of simulation data for inverter level
+                * disconnect: DataFrame of simulation data for disconnect level
+                * transformer: DataFrame of simulation data for transformer level
+                * grid: DataFrame of simulation data for grid level
+                * tracker: DataFrame of simulation data for tracker level
+                * misc_data: DataFrame containing costs (for each level), module degradation, dc and ac availability, and tracker loss/availability if tracking is used
+        """
+        costs = [
+            "Module Costs",
+            "String Costs",
+            "Combiner Costs",
+            "Inverter Costs",
+            "Disconnect Costs",
+            "Transformer Costs",
+            "Grid Costs",
+        ]
+
+        others = [
+            "Module Degradation",
+            "Dc Availability",
+            "Ac Availability",
+        ]
+
+        if self.case.config[ck.TRACKING]:
+            costs += ["Tracker Costs"]
+            others += ["Tracker Loss", "Tracker Availabilty"]
+
+        misc = pd.DataFrame(columns=costs.extend(others))
+        misc.index = misc.index.rename("Day")
+
+        for column, cost in zip(costs, self.costs.values()):
+            misc[column] = cost.copy()
+
+        misc[others[0]] = self.module_degradation_factor.copy()
+        misc[others[1]] = self.dc_power_availability.copy()
+        misc[others[2]] = self.ac_power_availability.copy()
+
+        if self.case.config[ck.TRACKING]:
+            misc[others[3]] = self.tracker_power_loss_factor.copy()
+            misc[others[4]] = self.tracker_availability.copy()
+
+        d = {}
+        for comp, data in self.comps.items():
+            d[comp] = data.copy()
+
+        d["misc_data"] = misc
+
+        return d
