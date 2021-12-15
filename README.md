@@ -1,4 +1,5 @@
 # pvrpm-lcoe
+[![Tests](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/tests.yml/badge.svg?branch=master&event=push)](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/tests.yml)
 
 [LICENSE](LICENSE)
 
