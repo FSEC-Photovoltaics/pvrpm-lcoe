@@ -2,7 +2,7 @@ PVRPM's documentation
 =================================
 About
 --------
-The PhotoVoltaic Reliability Performance Model (PVRPM) is a simulation tool that using NREL's SAM tool to model performance of a PV plant over the course of it's lifetime. It simulates failures, repairs, and monitoring across the lifespan based on user defined distributions and values. This allows a more accurate representation of cost and availability over the course of a lifetime compared to SAM's base simulation you can do from the GUI. There are many setups and configurations possible, allowing one to use this tool to compare different repair and monitoring practices to find what gives the lowest LCOE.
+The PhotoVoltaic Reliability Performance Model (PVRPM) is a simulation tool that using NREL's SAM to model performance of a PV plant over the course of it's lifetime. It simulates failures, repairs, and monitoring across the lifespan based on user defined distributions and values. This allows a more accurate representation of cost and availability over the course of a lifetime compared to SAM's base simulation you can do from the GUI. There are many setups and configurations possible, allowing one to use this tool to compare different repair and monitoring practices to find what gives the lowest LCOE.
 
 There are a few assumptions taken in the tool, alongside a specific way calculations are made. Please see the logic diagram to understand how the simulation works. Also, view the example configuration to get an idea how to setup your case.
 
