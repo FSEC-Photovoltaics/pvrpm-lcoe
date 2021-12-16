@@ -3,7 +3,7 @@
 
 [LICENSE](LICENSE)
 
-Scripts for LCOE simulation using SAM, using lk and Python
+Photovoltaic simulation tool using [SAM](https://github.com/NREL/SAM)
 
 Currently using SAM version 2020.11.29
 
