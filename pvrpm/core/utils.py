@@ -213,7 +213,7 @@ def get_higher_components(
         total_comp *= component_per[level]
 
     if start_level_df is not None:
-        indicies = start_level_df.index
+        indicies = start_level_df.index.copy()
         indicies = np.floor(indicies / total_comp)
         # sum up the number of occurences for each index and return with total number of components at start level per top level
         indicies, counts = np.unique(indicies, return_counts=True)
