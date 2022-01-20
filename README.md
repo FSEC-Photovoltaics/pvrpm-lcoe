@@ -3,8 +3,10 @@
 
 [LICENSE](LICENSE)
 
+[DOCUMENTATION](https://pvrpm.readthedocs.io/en/latest/)
+
 Photovoltaic simulation tool using [SAM](https://github.com/NREL/SAM)
 
 Currently using SAM version 2020.11.29
 
-You can view the documentation by cloning the repo and going to `docs/website` and opening `index.html` in your browser.
+Please see the documentation for installation and usage guides.
