@@ -7,6 +7,6 @@
 
 Photovoltaic simulation tool using [SAM](https://github.com/NREL/SAM)
 
-Currently using SAM version 2020.11.29
+Currently using SAM version 2021.12.02
 
 Please see the documentation for installation and usage guides.
