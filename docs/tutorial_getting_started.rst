@@ -3,6 +3,8 @@ Getting Started
 .. toctree::
   :hidden:
 
+**Make sure to follow :doc:`Installation <tutorial_1installation>` and install SAM before continuing here!**
+
 PVRPM enhances SAM's models for PV systems to obtain a more accurate LCOE than its base simulation. It also allows studying the effects of monitoring and repair techniques on PV systems throughout their lifetime.
 
 To get started, create a new SAM case in the SAM GUI. From there, you **must choose the Detailed Photovoltaic model** for PVRPM to work. This is required because PVRPM need's specific parameters that only exist in this model.
@@ -16,17 +18,19 @@ Exporting the SAM Case
 PVRPM works by reading the information in your SAM case and the PVRPM YAML configuration to properly run the simulation. For the first step, you need to export your SAM case to JSON files, which PVRPM uses to read in your SAM case.
 
 To do this:
-1. Open the SAM GUI, then open your `.sam` case file.
+1. Open the SAM GUI, then open your ``.sam`` case file.
 2. Once it is open, click the drop-down menu for the case, which is located next to the case name on the top bar.
-3. Click `Generate Code`, then `JSON for inputs`.
+3. Click ``Generate Code``, then ``JSON for inputs``.
 4. A file explorer window will open, allowing you to select a place to save the JSON files. Select an empty folder.
 
-Once this is done, the selected folder will contain a few JSON files. The names of these files will follow the convention of `case-name_module.json` where `case-name` is the name of the case, and `module` is the module that JSON represents. Pay attention to what modules you have; you'll need to know that for the next part. You can remove the `.h` and `.so` files.
+Once this is done, the selected folder will contain a few JSON files. The names of these files will follow the convention of ``case-name_module.json`` where ``case-name`` is the name of the case, and ``module`` is the module that JSON represents. Pay attention to what modules you have; you'll need to know that for the next part. You can remove the ``.h`` and ``.so`` files.
 
 Configuring PVRPM
 ------------------------
 
 This will go over every configuration option to set up the case study step by step. The example configuration is also heavily commented on to help with the parameters. Also, please study the logic diagram as it can help when setting up the configuration here. *Also note all of the values listed in examples are entirely arbitrary and do not represent a realistic case.*
+
+You can download the example configuration file :download:`here <../pvrpm/config/example_config.yml>` or view the example configuration file :doc:`here <example_pvrpm_config>`.
 
 Module Order
 ----------------
@@ -34,7 +38,7 @@ These modules correspond to the modules listed in the JSON files you obtained. T
 
 To make the module order easy to set up, go to this website: https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations
 
-Then, find the modules you have under `SSC Compute Modules` column in the table; the SAM configuration column should be one of the `Detailed PV Model` rows. Once you find one containing all your modules, put them in the order as they appear in the `SSC Compute Modules` column.
+Then, find the modules you have under ``SSC Compute Modules`` column in the table; the SAM configuration column should be one of the ``Detailed PV Model`` rows. Once you find one containing all your modules, put them in the order as they appear in the ``SSC Compute Modules`` column.
 
 .. code-block:: yaml
   :linenos:
@@ -69,7 +73,7 @@ The results folder and number of realizations can be overridden from the command
 
 Case Setup
 ----------------
-Set up the basics of the case. Set the number of trackers, combiners, and transformers. Set `num_trackers` to `0` if you are not using trackers. The worst-case tracker can be set to true if you are using trackers. This means that failures in tracking components result in them being stuck in the worst way: the module is pointing the opposite of the sun's travel arc.
+Set up the basics of the case. Set the number of trackers, combiners, and transformers. Set ``num_trackers`` to ``0`` if you are not using trackers. The worst-case tracker can be set to true if you are using trackers. This means that failures in tracking components result in them being stuck in the worst way: the module is pointing the opposite of the sun's travel arc.
 
 .. code-block:: yaml
   :linenos:
@@ -88,21 +92,21 @@ Set up the basics of the case. Set the number of trackers, combiners, and transf
 
 Component Level Setup
 ------------------------
-Each component level requires a setup of failures, monitoring, and repairs. This is required for module, string, combiner, inverter, disconnect, transformer, and grid. However, if you are not setting a component level to fail (`can_fail: false`), you can remove the rest of the sections below it. For example, if string's `can_fail: false`, I can remove the `failure`, `monitoring`, and `repair` sections.
+Each component level requires a setup of failures, monitoring, and repairs. This is required for module, string, combiner, inverter, disconnect, transformer, and grid. However, if you are not setting a component level to fail (``can_fail: false``), you can remove the rest of the sections below it. For example, if string's ``can_fail: false``, I can remove the ``failure``, ``monitoring``, and ``repair`` sections.
 
 There are many options for types of failures, monitoring, and the component, alongside various combinations to get different behaviors.
 
 Keep in mind the way these operations are as follows:
 
-1. First, using the distributions defined for failures, monitoring, and repairs, a `time_to_failure`, `time_to_detection`, and `time_to_repair` is generated for each component.
+1. First, using the distributions defined for failures, monitoring, and repairs, a ``time_to_failure``, ``time_to_detection``, and ``time_to_repair`` is generated for each component.
 
-2. `time_to_failure` then counts down to 0. Once a failure occurs, `time_to_detection` counts down to 0 (if monitoring is defined). Finally, `time_to_repair` counts to 0, which repairs the component and resets these values.
+2. ``time_to_failure`` then counts down to 0. Once a failure occurs, ``time_to_detection`` counts down to 0 (if monitoring is defined). Finally, ``time_to_repair`` counts to 0, which repairs the component and resets these values.
 
 Component Behaviors
 ########################
-`can_fail` can be set to true or false, which dictates whether the components in the component level (module, string, etc.) can fail. If this is false, then nothing will fall for this level. You can remove the failures, repairs, and monitoring sections.
-`can_repair` dictates if the components can be repaired at this level. Typically, leave this true if components can fail.
-`can_monitor` turns on or off component-level monitoring. This signifies some type of monitoring in place; if you want to simulate this type of monitoring, set this to `true`.
+``can_fail`` can be set to ``true`` or ``false``, which dictates whether the components in the component level (``module``, ``string``, etc.) can fail. If this is ``false``, then nothing will fall for this level. You can remove the ``failures``, ``repairs``, and ``monitoring`` sections.
+``can_repair`` dictates if the components can be repaired at this level. Typically, leave this ``true`` if components can fail.
+``can_monitor`` turns on or off component-level monitoring. This signifies some type of monitoring in place; if you want to simulate this type of monitoring, set this to ``true``.
 
 Warranty
 ###############
@@ -112,8 +116,8 @@ Distributions for Failures, Repairs, Monitoring
 ############################################################
 Every failure, repair, and monitoring mode requires a distribution to be defined that dictates how long until the specified action occurs.
 
-PVRPM has some built-in distributions, where only a mean and standard deviation is needed to model the distribution properly. Under the hood, PVRPM uses `scipy.stats` distributions to generate samples. However, `scipy.stats` documentation for each function is unclear on how to convert the mean and std into usable values for the distribution, which is why PVRPM will do that for you.
-However, not every single `scipy` distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):
+PVRPM has some built-in distributions, where only a mean and standard deviation is needed to model the distribution properly. Under the hood, PVRPM uses ``scipy.stats`` distributions to generate samples. However, ``scipy.stats`` documentation for each function is unclear on how to convert the mean and std into usable values for the distribution, which is why PVRPM will do that for you.
+However, not every single ``scipy`` distribution is wrapped by PVRPM. These are the distributions wrapped by PVRPM (use these as the distribution option):
 
   - exponential
   - normal
@@ -121,9 +125,9 @@ However, not every single `scipy` distribution is wrapped by PVRPM. These are th
   - lognormal
   - weibull
 
-Using these distributions as the `distribution` parameter for any failure, repair, or monitoring only requires you to provide the mean and standard deviation **in days**. The `weibull` distribution also allows you to give the `shape` for this distribution instead of the standard deviation. On the `Wikipedia page <https://en.wikipedia.org/wiki/Weibull_distribution>`_ for the weibull distribution is the parameter `k` `lambda` is calculated from the mean. Using the `std` option, make sure it is large since weibull distributions have large STDs by design.
+Using these distributions as the ``distribution`` parameter for any failure, repair, or monitoring only requires you to provide the mean and standard deviation **in days**. The ``weibull`` distribution also allows you to give the ``shape`` for this distribution instead of the standard deviation. On the `Wikipedia page <https://en.wikipedia.org/wiki/Weibull_distribution>`_ for the weibull distribution is the parameter ``k`` and ``lambda`` is calculated from the mean. Using the ``std`` option, make sure it is large since weibull distributions have large STDs by design.
 
-If these distributions don't properly model your data, you can use any distribution listed in the `scipy.stats <https://docs.scipy.org/doc/scipy/reference/stats.html>`_ module. The `distribution` parameter in the configuration should be set to the function name of the distribution in the `scipy.stats` module. The `parameters` key will then be keyword arguments to the function. Make sure to carefully read scipy's documentation, as each function is different in how you need to define it. Remember, the samples from the distribution represent the number of days before that event occurs for a component.
+If these distributions don't properly model your data, you can use any distribution listed in the `scipy.stats <https://docs.scipy.org/doc/scipy/reference/stats.html>`_ module. The ``distribution`` parameter in the configuration should be set to the function name of the distribution in the ``scipy.stats`` module. The ``parameters`` key will then be keyword arguments to the function. Make sure to carefully read scipy's documentation, as each function is different in how you need to define it. Remember, the samples from the distribution represent the number of days before that event occurs for a component.
 
 .. code-block:: yaml
   :linenos:
@@ -140,14 +144,14 @@ PVRPM currently has two failure modes: total failures and concurrent failures. T
 
 For a total failure setup, the failure requires the distribution, its parameters, the labor time to fix a component, and the cost to repair the component.
 
-Optionally, there are two fraction modes for a failure: `fraction` and `decay_fraction`. Setting the `fraction` will tell PVRPM to fail that fraction (between 0 and 1) of components in the component level consistently throughout the simulation. This means PVRPM will maintain `fraction` of the components with this failure mode throughout the simulation. Remember, PVRPM will always pick the failure mode in this section **with the shortest time to failure**, so if you set two failures mode, where one is always shorter than the other, then the longer failure mode will never occur, **even if the fraction is defined on the longer failure mode**.
-The `decay_fraction` also selects `decay_fraction` of the components to fail; however, it decays with each failure. If you set `decay_fraction` to 0.5, then at first, 50 percent of the components will fail with this failure mode, then 25  percent, then 12.5 percent, etc., until it goes to 0.
+Optionally, there are two fraction modes for a failure: ``fraction`` and ``decay_fraction``. Setting the ``fraction`` will tell PVRPM to fail that fraction (between 0 and 1) of components in the component level consistently throughout the simulation. This means PVRPM will maintain ``fraction`` of the components with this failure mode throughout the simulation. Remember, PVRPM will always pick the failure mode in this section **with the shortest time to failure**, so if you set two failures mode, where one is always shorter than the other, then the longer failure mode will never occur, **even if the fraction is defined on the longer failure mode**.
+The ``decay_fraction`` also selects ``decay_fraction`` of the components to fail; however, it decays with each failure. If you set ``decay_fraction`` to 0.5, then at first, 50 percent of the components will fail with this failure mode, then 25  percent, then 12.5 percent, etc., until it approaches 0, which in reality would mean the number of failures from this mode would be 0 when ``decay_fraction`` is small enough.
 
-A typical setup of failures is to have a long "end of life" failure with a large time, and failures with shorter time to failures with a `fraction` or `decay_fraction`, so some will fail with the shorter failures, and most will fail with the end of life failure.
+A typical setup of failures is to have a long "end of life" failure with a large time, and failures with shorter time to failures with a ``fraction`` or ``decay_fraction``, so some will fail with the shorter failures, and most will fail with the end of life failure.
 
-Concurrent failures work the same way as above, except each failure mode is counted **concurrently**. This means that failure modes defined as concurrent failures **do not have the shortest time picked among the modes; instead, each failure mode will fail the component independent of each other and the total failure mode**. You can view this mode as "partial failures", where failures of this nature happen more often than total failures but cost less and are faster to repair. You can use `fraction` and `decay_fraction` here as needed.
+Concurrent failures work the same way as above, except each failure mode is counted **concurrently**. This means that failure modes defined as concurrent failures **do not have the shortest time picked among the modes; instead, each failure mode will fail the component independent of each other and the total failure mode**. You can view this mode as "partial failures", where failures of this nature happen more often than total failures but cost less and are faster to repair. You can use ``fraction`` and ``decay_fraction`` here as needed.
 
-A typical setup for concurrent failure modes is to list routine failures every year or two to a `fraction` of the components.
+A typical setup for concurrent failure modes is to list routine failures every year or two to a ``fraction`` of the components.
 
 Total failure mode chooses the quickest time to failure from the different modes, and concurrent failure modes all operate independently of each other; they fail each component independent of other failures. Further note, **when a component is repaired from a *total failure*, all *concurrent failures* get reset** since this is a full replacement, and the partial failures that affected the old component won't affect the new one.
 
@@ -243,7 +247,7 @@ Component level monitoring is defined under each component level's configuration
       parameters:
         mean: 5
 
-Cross-level monitoring is a bit more complex. Alongside the distribution and parameters, some thresholds control how the monitoring works. A `global_threshold` option defines the fraction of components in the monitored level **must fail** before monitoring can detect failed components. This can be seen as enough modules to fail before monitoring at the inverter can start detecting those failures. In PVRPM, this is replicated by the `global_threshold` must be met before `time to detection` counts down. There is also a `failure_per_threshold`, the fraction of **lower level** components that must fail **per upper-level component**. For example, if monitoring at the string with a `failure_per_threshold` of 0.1, then 10 percent of modules under a single string must fail before the string monitoring can detect module failures. Both thresholds can be defined simultaneously, but one must be defined for this monitoring to work.
+Cross-level monitoring is a bit more complex. Alongside the distribution and parameters, some thresholds control how the monitoring works. A ``global_threshold`` option defines the fraction of components in the monitored level **must fail** before monitoring can detect failed components. This can be seen as enough modules to fail before monitoring at the inverter can start detecting those failures. In PVRPM, this is replicated by the ``global_threshold`` must be met before ``time to detection`` counts down. There is also a ``failure_per_threshold``, the fraction of **lower level** components that must fail **per upper-level component**. For example, if monitoring at the string with a ``failure_per_threshold`` of 0.1, then 10 percent of modules under a single string must fail before the string monitoring can detect module failures. Both thresholds can be defined simultaneously, but one must be defined for this monitoring to work.
 
 .. code-block:: yaml
   :linenos:
@@ -272,13 +276,13 @@ Cross-level monitoring is a bit more complex. Alongside the distribution and par
           mean: 1825
           std: 365
 
-Independent monitoring works outside of component levels. It represents monitoring that **detects all failures in any component level** instantly. It can happen statically every set number of days, defined by the `interval`, or at a threshold of failed components. There are a few ways to define this threshold. First, the threshold can be defined as `global_threshold`, which works differently than cross-level monitoring. This value is based on the **DC availability**, meaning the power reaching the inverter. This is calculated using the operating strings and combiners to determine how many modules reach the inverter. With this, combiners and strings are weighted higher than module failures.
+Independent monitoring works outside of component levels. It represents monitoring that **detects all failures in any component level** instantly. It can happen statically every set number of days, defined by the ``interval``, or at a threshold of failed components. There are a few ways to define this threshold. First, the threshold can be defined as ``global_threshold``, which works differently than cross-level monitoring. This value is based on the **DC availability**, meaning the power reaching the inverter. This is calculated using the operating strings and combiners to determine how many modules reach the inverter. With this, combiners and strings are weighted higher than module failures.
 
-The other way to define a threshold is more similar to cross-level monitoring. Using the `failure_per_threshold` sets a threshold of failed components for **each level** that must be reached before monitoring occurs. This uses OR logic, meaning only one level has to drop below this threshold for the independent monitoring for **all levels**.
+The other way to define a threshold is more similar to cross-level monitoring. Using the ``failure_per_threshold`` sets a threshold of failed components for **each level** that must be reached before monitoring occurs. This uses OR logic, meaning only one level has to drop below this threshold for the independent monitoring for **all levels**.
 
-Finally, you can combine all these arguments together; `interval`, `global_threshold`, and `failure_per_threshold`.
+Finally, you can combine all these arguments together; ``interval``, ``global_threshold``, and ``failure_per_threshold``.
 
-You must specify the labor time for each independent monitoring defined, which is in hours for other parameters. There is also **an optional distribution and parameters** that can be defined as the `time_to_detection` for components under the levels when the independent monitoring occurs. Think of it as the time it takes to complete the independent monitoring. Not setting this means that the `time_to_detection` gets set to zero when independent monitoring occurs.
+You must specify the labor time for each independent monitoring defined, which is in hours for other parameters. There is also **an optional distribution and parameters** that can be defined as the ``time_to_detection`` for components under the levels when the independent monitoring occurs. Think of it as the time it takes to complete the independent monitoring. Not setting this means that the ``time_to_detection`` gets set to zero when independent monitoring occurs.
 
 .. code-block:: yaml
   :linenos:

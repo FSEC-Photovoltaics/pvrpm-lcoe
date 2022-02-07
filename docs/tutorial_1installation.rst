@@ -3,7 +3,7 @@ Installation
 
 This document covers installation and setup of the tool. The tool requires you to build a valid case in SAM, so if you haven't already download and install SAM from here: https://sam.nrel.gov/download.html
 
-**Currently, the supported SAM version is 2020.11.29!**
+**Currently, the supported SAM version is 2021.12.02!**
 
 SAM can be installed on Windows, MAC, or Linux.
 
