@@ -1,8 +1,18 @@
-SAM/PVRPM Assumptions / Limitations
+PVRPM Assumptions / Limitations
 =====================================
 .. toctree::
   :hidden:
 
-PVRPM makes a few assumptions in order to be able to run a realistic simulation efficiently.
+PVRPM makes a few assumptions in order to be able to run a realistic simulation efficiently. Along with these assumptions arise limitations to what the model can simulate realistically.
 
-TODO
+To calculate LCOE, NPV, and other data, PVRPM uses SAMs simulation capabilities for PV systems. With all of the configuration for failures, repairs, and monitoring, it generates availability for DC and AC power and the OM yearly cost for the system. These three parameters are what SAM uses in its simulation for each realization to calculate all of the output statistics.
+
+With this, everything PVRPM does must boil down to these three parameters. In doing so, some assumptions must be made to reduce computation complexity. The primary assumption is that failures, repairs, and monitoring are stochastic and can be modeled using statistical distribution. The distribution should consider the many factors that go into these areas, like weather, type of modules, quality of equipment and monitoring, etc., since PVRPM does not simulate these real-world phenomena. Alongside this PVRPM  does not account for changes in the system size, it is considered static across the lifetime of the system; that is, the number of components stays the same across the simulation lifetime.
+
+As of right now, failures are assumed to be a total component failure, where availability of the component while failed is zero. In a future release, partial failures will be available to simulate reduced functionality because of a partial failure of the component but still provide greater than 0 availability in this degraded state. It also assumes that repair costs for these failures do not rise with inflation; only the labor rates rise with yearly inflation rates (except for tracker repair costs, which do rise with inflation). The yearly inflation rate is also set to be the same each year, and new labor costs are calculated only at the beginning of every year. When components are repaired with a warranty, it is assumed that the new component has the full warranty time defined in that component's configuration. Warranties are also only applied on successful repair, so if a warranty runs out before a repair can occur, that component is repaired out of warranty.
+
+Availability is also based upon the daylight hours for the configured location via the weather file in SAM, except for the grid component level, which should be up 24 hours every day. When availability is lost due to a failure, the availability lost is only the daylight hours lost, not total hours considered failed. PVRPM only considers sun-up hours, not sun-rise or sun-set hours. It also only considers whether the entire hour is sun-up or not, so for example, if most of an hour is sun-up with a sun-set towards the end, the entire hour is still considered sun-up.
+
+During the calculation of when repairs, monitoring, and failures take place, it is assumed that as soon as a failure occurs, either monitoring or repair immediately begins the next day, depending on what is configured for that component. This must be accounted for in the user's configuration of the distributions. If multiple monitoring types are defined for a single component, then the quickest monitoring will override the others. For example, if component-level monitoring is defined for modules and cross-level monitoring from the inverter to the module, whatever has the shortest time to detection. Typically, it would be the component level monitoring.
+
+Finally, each realization is independent of the other realizations in a simulation run. A realization is simply a single "run" of the system for the duration of its lifetime, with the provided configurations.
