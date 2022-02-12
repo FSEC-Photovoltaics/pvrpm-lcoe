@@ -112,7 +112,7 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
         # so they must be normalized first
         mu, sigma = parameters[ck.MEAN], parameters[ck.STD]
         normalized_std = np.sqrt(np.log(1 + (sigma / mu) ** 2))
-        normalized_mean = np.log(mu) - normalized_std ** 2 / 2
+        normalized_mean = np.log(mu) - normalized_std**2 / 2
         dist = stats.lognorm(s=normalized_std, scale=np.exp(normalized_mean))
     elif distribution == "normal":
         dist = stats.norm(loc=parameters[ck.MEAN], scale=parameters[ck.STD])
