@@ -37,6 +37,6 @@ def test_simulation(tmp_path: str):
 
     # ensure simulation ran correctly
     # values taken from manual input into SAM case
-    assert avg_lcoe <= 140 and avg_lcoe >= 130
+    assert avg_lcoe <= 145 and avg_lcoe >= 130
     for i, (l, h) in enumerate(ranges):
         assert total_fails[i] >= l and total_fails[i] <= h
