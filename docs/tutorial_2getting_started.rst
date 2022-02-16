@@ -3,7 +3,7 @@ Getting Started
 .. toctree::
   :hidden:
 
-**Make sure to follow :doc:`Installation <tutorial_1installation>` and install SAM before continuing here!**
+**Make sure to follow** :doc:`Installation <tutorial_1installation>` **and install SAM before continuing here!**
 
 PVRPM enhances SAM's models for PV systems to obtain a more accurate LCOE than its base simulation. It also allows studying the effects of monitoring and repair techniques on PV systems throughout their lifetime.
 
