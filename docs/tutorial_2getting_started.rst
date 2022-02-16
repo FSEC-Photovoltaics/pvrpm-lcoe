@@ -32,29 +32,6 @@ This will go over every configuration option to set up the case study step by st
 
 You can download the example configuration file :download:`here <../pvrpm/config/example_config.yml>` or view the example configuration file :doc:`here <example_pvrpm_config>`.
 
-Module Order
-----------------
-These modules correspond to the modules listed in the JSON files you obtained. The modules must be simulated in the correct order for PVRPM to properly run simulations using PySAM (SAM's Python interface). A typical order is in the example, but you may need to modify it depending on your case.
-
-To make the module order easy to set up, go to this website: https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations
-
-Then, find the modules you have under ``SSC Compute Modules`` column in the table; the SAM configuration column should be one of the ``Detailed PV Model`` rows. Once you find one containing all your modules, put them in the order as they appear in the ``SSC Compute Modules`` column.
-
-.. code-block:: yaml
-  :linenos:
-
-  module_order: # the order the modules of this case should be executed
-                # check to see what modules you use by the name of the json output files
-                # typically, this should be Pvsamv1 -> grid -> utiltiy -> others
-                # see https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations
-  # Only detailed PV models are supported, which is Pvsamv1, your case must have this module
-  # Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn't support lifetime
-    - Pvsamv1
-    - Grid
-    - Utilityrate5
-    - Cashloan
-
-
 Run Setup
 ----------------
 Here, set the results folder location. On Windows, use only one backslash to separate directories; you do not need to escape them or spaces. Then set the number of realizations you want to run and the confidence interval for calculating results.
