@@ -9,7 +9,7 @@ PVRPM enhances SAM's models for PV systems to obtain a more accurate LCOE than i
 
 To get started, create a new SAM case in the SAM GUI. From there, you **must choose the Detailed Photovoltaic model** for PVRPM to work. This is required because PVRPM need's specific parameters that only exist in this model.
 
-Then, choose your financial model. It must be a financial model that supports lifetime losses. Please read SAM's documentation for help in setting up the case.
+Then, choose your financial model. It must be a financial model that supports lifetime losses. Any financial model under the `Detailed Photovoltaic Model` will work **except** the `LCOE Calculator (FCR Method)` and `No Financial Model`. Please read SAM's documentation for help in setting up the case as it goes into more detail on these models.
 
 Once that is set up, you can download the example configuration and modify it as needed. Below explains from start to finish of how to run a simulation with PVRPM.
 
@@ -20,7 +20,7 @@ PVRPM works by reading the information in your SAM case and the PVRPM YAML confi
 To do this:
 1. Open the SAM GUI, then open your ``.sam`` case file.
 2. Once it is open, click the drop-down menu for the case, which is located next to the case name on the top bar.
-3. Click ``Generate Code``, then ``JSON for inputs``.
+3. Click ``Generate Code``, then ``PySAM JSON`` (**not** ``JSON for Inputs``).
 4. A file explorer window will open, allowing you to select a place to save the JSON files. Select an empty folder.
 
 Once this is done, the selected folder will contain a few JSON files. The names of these files will follow the convention of ``case-name_module.json`` where ``case-name`` is the name of the case, and ``module`` is the module that JSON represents. Pay attention to what modules you have; you'll need to know that for the next part. You can remove the ``.h`` and ``.so`` files.

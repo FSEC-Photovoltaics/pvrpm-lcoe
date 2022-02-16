@@ -48,6 +48,25 @@ class SamCase:
         if results_folder is not None:
             self.config[ck.RESULTS_FOLDER] = results_folder
 
+        # lookup table for module order:
+        self.module_orders = [
+            ["Pvsamv1", "Grid", "Utilityrate5", "Cashloan"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "Merchantplant"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "Levpartflip"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "Equpartflip"],
+            ["Belpe", "Pvsamv1", "Grid", "Utilityrate5", "Cashloan"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "Saleleaseback"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "Singleowner"],
+            ["Pvsamv1", "Grid", "Utilityrate5", "HostDeveloper"],
+            ["Belpe", "Pvsamv1", "Grid", "Utilityrate5", "Thirdpartyownership"],
+        ]
+
+        # lookup table for models that pvrpm cannot use
+        self.bad_module_orders = [
+            ["Pvsamv1", "Grid"],
+            ["Pvsamv1", "Grid", "Lcoefcr"],
+        ]
+
         self.__verify_case()
         self.__verify_config()
 
@@ -123,12 +142,6 @@ class SamCase:
 
             modules[module_name] = module
 
-        # final check that required modules are present in this case
-        for required in ck.required_modules:
-            if required not in modules:
-                raise CaseError(
-                    f"PVRPM requires the module '{required}' for the simulation to run properly. Please redefine your case."
-                )
         return modules
 
     def __verify_config(self) -> None:
@@ -462,12 +475,45 @@ class SamCase:
         """
         Verifies loaded module configuration from SAM and also sets class variables for some information about the case.
         """
+        # since we are finding order simulation now, remove set order in config for old pvrpm config files
+        self.config[ck.MODULE_ORDER] = None
+
+        # setup module order for simulation, also
         # need to check that an LCOE calculator that supports lifetime is used
-        for bad_module in ck.unusable_lcoe_calcs:
-            if bad_module in self.modules:
-                raise CaseError(
-                    f"LCOE calculator {bad_module} cannot be used since it doesn't support lifetime, please fix the calculator in the case."
-                )
+        # in this case its only 1 unusable calculator and if no calculator is present
+        my_modules = list(self.modules.keys())
+        for module_loadout in self.module_orders:
+            if len(module_loadout) != len(self.modules):
+                continue
+            found = True
+            for module in module_loadout:
+                if module not in my_modules:
+                    found = False
+                    break
+
+            if found:
+                self.config[ck.MODULE_ORDER] = module_loadout
+                break
+
+        if self.config[ck.MODULE_ORDER] is None:
+            for module_loadout in self.bad_module_orders:
+                if len(module_loadout) != len(self.modules):
+                    continue
+
+                found = True
+                for module in module_loadout:
+                    if module not in my_modules:
+                        found = False
+                        break
+
+                if found:
+                    raise CaseError(
+                        "You have either selected the `LCOE Calculator (FCR Method)` or `No Financial Model` for your financial model, which PVRPM does not support. Please select a supported financial model."
+                    )
+
+            raise CaseError(
+                "You have selected an unknown financial model or are not using the `Detailed Photovoltaic Model`. Please update your model to a supported model."
+            )
 
         if self.value("en_dc_lifetime_losses") or self.value("en_ac_lifetime_losses"):
             logger.warning("Lifetime daily DC and AC losses will be overridden for this run.")

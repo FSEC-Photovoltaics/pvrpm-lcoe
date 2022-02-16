@@ -186,16 +186,6 @@ class ConfigKeys:
         GRID,
     ]
 
-    # these are modules that are required for PVRPM
-    required_modules = [
-        "Pvsamv1",
-    ]
-
-    # lcoe modules that cant be used
-    unusable_lcoe_calcs = [
-        "Lcoefcr",
-    ]
-
     # for output generation
     losses = [
         "annual_poa_shading_loss_percent",
