@@ -1,14 +1,3 @@
-module_order: # the order the modules of this case should be executed
-              # check to see what modules you use by the name of the json output files
-              # typically, this should be Pvsamv1 -> grid -> utiltiy -> others
-              # see https://nrel-pysam.readthedocs.io/en/master/Configs.html#sam-simulation-configurations
-# Only detailed PV models are supported, which is Pvsamv1, your case must have this module
-# Also, only LCOE calculators that support lifetime are allowed, PVRPM will check this and notify you if your LCOE calculator doesn't support lifetime
-  - Pvsamv1
-  - Grid
-  - Utilityrate5
-  - Cashloan
-
 ### Run Setup ###
 # results folder doesn't need to exist, it will be created if it doesnt already
 # For windows use single backslash. Do not need to escape spaces in folder names
