@@ -416,7 +416,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     yearly_fail_results = pd.DataFrame(index=cost_index, data=yearly_fail_data)
     yearly_fail_results["total"] = yearly_fail_results.sum(axis=1)
 
-    stats_append = []
+    stats_append = [summary_results]
     summary_no_base = summary_results.iloc[1:]
     min = summary_no_base.min()
     min.name = "min"
@@ -464,7 +464,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         values.name = f"P{p}"
         stats_append.append(values)
 
-    summary_results = summary_results.append(stats_append)
+    summary_results = pd.concat(stats_append)
 
     return [
         summary_results,
@@ -869,8 +869,10 @@ def pvrpm_sim(
 
     save_path = case.config[ck.RESULTS_FOLDER]
     lifetime = case.config[ck.LIFETIME_YRS]
-    if threads == 0:
+    if threads <= -1:
         threads = mp.cpu_count()
+    elif threads == 0:
+        threads = 1
 
     logger.info("Running base case simulation...")
     start = time.time()

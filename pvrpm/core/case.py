@@ -166,8 +166,8 @@ class SamCase:
             )
 
         if not self.config[ck.TRACKING] and self.config.get(ck.TRACKER, False):
-            raise CaseError(
-                "No tracking modules loaded by tracker defined in PVRPM configuration, please remove it if not using it."
+            logger.warning(
+                "No tracking modules loaded for the SAM case, however there is a tracking configuration in the PVRPM configuration. This configuration will be ignored and no simulation with trackers will be performed."
             )
 
         top_level_keys = set(ck.needed_keys)
@@ -185,9 +185,6 @@ class SamCase:
 
         if self.config[ck.NUM_COMBINERS] <= 0:
             raise CaseError("Number of combiners must be greater than 0!")
-
-        if self.config[ck.NUM_TRANSFORMERS] <= 0:
-            raise CaseError("Number of transformers must be greater than 0!")
 
         # static monitoring
         if self.config.get(ck.INDEP_MONITOR, None):
@@ -528,6 +525,9 @@ class SamCase:
                 "Degradation is set by the PVRPM script, you have entered a non-zero degradation to the degradation input. This script will set the degradation input to zero."
             )
             self.value("dc_degradation", [0])
+
+        if ck.NUM_TRANSFORMERS not in self.config or self.config[ck.NUM_TRANSFORMERS] < 1:
+            raise CaseError("Number of transformers must be greater than 0!")
 
         self.num_modules = 0
         self.num_strings = 0
