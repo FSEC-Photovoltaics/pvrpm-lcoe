@@ -8,7 +8,7 @@ conf_interval: 90 #XX % confidence interval around the mean will be calculated f
 ### Case Setup ###
 num_combiners: 2 # total number of DC combiner boxes
 num_transformers: 1 # total number of Transformers
-num_trackers: 2 # total number of trackers
+num_trackers: 0 # total number of trackers
 
 ### Financial Inputs ###
 present_day_labor_rate: 100 # dollars per hour
@@ -137,16 +137,10 @@ module:
       fraction: 0.1 # > 0 and < 1, fraction of these components that are normal failures, maintained throughout the simulation
 
   monitoring:
-    normal_monitoring: # this key name can be anything you want
+    all_monitoring: # this key name can be anything you want
       distribution: exponential
       parameters:
         mean: 5
-
-    defective_monitoring:
-      distribution: normal
-      parameters:
-        mean: 15
-        std: 5
 
   repairs:
     all_repairs: # this key name can be anything you want
@@ -356,32 +350,33 @@ grid:
       parameters:
         mean: 0.5 # in days
 
-tracker: # only required for tracking systems, remove it not using trackers
-  name: tracker
-  can_fail: true
-  can_repair: true
-  can_monitor: true
-
-  failures:
-    failure: # this key name can be anything you want
-      distribution: exponential
-      parameters:
-        mean: 500
-      labor_time: 0 # in hours
-      cost: 2000 # in USD
-
-  monitoring:
-    normal_monitoring: # this key name can be anything you want
-      distribution: exponential
-      parameters:
-        mean: 5
-
-  repairs:
-    all_repairs: # this key name can be anything you want
-      distribution: lognormal
-      parameters:
-        mean: 30 # in days
-        std: 10
+# uncomment if using trackers
+#tracker: # only required for tracking systems, remove it not using trackers
+#  name: tracker
+#  can_fail: true
+#  can_repair: true
+#  can_monitor: true
+#
+#  failures:
+#    failure: # this key name can be anything you want
+#      distribution: exponential
+#      parameters:
+#        mean: 500
+#      labor_time: 0 # in hours
+#      cost: 2000 # in USD
+#
+#  monitoring:
+#    normal_monitoring: # this key name can be anything you want
+#      distribution: exponential
+#      parameters:
+#        mean: 5
+#
+#  repairs:
+#    all_repairs: # this key name can be anything you want
+#      distribution: lognormal
+#      parameters:
+#        mean: 30 # in days
+#        std: 10
 
 
 ### Independent Monitoring Practices ###

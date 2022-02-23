@@ -20,7 +20,7 @@ def main():
 @click.option(
     "--threads",
     metavar="<num_threads>",
-    help="Number of threads to use for paralized simulations, set to 0 to use all CPU threads",
+    help="Number of threads to use for paralized simulations, set to -1 to use all CPU threads",
     default=1,
 )
 @click.option(
