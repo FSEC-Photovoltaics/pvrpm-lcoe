@@ -315,7 +315,7 @@ You can also parallelize realizations to decrease the overall run time. To use a
 .. code-block:: bash
   :linenos:
 
-  pvrpm run --case /path/to/directory/with/jsons --threads 0 /path/to/pvrpm/config.yaml
+  pvrpm run --case /path/to/directory/with/jsons --threads -1 /path/to/pvrpm/config.yaml
 
   PVRPM will alert you to unknown keys in your configuration if you misspelled something and tell you any incorrect or missing parameters you may have.
 
