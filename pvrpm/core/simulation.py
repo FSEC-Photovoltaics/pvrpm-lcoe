@@ -149,9 +149,13 @@ def run_system_realization(
             year = np.floor(i / 365)
             inflation = np.power(1 + case.config[ck.INFLATION] / 100, year)
             comp.update_labor_rates(case.config[ck.LABOR_RATE] * inflation)
-            if case.config[ck.TRACKING]:
-                for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
-                    case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
+            # Decided to remove since it doesnt make sense for only trackers to rise with inflation and not
+            # all other failures. Plus, this was broken.
+            # need to store original cost of tracker failures for each failure and increase based on that cost
+            # also need to take in concurrent failures
+            # if case.config[ck.TRACKING]:
+            #    for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
+            #        case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
 
         # save state if debugging
         if debug > 0 and i % debug == 0:
