@@ -149,9 +149,13 @@ def run_system_realization(
             year = np.floor(i / 365)
             inflation = np.power(1 + case.config[ck.INFLATION] / 100, year)
             comp.update_labor_rates(case.config[ck.LABOR_RATE] * inflation)
-            if case.config[ck.TRACKING]:
-                for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
-                    case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
+            # Decided to remove since it doesnt make sense for only trackers to rise with inflation and not
+            # all other failures. Plus, this was broken.
+            # need to store original cost of tracker failures for each failure and increase based on that cost
+            # also need to take in concurrent failures
+            # if case.config[ck.TRACKING]:
+            #    for fail in case.config[ck.TRACKER][ck.FAILURE].keys():
+            #        case.config[ck.TRACKER][ck.FAILURE][fail][ck.COST] *= inflation
 
         # save state if debugging
         if debug > 0 and i % debug == 0:
@@ -416,7 +420,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     yearly_fail_results = pd.DataFrame(index=cost_index, data=yearly_fail_data)
     yearly_fail_results["total"] = yearly_fail_results.sum(axis=1)
 
-    stats_append = [summary_results]
+    stats_append = []
     summary_no_base = summary_results.iloc[1:]
     min = summary_no_base.min()
     min.name = "min"
@@ -464,7 +468,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         values.name = f"P{p}"
         stats_append.append(values)
 
-    summary_results = pd.concat(stats_append)
+    # since pandas wants to depercate append, gotta convert series into dataframes
+    summary_results = pd.concat([summary_results, *[s.to_frame().transpose() for s in stats_append]])
 
     return [
         summary_results,

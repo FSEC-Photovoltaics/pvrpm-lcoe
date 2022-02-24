@@ -15,7 +15,7 @@ def test_simulation(tmp_path: str):
     """
     os.chdir(os.path.join("tests", "integration", "case"))
     case = SamCase(".", "test.yml", num_realizations=5, results_folder=tmp_path)
-    results = pvrpm_sim(case, save_results=True, save_graphs=True, progress_bar=False, debug=365, threads=0)
+    results = pvrpm_sim(case, save_results=True, save_graphs=True, progress_bar=False, debug=365, threads=-1)
 
     df_results = gen_results(case, results)
     mean_idx = 8
@@ -37,6 +37,6 @@ def test_simulation(tmp_path: str):
 
     # ensure simulation ran correctly
     # values taken from manual input into SAM case
-    assert avg_lcoe <= 145 and avg_lcoe >= 130
+    assert avg_lcoe <= 22 and avg_lcoe >= 10
     for i, (l, h) in enumerate(ranges):
         assert total_fails[i] >= l and total_fails[i] <= h
