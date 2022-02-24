@@ -416,7 +416,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
     yearly_fail_results = pd.DataFrame(index=cost_index, data=yearly_fail_data)
     yearly_fail_results["total"] = yearly_fail_results.sum(axis=1)
 
-    stats_append = [summary_results]
+    stats_append = []
     summary_no_base = summary_results.iloc[1:]
     min = summary_no_base.min()
     min.name = "min"
@@ -464,7 +464,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
         values.name = f"P{p}"
         stats_append.append(values)
 
-    summary_results = pd.concat(stats_append)
+    # since pandas wants to depercate append, gotta convert series into dataframes
+    summary_results = pd.concat([summary_results, *[s.to_frame().transpose() for s in stats_append]])
 
     return [
         summary_results,
