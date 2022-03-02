@@ -66,3 +66,14 @@ If you want to run automated tests (will take a while based on compute power):
   cd pvrpm-lcoe
   pip install .[testing]
   pytest
+
+For setting up the package in edit mode to modify PVRPM for fixing bugs or adding features:
+
+.. code-block:: bash
+  :linenos:
+
+  git clone https://github.com/FSEC-Photovoltaics/pvrpm-lcoe
+  cd pvrpm-lcoe
+  pip install -e .
+
+Edits to the code can be made in the `pvrpm-lcoe` folder and be tested by running PVRPM from the command line or custom wrapper script.
