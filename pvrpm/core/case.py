@@ -493,9 +493,10 @@ class SamCase:
         logger.warning("test 78")
         # make directory for results if it doesnt exist
         os.makedirs(self.config[ck.RESULTS_FOLDER], exist_ok=True)
-
+        logger.warning("test 79")
         if self.config[ck.TRACKING] and self.config[ck.TRACKER][ck.CAN_FAIL]:
             self.precalculate_tracker_losses()
+        logger.warning("test 80")
 
     def __verify_case(self) -> None:
         """
@@ -647,26 +648,27 @@ class SamCase:
         """
         Precalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
         """
+        logger.warning("test 81")
         if self.value("subarray1_tilt") != 0:
             raise CaseError("This script can only model tracker failures for 0 degree tilt trackers.")
-
+        logger.warning("test 82")
         user_analysis_period = self.value("analysis_period")
         self.value("analysis_period", 1)
         self.value("en_ac_lifetime_losses", 0)
         self.value("en_dc_lifetime_losses", 0)
-
+        logger.warning("test 83")
         self.simulate()
         timeseries_with_tracker = self.output("dc_net")
-
+        logger.warning("test 84")
         # calculate timeseries performance without trackers for one year
         user_tracking_mode = self.value("subarray1_track_mode")
         user_azimuth = self.value("subarray1_azimuth")
         user_tilt = self.value("subarray1_tilt")
         self.value("subarray1_track_mode", 0)  # fixed tilt
-
+        logger.warning("test 85")
         if user_azimuth > 360 or user_azimuth < 0:
             raise CaseError("Azimuth must be between 0 and 360. Please adjust the azimuth and try again.")
-
+        logger.warning("test 86")
         if self.config[ck.WORST_TRACKER]:
             # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
             worst_case_az = user_azimuth
@@ -686,17 +688,17 @@ class SamCase:
         else:
             # assume average case is that tracker gets stuck flat
             self.value("subarray1_tilt", 0)
-
+        logger.warning("test 87")
         self.simulate()
         timeseries_without_tracker = self.output("dc_net")
-
+        logger.warning("test 88")
         # summarize it to daily energy
         sum_with_tracker = summarize_dc_energy(timeseries_with_tracker, 365)
         sum_without_tracker = summarize_dc_energy(timeseries_without_tracker, 365)
-
+        logger.warning("test 89")
         # calculate daily loss statistics
         self.daily_tracker_coeffs = sum_without_tracker / sum_with_tracker
-
+        logger.warning("test 90")
         self.value("analysis_period", user_analysis_period)
         self.value("subarray1_track_mode", user_tracking_mode)
         self.value("subarray1_azimuth", user_azimuth)
