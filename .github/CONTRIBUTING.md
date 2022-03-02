@@ -18,7 +18,7 @@ Before asking a question, please make sure to read the [documentation](https://p
 
 ## Feature Requests
 Feature requests be submitted as issues [here](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/issues) and should follow the **feature request template**.
-Feature requests should be concise, specific, and if possible include examples of how the feature should work. It will then be assigned a priority level by one of the members of the repository.
+Feature requests should be concise, specific, and if possible include examples of how the feature should work. It will then be assigned a priority level by one of the members of the repository. For changes to **documentation only**, you can instead use the **documentation change template** proposing changes to the documentation. A PR can then reference this issue to change the documentation. This includes grammar fixes, spelling mistakes, or rewording.
 
 ## Reporting Bugs
 Bug reports should also be submitted as issues [here](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/issues) and follow the **bug report template**. Bug reports need to provide the operating system and hardware specifications of the computer that ran into the bug, full stack trace (use the `--trace` flag when running a simulation to get stack traces), and include a `zip` file containing **your PVRPM `YAML` configuration, `JSON` files for the SAM case, and the weather file used with the simulation.** This will allow others to reproduce and confirm the bug on other systems.
