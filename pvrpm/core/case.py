@@ -545,17 +545,20 @@ class SamCase:
         self.config[ck.MULTI_SUBARRAY] = 0
         logger.warning("test 8")
         for sub in range(1, 5):
+            logger.warning("test loop 1")
             if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
+                logger.warning(f"test loop {sub}: 2")
                 self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
                     f"subarray{sub}_nstrings"
                 )
-
+                logger.warning(f"test loop {sub}: 3")
                 self.num_strings += self.value(f"subarray{sub}_nstrings")
-
+                logger.warning(f"test loop {sub}: 4")
                 if self.value(f"subarray{sub}_track_mode"):
                     self.config[ck.TRACKING] = True
-
+                logger.warning(f"test loop {sub}: 5")
                 self.config[ck.MULTI_SUBARRAY] += 1
+                logger.warning(f"test loop {sub}: 6")
 
         logger.warning("test 9")
         inverter = self.value("inverter_model")
