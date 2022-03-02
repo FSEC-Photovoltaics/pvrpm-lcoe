@@ -662,8 +662,11 @@ class SamCase:
         logger.warning("test 84")
         # calculate timeseries performance without trackers for one year
         user_tracking_mode = self.value("subarray1_track_mode")
+        logger.warning("test 84 1")
         user_azimuth = self.value("subarray1_azimuth")
+        logger.warning("test 84 2")
         user_tilt = self.value("subarray1_tilt")
+        logger.warning("test 84 3")
         self.value("subarray1_track_mode", 0)  # fixed tilt
         logger.warning("test 85")
         if user_azimuth > 360 or user_azimuth < 0:
