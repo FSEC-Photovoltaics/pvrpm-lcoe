@@ -19,15 +19,15 @@ class SamCase:
     """
 
     def __init__(self, sam_json_dir: str, config: str, num_realizations: int = 0, results_folder: str = None):
-        print("enter init")
+        logger.warning("enter init")
         self.ssc = pssc.PySSC()
-        print("test 1")
+        logger.warning("test 1")
         self.config = self.__load_config(config, type="yaml")
-        print("test 2")
+        logger.warning("test 2")
         self.sam_json_dir = sam_json_dir
         self.daily_tracker_coeffs = None
         self.modules = self.__load_modules()
-        print("test 3")
+        logger.warning("test 3")
 
         # will be calculated after base case simulation
         self.daylight_hours = None
@@ -46,7 +46,7 @@ class SamCase:
             raise CaseError("There are errors in the configuration files, see logs.")
 
         # override results folder and number of realizations
-        print("test 4")
+        logger.warning("test 4")
         if num_realizations >= 2:
             self.config[ck.NUM_REALIZATION] = num_realizations
         if results_folder is not None:
@@ -70,11 +70,11 @@ class SamCase:
             ["Pvsamv1", "Grid"],
             ["Pvsamv1", "Grid", "Lcoefcr"],
         ]
-        print("test 5")
+        logger.warning("test 5")
         self.__verify_case()
-        print("test 6")
+        logger.warning("test 6")
         self.__verify_config()
-        print("test 7")
+        logger.warning("test 7")
 
     @staticmethod
     def __load_config(path: str, type: str = "yaml") -> dict:
