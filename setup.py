@@ -22,7 +22,16 @@ setup(
         "matplotlib",
         "python-dateutil",
     ],
-    extras_require={"docs": ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-napoleon",], "testing": ["pytest",],},
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinx_rtd_theme",
+            "sphinxcontrib-napoleon",
+        ],
+        "testing": [
+            "pytest",
+        ],
+    },
     python_requires=">=3.8",
     entry_points="""
         [console_scripts]
