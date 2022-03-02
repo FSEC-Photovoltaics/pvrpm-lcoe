@@ -72,9 +72,9 @@ class SamCase:
         ]
         logger.warning("test 5")
         self.__verify_case()
-        logger.warning("test 6")
+        logger.warning("test case")
         self.__verify_config()
-        logger.warning("test 7")
+        logger.warning("test config")
 
     @staticmethod
     def __load_config(path: str, type: str = "yaml") -> dict:
@@ -532,15 +532,18 @@ class SamCase:
             )
             self.value("dc_degradation", [0])
 
+        logger.warning("test 6")
         if ck.NUM_TRANSFORMERS not in self.config or self.config[ck.NUM_TRANSFORMERS] < 1:
             raise CaseError("Number of transformers must be greater than 0!")
 
+        logger.warning("test 7")
         self.num_modules = 0
         self.num_strings = 0
         # assume the number of modules per string is the same for each subarray
         self.config[ck.MODULES_PER_STR] = int(self.value("subarray1_modules_per_string"))
         self.config[ck.TRACKING] = False
         self.config[ck.MULTI_SUBARRAY] = 0
+        logger.warning("test 8")
         for sub in range(1, 5):
             if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
                 self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
@@ -554,21 +557,27 @@ class SamCase:
 
                 self.config[ck.MULTI_SUBARRAY] += 1
 
+        logger.warning("test 9")
         inverter = self.value("inverter_model")
         if inverter == 0:
+            logger.warning("test 10")
             self.config[ck.INVERTER_SIZE] = self.value("inv_snl_paco")
         elif inverter == 1:
+            logger.warning("test 10 2")
             self.config[ck.INVERTER_SIZE] = self.value("inv_ds_paco")
         elif inverter == 2:
+            logger.warning("test 10 3")
             self.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
+        logger.warning("test 11")
         if self.config[ck.MULTI_SUBARRAY] > 1 and self.config[ck.TRACKING]:
             raise CaseError(
                 "Tracker failures may only be modeled for a system consisting of a single subarray. Exiting simulation."
             )
 
+        logger.warning("test 12")
         if self.config[ck.TRACKING]:
             if self.value("subarray1_track_mode") == 2 or self.value("subarray1_track_mode") == 3:
                 raise CaseError(
@@ -576,15 +585,17 @@ class SamCase:
                 )
 
         # assume 1 AC disconnect per inverter
+        logger.warning("test 13")
         self.num_inverters = self.value("inverter_count")
         self.num_disconnects = self.num_inverters
+        logger.warning("test 14")
 
         self.config[ck.STR_PER_COMBINER] = int(np.floor(self.num_strings / self.config[ck.NUM_COMBINERS]))
-
+        logger.warning("test 15")
         self.config[ck.COMBINER_PER_INVERTER] = int(np.floor(self.config[ck.NUM_COMBINERS] / self.num_inverters))
-
+        logger.warning("test 16")
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
-
+        logger.warning("test 17")
         self.config[ck.LIFETIME_YRS] = int(self.value("analysis_period"))
 
     # for pickling
