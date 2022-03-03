@@ -72,7 +72,7 @@ class SamCase:
         ]
 
         # logger.warning("test value")
-        self.value("test")
+        self.value("subarray1_modules_per_string")
         # logger.warning("end test value")
 
         logger.warning("test 5")
