@@ -19,12 +19,15 @@ class SamCase:
     """
 
     def __init__(self, sam_json_dir: str, config: str, num_realizations: int = 0, results_folder: str = None):
-        """"""
+        logger.warning("enter init")
         self.ssc = pssc.PySSC()
+        logger.warning("test 1")
         self.config = self.__load_config(config, type="yaml")
+        logger.warning("test 2")
         self.sam_json_dir = sam_json_dir
         self.daily_tracker_coeffs = None
         self.modules = self.__load_modules()
+        logger.warning("test 3")
 
         # will be calculated after base case simulation
         self.daylight_hours = None
@@ -43,6 +46,7 @@ class SamCase:
             raise CaseError("There are errors in the configuration files, see logs.")
 
         # override results folder and number of realizations
+        logger.warning("test 4")
         if num_realizations >= 2:
             self.config[ck.NUM_REALIZATION] = num_realizations
         if results_folder is not None:
@@ -67,8 +71,15 @@ class SamCase:
             ["Pvsamv1", "Grid", "Lcoefcr"],
         ]
 
+        # logger.warning("test value")
+        self.value("subarray1_modules_per_string")
+        # logger.warning("end test value")
+
+        logger.warning("test 5")
         self.__verify_case()
+        logger.warning("test case")
         self.__verify_config()
+        logger.warning("test config")
 
     @staticmethod
     def __load_config(path: str, type: str = "yaml") -> dict:
@@ -148,6 +159,7 @@ class SamCase:
         """
         Verifies loaded YAML configuration file.
         """
+        logger.warning("test 18")
         # helper function to check distribution parameters
         def check_params(component: str, name: str, config: dict):
             if ck.MEAN not in config[ck.PARAM]:
@@ -159,43 +171,47 @@ class SamCase:
             elif config[ck.DIST] != ck.EXPON and ck.STD not in config[ck.PARAM]:
                 raise CaseError(f"STD parameter for {name} is missing!")
 
+        logger.warning("test 19")
         # tracking check
         if self.config[ck.TRACKING] and not self.config.get(ck.TRACKER, False):
             raise CaseError(
                 "Tracking modules loaded in SAM config but no trackers defined in the PVRPM YML configuration, please make sure it is setup!"
             )
-
+        logger.warning("test 20")
         if not self.config[ck.TRACKING] and self.config.get(ck.TRACKER, False):
             logger.warning(
                 "No tracking modules loaded for the SAM case, however there is a tracking configuration in the PVRPM configuration. This configuration will be ignored and no simulation with trackers will be performed."
             )
 
+        logger.warning("test 21")
         top_level_keys = set(ck.needed_keys)
         included_keys = set(self.config.keys()) & top_level_keys
         if included_keys != top_level_keys:
             raise CaseError(
                 f"Missing required configuration options in the PVRPM configuration: {top_level_keys - included_keys}"
             )
-
+        logger.warning("test 22")
         if self.config[ck.NUM_REALIZATION] < 2:
             raise CaseError("Number of realizations must be greater than or equal to 2!")
-
+        logger.warning("test 23")
         if self.config[ck.TRACKING] and self.config[ck.NUM_TRACKERS] <= 0:
             raise CaseError("If tracking is defined the number of trackers must be greater than 0!")
-
+        logger.warning("test 24")
         if self.config[ck.NUM_COMBINERS] <= 0:
             raise CaseError("Number of combiners must be greater than 0!")
-
+        logger.warning("test 25")
         # static monitoring
         if self.config.get(ck.INDEP_MONITOR, None):
             needed_keys = set(ck.indep_monitor_keys)
             for name, monitor_config in self.config[ck.INDEP_MONITOR].items():
+                logger.warning("test 26")
                 included_keys = set(monitor_config.keys()) & needed_keys
                 unknown_keys = (
                     set(monitor_config.keys())
                     - needed_keys
                     - {ck.INTERVAL, ck.FAIL_THRESH, ck.DIST, ck.PARAM, ck.FAIL_PER_THRESH}
                 )
+                logger.warning("test 27")
                 if included_keys != needed_keys:
                     raise CaseError(f"Independent monitoring for {name} is missing keys {needed_keys - included_keys}")
                 if ck.INTERVAL not in monitor_config and (
@@ -212,7 +228,7 @@ class SamCase:
                         )
                     if monitor_config[ck.DIST] in ck.dists:
                         check_params("", name, monitor_config)
-
+                logger.warning("test 28")
                 if unknown_keys:
                     logger.warning(f"Unknown keys in independent monitoring configuration: {unknown_keys}")
                 for level in monitor_config[ck.LEVELS]:
@@ -222,19 +238,23 @@ class SamCase:
                         self.config[level][ck.INDEP_MONITOR][name] = monitor_config[ck.INTERVAL]
                     else:
                         self.config[level][ck.INDEP_MONITOR][name] = None
-
+        logger.warning("test 29")
         # cross level monitoring and compounding
         if self.config.get(ck.COMP_MONITOR, None):
             # parse levels in order from lowest -> highest to maintain priority on monitoring
             for component in ck.compound_levels:
                 if not self.config[ck.COMP_MONITOR].get(component, None):
                     continue
+                logger.warning("test 30")
                 monitor_component_data = self.config[ck.COMP_MONITOR][component]
 
                 for monitor_component, monitor_config in monitor_component_data.items():
+                    logger.warning("test 31")
                     needed_keys = set(ck.compound_keys)
                     included_keys = set(monitor_config.keys()) & needed_keys
+                    logger.warning("test 32")
                     unknown_keys = set(monitor_config.keys()) - needed_keys - {ck.FAIL_PER_THRESH} - {ck.FAIL_THRESH}
+                    logger.warning("test 33")
                     if included_keys != needed_keys:
                         raise CaseError(
                             f"Cross component monitoring under component {component}:{monitor_component} is missing keys {needed_keys - included_keys}"
@@ -243,6 +263,7 @@ class SamCase:
                     #    raise CaseError(
                     #        f"Compound function for {component}:{monitor_component} is not a valid function!"
                     #    )
+                    logger.warning("test 34")
                     if unknown_keys:
                         logger.warning(f"Unknown keys in cross level monitoring configuration: {unknown_keys}")
 
@@ -253,33 +274,34 @@ class SamCase:
                         raise CaseError(
                             f"You must specify at least {ck.FAIL_THRESH} or {ck.FAIL_PER_THRESH} for {component}:{monitor_component}"
                         )
-
+                    logger.warning("test 35")
                     if monitor_config.get(ck.FAIL_THRESH, None) is not None and (
                         monitor_config[ck.FAIL_THRESH] < 0 or monitor_config[ck.FAIL_THRESH] > 1
                     ):
                         raise CaseError(
                             f"Global failure threshold for {component}:{monitor_component} must be between 0 and 1."
                         )
-
+                    logger.warning("test 36")
                     if monitor_config.get(ck.FAIL_PER_THRESH, None) is not None and (
                         monitor_config[ck.FAIL_PER_THRESH] < 0 or monitor_config[ck.FAIL_PER_THRESH] > 1
                     ):
                         raise CaseError(
                             f"{ck.FAIL_PER_THRESH} for {component}:{monitor_component} must be between 0 and 1."
                         )
-
+                    logger.warning("test 37")
                     if monitor_config[ck.DIST] in ck.dists:
                         check_params(component, monitor_component, monitor_config)
-
+                    logger.warning("test 38")
                     if not self.config[monitor_component].get(ck.COMP_MONITOR, None):
                         # add what level is monitoring this component level for compounding later
                         monitor_config[ck.LEVELS] = component
                         self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
 
+        logger.warning("test 39")
         for component in ck.component_keys:
             if not self.config.get(component, None):  # for non-needed components, needed ones checked already above
                 continue
-
+            logger.warning("test 40")
             missing = []
             if not self.config[component].get(ck.NAME, None):
                 missing.append(ck.NAME)
@@ -291,7 +313,7 @@ class SamCase:
                 missing.append(ck.CAN_MONITOR)
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
-
+            logger.warning("test 41")
             if self.config[component][ck.CAN_FAIL] and not self.config[component].get(ck.FAILURE, None):
                 missing.append(ck.FAILURE)
             if self.config[component][ck.CAN_REPAIR] and not self.config[component].get(ck.REPAIR, None):
@@ -301,22 +323,25 @@ class SamCase:
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
 
+            logger.warning("test 42")
             if self.config[component].get(ck.WARRANTY, None) and not self.config[component][ck.WARRANTY].get(
                 ck.DAYS, None
             ):
                 missing.append(ck.DAYS)
-
+            logger.warning("test 43")
             # check the number of repairs / monitoring is either 1 or equal to number of failures
             if self.config[component][ck.CAN_FAIL]:  # in case there are no failures for components that cant fail
                 num_failure_modes = len(self.config[component].get(ck.FAILURE, {}))
                 if self.config[component][ck.CAN_REPAIR]:
                     num_repair_modes = len(self.config[component].get(ck.REPAIR, {}))
+                    logger.warning("test 44")
                     if num_repair_modes != 1 and num_repair_modes != num_failure_modes:
                         raise CaseError(
                             f"Number of repairs for component '{component}' must be 1 or equal to the number of failures"
                         )
                 if self.config[component][ck.CAN_MONITOR]:
                     num_monitor_modes = len(self.config[component].get(ck.MONITORING, {}))
+                    logger.warning("test 45")
                     if num_monitor_modes != 1 and num_monitor_modes != num_failure_modes:
                         raise CaseError(
                             f"Number of monitoring modes for component '{component}' must be 1 or equal to the number of failures"
@@ -324,126 +349,134 @@ class SamCase:
                 # check concurrent failures and repairs
                 num_failure_modes = len(self.config[component].get(ck.PARTIAL_FAIL, {}))
                 if self.config[component][ck.CAN_REPAIR]:
+                    logger.warning("test 48")
                     num_repair_modes = len(self.config[component].get(ck.PARTIAL_REPAIR, {}))
                     if num_repair_modes != 1 and num_repair_modes != num_failure_modes:
                         raise CaseError(
                             f"Number of concurrent repairs for component '{component}' must be 1 or equal to the number of concurrent failures"
                         )
-
+            logger.warning("test 49")
             for failure, fail_config in self.config[component].get(ck.FAILURE, {}).items():
+                logger.warning("test 50")
                 fails = set(ck.failure_keys)
                 if component == ck.INVERTER:
                     # inverters may have cost_per_watt specified instead of cost
                     fails.discard(ck.COST)
-
+                logger.warning("test 51")
                 included = fails & set(fail_config.keys())
                 if included != fails:
                     missing += list(fails - included)
-
+                logger.warning("test 52")
                 unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT, ck.DECAY_FRAC}
                 if unknown_keys:
                     logger.warning(f"Unknown keys in failure configuration {failure}: {unknown_keys}")
-
+                logger.warning("test 53")
                 keys = set(fail_config.keys())
                 if ck.FRAC in keys and ck.DECAY_FRAC in keys:
                     raise CaseError(f"Must specify either `fraction` or `decay_fraction`, not both for '{component}'")
-
+                logger.warning("test 54")
                 # update cost for inverters
                 if component == ck.INVERTER:
                     if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
                         missing.append(ck.COST)
-
+                    logger.warning("test 55")
                     if fail_config.get(ck.COST_PER_WATT, None) is not None:
                         # calculate costs based on cents/watt
                         self.config[component][ck.FAILURE][failure][ck.COST] = (
                             fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
                         )
-
+                logger.warning("test 56")
                 if fail_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, failure, fail_config)
 
             # partial failure check
+            logger.warning("test 57")
             for failure, fail_config in self.config[component].get(ck.PARTIAL_FAIL, {}).items():
                 fails = set(ck.partial_failure_keys)
                 if component == ck.INVERTER:
                     # inverters may have cost_per_watt specified instead of cost
                     fails.discard(ck.COST)
-
+                logger.warning("test 58")
                 included = fails & set(fail_config.keys())
                 if included != fails:
                     missing += list(fails - included)
-
+                logger.warning("test 59")
                 unknown_keys = set(fail_config.keys()) - fails - {ck.FRAC, ck.COST, ck.COST_PER_WATT, ck.DECAY_FRAC}
                 if unknown_keys:
                     logger.warning(f"Unknown keys in concurrent failure configuration {failure}: {unknown_keys}")
-
+                logger.warning("test 60")
                 keys = set(fail_config.keys())
                 if ck.FRAC in keys and ck.DECAY_FRAC in keys:
                     raise CaseError(f"Must specify either `fraction` or `decay_fraction`, not both for '{component}'")
-
+                logger.warning("test 61")
                 # update cost for inverters
                 if component == ck.INVERTER:
                     if fail_config.get(ck.COST, None) is None and fail_config.get(ck.COST_PER_WATT, None) is None:
                         missing.append(ck.COST)
-
+                    logger.warning("test 62")
                     if fail_config.get(ck.COST_PER_WATT, None) is not None:
                         # calculate costs based on cents/watt
                         self.config[component][ck.PARTIAL_FAIL][failure][ck.COST] = (
                             fail_config[ck.COST_PER_WATT] * self.config[ck.INVERTER_SIZE]
                         )
-
+                logger.warning("test 63")
                 if fail_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, failure, fail_config)
-
+            logger.warning("test 64")
             for monitor, monitor_config in self.config[component].get(ck.MONITORING, {}).items():
+                logger.warning("test 65")
                 monitor_ = set(ck.monitoring_keys)
                 included = monitor_ & set(monitor_config.keys())
+                logger.warning("test 66")
                 if included != monitor_:
                     missing += list(monitor_ - included)
-
+                logger.warning("test 67")
                 unknown_keys = set(monitor_config.keys()) - monitor_
                 if unknown_keys:
                     logger.warning(f"Unknown keys in monitoring configuration {monitor}: {unknown_keys}")
 
                 if monitor_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, monitor, monitor_config)
-
+            logger.warning("test 68")
             for repair, repair_config in self.config[component].get(ck.REPAIR, {}).items():
                 repairs_ = set(ck.repair_keys)
                 included = repairs_ & set(repair_config.keys())
                 if included != repairs_:
                     missing += list(repairs_ - included)
-
+                logger.warning("test 69")
                 unknown_keys = set(repair_config.keys()) - repairs_
                 if unknown_keys:
                     logger.warning(f"Unknown keys in repair configuration {repair}: {unknown_keys}")
-
+                logger.warning("test 70")
                 if repair_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, repair, repair_config)
 
             # partial repairs
+            logger.warning("test 71")
             for repair, repair_config in self.config[component].get(ck.PARTIAL_REPAIR, {}).items():
                 repairs_ = set(ck.partial_repair_keys)
                 included = repairs_ & set(repair_config.keys())
+                logger.warning("test 72")
                 if included != repairs_:
                     missing += list(repairs_ - included)
-
+                logger.warning("test 73")
                 unknown_keys = set(repair_config.keys()) - repairs_
                 if unknown_keys:
                     logger.warning(f"Unknown keys in concurrent repair configuration {repair}: {unknown_keys}")
 
                 if repair_config.get(ck.DIST, None) in ck.dists:
                     check_params(component, repair, repair_config)
-
+                logger.warning("test 74")
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
-
+            logger.warning("test 75")
             if self.config[ck.STR_PER_COMBINER] * self.config[ck.NUM_COMBINERS] != self.num_strings:
                 raise CaseError("There must be an integer number of strings per combiner!")
-
+            logger.warning("test 76")
             if self.config[ck.INVERTER_PER_TRANS] * self.config[ck.NUM_TRANSFORMERS] != self.num_inverters:
                 raise CaseError("There must be an integer number of inverters per transformer!")
 
+            logger.warning("test 77")
             # add the number of each component to its configuration information
             if component == ck.MODULE:
                 self.config[component][ck.NUM_COMPONENT] = int(self.num_modules)
@@ -462,11 +495,13 @@ class SamCase:
             elif component == ck.TRACKER:
                 self.config[component][ck.NUM_COMPONENT] = self.config[ck.NUM_TRACKERS]
 
+        logger.warning("test 78")
         # make directory for results if it doesnt exist
         os.makedirs(self.config[ck.RESULTS_FOLDER], exist_ok=True)
-
+        logger.warning("test 79")
         if self.config[ck.TRACKING] and self.config[ck.TRACKER][ck.CAN_FAIL]:
             self.precalculate_tracker_losses()
+        logger.warning("test 80")
 
     def __verify_case(self) -> None:
         """
@@ -526,43 +561,55 @@ class SamCase:
             )
             self.value("dc_degradation", [0])
 
+        logger.warning("test 6")
         if ck.NUM_TRANSFORMERS not in self.config or self.config[ck.NUM_TRANSFORMERS] < 1:
             raise CaseError("Number of transformers must be greater than 0!")
 
+        logger.warning("test 7")
         self.num_modules = 0
         self.num_strings = 0
         # assume the number of modules per string is the same for each subarray
         self.config[ck.MODULES_PER_STR] = int(self.value("subarray1_modules_per_string"))
         self.config[ck.TRACKING] = False
         self.config[ck.MULTI_SUBARRAY] = 0
+        logger.warning("test 8")
         for sub in range(1, 5):
+            logger.warning("test loop 1")
             if sub == 1 or self.value(f"subarray{sub}_enable"):  # subarry 1 is always enabled
+                logger.warning(f"test loop {sub}: 2")
                 self.num_modules += self.value(f"subarray{sub}_modules_per_string") * self.value(
                     f"subarray{sub}_nstrings"
                 )
-
+                logger.warning(f"test loop {sub}: 3")
                 self.num_strings += self.value(f"subarray{sub}_nstrings")
-
+                logger.warning(f"test loop {sub}: 4")
                 if self.value(f"subarray{sub}_track_mode"):
                     self.config[ck.TRACKING] = True
-
+                logger.warning(f"test loop {sub}: 5")
                 self.config[ck.MULTI_SUBARRAY] += 1
+                logger.warning(f"test loop {sub}: 6")
 
+        logger.warning("test 9")
         inverter = self.value("inverter_model")
         if inverter == 0:
+            logger.warning("test 10")
             self.config[ck.INVERTER_SIZE] = self.value("inv_snl_paco")
         elif inverter == 1:
+            logger.warning("test 10 2")
             self.config[ck.INVERTER_SIZE] = self.value("inv_ds_paco")
         elif inverter == 2:
+            logger.warning("test 10 3")
             self.config[ck.INVERTER_SIZE] = self.value("inv_pd_paco")
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
+        logger.warning("test 11")
         if self.config[ck.MULTI_SUBARRAY] > 1 and self.config[ck.TRACKING]:
             raise CaseError(
                 "Tracker failures may only be modeled for a system consisting of a single subarray. Exiting simulation."
             )
 
+        logger.warning("test 12")
         if self.config[ck.TRACKING]:
             if self.value("subarray1_track_mode") == 2 or self.value("subarray1_track_mode") == 3:
                 raise CaseError(
@@ -570,15 +617,17 @@ class SamCase:
                 )
 
         # assume 1 AC disconnect per inverter
+        logger.warning("test 13")
         self.num_inverters = self.value("inverter_count")
         self.num_disconnects = self.num_inverters
+        logger.warning("test 14")
 
         self.config[ck.STR_PER_COMBINER] = int(np.floor(self.num_strings / self.config[ck.NUM_COMBINERS]))
-
+        logger.warning("test 15")
         self.config[ck.COMBINER_PER_INVERTER] = int(np.floor(self.config[ck.NUM_COMBINERS] / self.num_inverters))
-
+        logger.warning("test 16")
         self.config[ck.INVERTER_PER_TRANS] = int(np.floor(self.num_inverters / self.config[ck.NUM_TRANSFORMERS]))
-
+        logger.warning("test 17")
         self.config[ck.LIFETIME_YRS] = int(self.value("analysis_period"))
 
     # for pickling
@@ -604,26 +653,30 @@ class SamCase:
         """
         Precalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
         """
+        logger.warning("test 81")
         if self.value("subarray1_tilt") != 0:
             raise CaseError("This script can only model tracker failures for 0 degree tilt trackers.")
-
+        logger.warning("test 82")
         user_analysis_period = self.value("analysis_period")
         self.value("analysis_period", 1)
         self.value("en_ac_lifetime_losses", 0)
         self.value("en_dc_lifetime_losses", 0)
-
+        logger.warning("test 83")
         self.simulate()
         timeseries_with_tracker = self.output("dc_net")
-
+        logger.warning("test 84")
         # calculate timeseries performance without trackers for one year
         user_tracking_mode = self.value("subarray1_track_mode")
+        logger.warning("test 84 1")
         user_azimuth = self.value("subarray1_azimuth")
+        logger.warning("test 84 2")
         user_tilt = self.value("subarray1_tilt")
+        logger.warning("test 84 3")
         self.value("subarray1_track_mode", 0)  # fixed tilt
-
+        logger.warning("test 85")
         if user_azimuth > 360 or user_azimuth < 0:
             raise CaseError("Azimuth must be between 0 and 360. Please adjust the azimuth and try again.")
-
+        logger.warning("test 86")
         if self.config[ck.WORST_TRACKER]:
             # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
             worst_case_az = user_azimuth
@@ -643,17 +696,17 @@ class SamCase:
         else:
             # assume average case is that tracker gets stuck flat
             self.value("subarray1_tilt", 0)
-
+        logger.warning("test 87")
         self.simulate()
         timeseries_without_tracker = self.output("dc_net")
-
+        logger.warning("test 88")
         # summarize it to daily energy
         sum_with_tracker = summarize_dc_energy(timeseries_with_tracker, 365)
         sum_without_tracker = summarize_dc_energy(timeseries_without_tracker, 365)
-
+        logger.warning("test 89")
         # calculate daily loss statistics
         self.daily_tracker_coeffs = sum_without_tracker / sum_with_tracker
-
+        logger.warning("test 90")
         self.value("analysis_period", user_analysis_period)
         self.value("subarray1_track_mode", user_tracking_mode)
         self.value("subarray1_azimuth", user_azimuth)
