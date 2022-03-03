@@ -70,6 +70,11 @@ class SamCase:
             ["Pvsamv1", "Grid"],
             ["Pvsamv1", "Grid", "Lcoefcr"],
         ]
+
+        # logger.warning("test value")
+        self.value("test")
+        # logger.warning("end test value")
+
         logger.warning("test 5")
         self.__verify_case()
         logger.warning("test case")
