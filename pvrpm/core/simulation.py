@@ -803,6 +803,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     lcoe = np.array([comp.lcoe for comp in results])
     plt.boxplot(lcoe, vert=True, labels=["LCOE"])
     plt.title("LCOE Box Plot for Realizations")
+    plt.ylabel("LCOE (cents/kWh)")
     plt.tight_layout()
 
     if save_path:
