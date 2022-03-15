@@ -14,7 +14,9 @@ Installation
 --------------
 Requires python >= 3.8
 
-Works on any x64 OS.
+Works on Windows and Linux x64 OSes.
+
+**Currently, there are issues running on macOS. Please see this issue for updates:** https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/issues/49
 
 
 **Recommended** using pip:
