@@ -1,6 +1,8 @@
 # pvrpm-lcoe
 [![Tests](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/tests.yml/badge.svg?branch=master&event=push)](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/tests.yml) [![black-checker](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/black-checker.yml/badge.svg)](https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/actions/workflows/black-checker.yml)
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.04093/status.svg)](https://doi.org/10.21105/joss.04093)
+
 ---
 
 ### Quick Reference
