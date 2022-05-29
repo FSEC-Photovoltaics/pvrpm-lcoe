@@ -683,7 +683,10 @@ class SamCase:
         self.simulate()
 
         self.base_lcoe = self.output("lcoe_real")
-        self.base_npv = self.output("npv")
+        try:
+            self.base_npv = self.output("npv")
+        except AttributeError:
+            self.base_npv = None
 
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0
@@ -692,8 +695,15 @@ class SamCase:
         self.base_dc_energy = summarize_dc_energy(self.output("dc_net"), lifetime)
 
         # other outputs from base case (for graphing)
-        self.base_load = self.value("load")
-        self.base_tax_cash_flow = self.output("cf_after_tax_cash_flow")
+        try:
+            self.base_load = self.value("load")
+        except AttributeError:
+            self.base_load = None
+
+        try:
+            self.base_tax_cash_flow = self.output("cf_after_tax_cash_flow")
+        except AttributeError:
+            self.base_tax_cash_flow = self.output("cf_pretax_cashflow")
 
         for loss in ck.losses:
             try:

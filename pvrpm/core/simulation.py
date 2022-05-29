@@ -205,15 +205,22 @@ def run_system_realization(
     case.simulate()
 
     # add the results of the simulation to the components class and return
-    comp.timeseries_dc_power = case.value("dc_net")
+    comp.timeseries_dc_power = case.output("dc_net")
     comp.timeseries_ac_power = case.value("gen")
-    comp.lcoe = case.value("lcoe_real")
-    comp.npv = case.value("npv")
+    comp.lcoe = case.output("lcoe_real")
+    try:
+        comp.npv = case.output("npv")
+    except AttributeError:
+        comp.npv = None
+
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
 
     # more results, for graphing and what not
-    comp.tax_cash_flow = case.output("cf_after_tax_cash_flow")
+    try:
+        comp.tax_cash_flow = case.output("cf_after_tax_cash_flow")
+    except AttributeError:
+        comp.tax_cash_flow = case.output("cf_pretax_cashflow")
 
     for loss in ck.losses:
         try:
@@ -398,6 +405,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
 
     # generate dataframes
     summary_results = pd.DataFrame(index=summary_index, data=summary_data)
+    if summary_results["npv"].isna().all():
+        summary_results = summary_results.drop("npv", axis=1)
     summary_results.index.name = "Realization"
     # reorder columns for summary results
     reorder = list(summary_results.columns[0:2])  # lcoe and npv
@@ -515,7 +524,7 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     ]
     # base case data to compare to
     base_losses = case.base_losses
-    base_load = np.array(case.base_load)
+    base_load = np.array(case.base_load) if case.base_load is not None else None
     base_ac_energy = np.array(case.base_ac_energy)
     base_annual_energy = np.array(case.base_annual_energy)
     base_tax_cash_flow = np.array(case.base_tax_cash_flow)
@@ -571,8 +580,9 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     base_ac_energy = np.sum(base_ac_energy, axis=1)
 
     # daily load, load is the same between realizations and base
-    base_load = np.reshape(base_load, (365, 24))
-    base_load = np.sum(base_load, axis=1)
+    if base_load is not None:
+        base_load = np.reshape(base_load, (365, 24))
+        base_load = np.sum(base_load, axis=1)
 
     avg_losses = {k: v for k, v in zip(ck.losses, avg_losses)}  # create losses dictionary
 
@@ -591,7 +601,8 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
         monthly_energy[month] = np.sum(avg_ac_energy[start : start + num_days])
         base_monthly_energy[month] = np.sum(base_ac_energy[start : start + num_days])
 
-        monthly_load[month] = np.sum(base_load[start : start + num_days])
+        if base_load is not None:
+            monthly_load[month] = np.sum(base_load[start : start + num_days])
 
         current_month += delta
         start += num_days
@@ -619,36 +630,37 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     plt.close()  # clear plot
 
     # graph the monthly energy against the monthly load
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-    fig.set_figheight(5)
-    fig.set_figwidth(10)
+    if base_load is not None:
+        fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+        fig.set_figheight(5)
+        fig.set_figwidth(10)
 
-    ind = np.arange(len(monthly_energy))
-    ax1.bar(ind - 0.2, list(monthly_energy.values()), width=0.4, label="AC Energy")
-    ax1.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray", label="Electricity Load")
-    ax1.set_title("Realization Average")
-    ax1.set_xlabel("Month")
-    ax1.set_xticks(ind)
-    ax1.set_xticklabels(labels=list(monthly_energy.keys()))
-    ax1.set_ylabel("kWh")
+        ind = np.arange(len(monthly_energy))
+        ax1.bar(ind - 0.2, list(monthly_energy.values()), width=0.4, label="AC Energy")
+        ax1.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray", label="Electricity Load")
+        ax1.set_title("Realization Average")
+        ax1.set_xlabel("Month")
+        ax1.set_xticks(ind)
+        ax1.set_xticklabels(labels=list(monthly_energy.keys()))
+        ax1.set_ylabel("kWh")
 
-    ax2.bar(ind - 0.2, list(base_monthly_energy.values()), width=0.4)
-    ax2.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray")
-    ax2.set_title("Base Case")
-    ax2.set_xlabel("Month")
-    ax2.set_xticks(ind)
-    ax2.set_xticklabels(labels=list(monthly_energy.keys()))
-    ax2.set_ylabel("kWh")
+        ax2.bar(ind - 0.2, list(base_monthly_energy.values()), width=0.4)
+        ax2.bar(ind + 0.2, list(monthly_load.values()), width=0.4, color="tab:gray")
+        ax2.set_title("Base Case")
+        ax2.set_xlabel("Month")
+        ax2.set_xticks(ind)
+        ax2.set_xticklabels(labels=list(monthly_energy.keys()))
+        ax2.set_ylabel("kWh")
 
-    fig.legend()
-    fig.suptitle("Monthly Energy and Load")
-    fig.tight_layout()
-    if save_path:
-        plt.savefig(os.path.join(save_path, "Average Monthly Energy and Load.png"), bbox_inches="tight", dpi=200)
-    else:
-        plt.show()
+        fig.legend()
+        fig.suptitle("Monthly Energy and Load")
+        fig.tight_layout()
+        if save_path:
+            plt.savefig(os.path.join(save_path, "Average Monthly Energy and Load.png"), bbox_inches="tight", dpi=200)
+        else:
+            plt.show()
 
-    plt.close()  # clear plot
+        plt.close()  # clear plot
 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
     fig.set_figheight(5)
@@ -788,11 +800,20 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     ax2.set_xlabel("Year")
     ax2.set_ylabel("USD")
 
-    fig.suptitle("After Tax Cash Flow for System Lifetime")
+    # determine if stored value is pretax or after tax cash flow, depending on financial model
+    flow = None
+    try:
+        case.output("cf_after_tax_cash_flow")
+        flow = "After"
+    except AttributeError:
+        case.output("cf_pretax_cashflow")
+        flow = "Pre"
+
+    fig.suptitle(f"{flow} Tax Cash Flow for System Lifetime")
     fig.tight_layout()
     if save_path:
         plt.savefig(
-            os.path.join(save_path, "After Tax Cash Flow for System Lifetime.png"), bbox_inches="tight", dpi=200
+            os.path.join(save_path, f"{flow} Tax Cash Flow for System Lifetime.png"), bbox_inches="tight", dpi=200
         )
     else:
         plt.show()
