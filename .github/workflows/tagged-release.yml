@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.8.x"
           architecture: "x64"
-      - run: mkdir build && pip install wheel && pip wheel . -w build/ --use-feature=in-tree-build
+      - run: mkdir build && pip install wheel && pip wheel . -w build/
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
