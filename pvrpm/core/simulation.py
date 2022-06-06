@@ -95,11 +95,7 @@ def simulate_day(case: SamCase, comp: Components, day: int):
 
 
 def run_system_realization(
-    case: SamCase,
-    seed: bool = False,
-    realization_num: int = 0,
-    progress_bar: bool = False,
-    debug: int = 0,
+    case: SamCase, seed: bool = False, realization_num: int = 0, progress_bar: bool = False, debug: int = 0,
 ) -> Components:
     """
     Run a full realization for calculating costs
@@ -208,10 +204,7 @@ def run_system_realization(
     comp.timeseries_dc_power = case.output("dc_net")
     comp.timeseries_ac_power = case.value("gen")
     comp.lcoe = case.output("lcoe_real")
-    try:
-        comp.npv = case.output("npv")
-    except AttributeError:
-        comp.npv = None
+    comp.npv = case.get_npv()
 
     # remove the first element from cf_energy_net because it is always 0, representing year 0
     comp.annual_energy = np.array(case.output("cf_energy_net")[1:])
@@ -405,8 +398,6 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
 
     # generate dataframes
     summary_results = pd.DataFrame(index=summary_index, data=summary_data)
-    if summary_results["npv"].isna().all():
-        summary_results = summary_results.drop("npv", axis=1)
     summary_results.index.name = "Realization"
     # reorder columns for summary results
     reorder = list(summary_results.columns[0:2])  # lcoe and npv
@@ -922,10 +913,7 @@ def pvrpm_sim(
         ac_power_results,
         yearly_cost_results,
         yearly_fail_results,
-    ) = gen_results(
-        case,
-        results,
-    )
+    ) = gen_results(case, results,)
 
     # finally, graph results
     if save_graphs:

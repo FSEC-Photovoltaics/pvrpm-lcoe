@@ -9,7 +9,7 @@ PVRPM enhances SAM's models for PV systems to obtain a more accurate LCOE than i
 
 To get started, create a new SAM case in the SAM GUI. From there, you **must choose the Detailed Photovoltaic model** for PVRPM to work. This is required because PVRPM need's specific parameters that only exist in this model.
 
-Then, choose your financial model. It must be a financial model that supports lifetime losses. Any financial model under the `Detailed Photovoltaic Model` will work **except** the `LCOE Calculator (FCR Method)` and `No Financial Model`. Please read SAM's documentation for help in setting up the case as it goes into more detail on these models.
+Then, choose your financial model. It must be a financial model that supports lifetime losses. Any financial model under the `Detailed Photovoltaic Model` will work **except** the `LCOE Calculator (FCR Method)`, `Third Party Owner - Host` and `No Financial Model`. Please read SAM's documentation for help in setting up the case as it goes into more detail on these models.
 
 Once that is set up, you can download the example configuration and modify it as needed. Below explains from start to finish of how to run a simulation with PVRPM.
 

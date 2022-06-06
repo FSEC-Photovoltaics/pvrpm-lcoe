@@ -65,6 +65,7 @@ class SamCase:
         self.bad_module_orders = [
             ["Pvsamv1", "Grid"],
             ["Pvsamv1", "Grid", "Lcoefcr"],
+            ["Belpe", "Pvsamv1", "Grid", "Utilityrate5", "Thirdpartyownership"],
         ]
 
         self.__verify_case()
@@ -505,7 +506,7 @@ class SamCase:
 
                 if found:
                     raise CaseError(
-                        "You have either selected the `LCOE Calculator (FCR Method)` or `No Financial Model` for your financial model, which PVRPM does not support. Please select a supported financial model."
+                        "You have either selected the `LCOE Calculator (FCR Method)`, `Third Party Owner - Host` or `No Financial Model` for your financial model, which PVRPM does not support. Please select a supported financial model."
                     )
 
             raise CaseError(
@@ -600,6 +601,25 @@ class SamCase:
         self.ssc = pssc.PySSC()
         self.modules = self.__load_modules()
 
+    def get_npv(self):
+        """
+        Returns the NPV for the case after a simulation has been ran, regardless of financial model used.
+        """
+        try:
+            return self.output("npv")
+        except AttributeError:
+            pass
+
+        try:
+            return np.array(self.output("cf_project_return_aftertax_npv")).sum()
+        except AttributeError:
+            pass
+
+        try:
+            return self.output("tax_investor_aftertax_npv")
+        except AttributeError:
+            return None
+
     def precalculate_tracker_losses(self):
         """
         Precalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
@@ -683,10 +703,7 @@ class SamCase:
         self.simulate()
 
         self.base_lcoe = self.output("lcoe_real")
-        try:
-            self.base_npv = self.output("npv")
-        except AttributeError:
-            self.base_npv = None
+        self.base_npv = self.get_npv()
 
         # ac energy
         # remove the first element from cf_energy_net because it is always 0, representing year 0

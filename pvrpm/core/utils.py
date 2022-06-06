@@ -45,6 +45,15 @@ def filename_to_module(filename: str) -> object:
     Returns:
         :obj:`PySAM`: PySAM object the file represents
     """
+    # for certain modules the name from SAM doesnt match up with the module name (extra spaces in module name)
+    broken_modules = ["host_developer"]
+    for mod in broken_modules:
+        if mod in filename:
+            module_str = filename.strip().split("_")[-2:]
+            module_str = "".join(module_str).split(".")[0].strip()
+            return getattr_override(pysam, module_str)
+
+    # if not a broken module:
     # SAM case file exporting should be underscores, with the last word being the module type
     module_str = filename.strip().split("_")[-1].split(".")[0].strip()
     return getattr_override(pysam, module_str)
@@ -112,7 +121,7 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
         # so they must be normalized first
         mu, sigma = parameters[ck.MEAN], parameters[ck.STD]
         normalized_std = np.sqrt(np.log(1 + (sigma / mu) ** 2))
-        normalized_mean = np.log(mu) - normalized_std**2 / 2
+        normalized_mean = np.log(mu) - normalized_std ** 2 / 2
         dist = stats.lognorm(s=normalized_std, scale=np.exp(normalized_mean))
     elif distribution == "normal":
         dist = stats.norm(loc=parameters[ck.MEAN], scale=parameters[ck.STD])
@@ -131,12 +140,7 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
         if ck.STD in parameters:
             mean, std = parameters[ck.MEAN], parameters[ck.STD]
             c0 = 1.27 * np.sqrt(mean / std)
-            c, info, ier, msg = scipy.optimize.fsolve(
-                lambda t: _h(t) - (mean / std),
-                c0,
-                xtol=1e-10,
-                full_output=True,
-            )
+            c, info, ier, msg = scipy.optimize.fsolve(lambda t: _h(t) - (mean / std), c0, xtol=1e-10, full_output=True,)
 
             # Test residual rather than error code.
             if np.abs(info["fvec"][0]) > 1e-8:
@@ -162,10 +166,7 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
 
 
 def get_higher_components(
-    top_level: str,
-    start_level: str,
-    case,
-    start_level_df: pd.DataFrame = None,
+    top_level: str, start_level: str, case, start_level_df: pd.DataFrame = None,
 ) -> Tuple[np.array, np.array, int]:
     """
     Calculates the indicies of the top level that correspond to the given level df indicies and returns the given level indicies count per top level component and the total number of start_level components per top_level component
