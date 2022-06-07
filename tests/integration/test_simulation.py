@@ -52,13 +52,9 @@ def test_simulation(tmp_path: str):
 
         # ensure simulation ran correctly
         # values taken from manual input into SAM case
-        print("=" * 25)
-        print(f"{case_name}:")
-        print(f"lcoe: {avg_lcoe}")
-        print("=" * 25)
 
-        # assert avg_lcoe <= lcoe_range[1] and avg_lcoe >= lcoe_range[0]
-        # for i, (l, h) in enumerate(fail_ranges):
-        # assert total_fails[i] >= l and total_fails[i] <= h
+        assert avg_lcoe <= lcoe_range[1] and avg_lcoe >= lcoe_range[0]
+        for i, (l, h) in enumerate(fail_ranges):
+            assert total_fails[i] >= l and total_fails[i] <= h
 
         os.chdir("..")
