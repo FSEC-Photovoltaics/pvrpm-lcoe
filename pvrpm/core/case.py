@@ -58,7 +58,6 @@ class SamCase:
             ["Pvsamv1", "Grid", "Utilityrate5", "Saleleaseback"],
             ["Pvsamv1", "Grid", "Utilityrate5", "Singleowner"],
             ["Pvsamv1", "Grid", "Utilityrate5", "HostDeveloper"],
-            ["Belpe", "Pvsamv1", "Grid", "Utilityrate5", "Thirdpartyownership"],
         ]
 
         # lookup table for models that pvrpm cannot use
@@ -559,17 +558,6 @@ class SamCase:
         else:
             raise CaseError("Unknown inverter model! Should be 0, 1, or 2")
 
-        if self.config[ck.MULTI_SUBARRAY] > 1 and self.config[ck.TRACKING]:
-            raise CaseError(
-                "Tracker failures may only be modeled for a system consisting of a single subarray. Exiting simulation."
-            )
-
-        if self.config[ck.TRACKING]:
-            if self.value("subarray1_track_mode") == 2 or self.value("subarray1_track_mode") == 3:
-                raise CaseError(
-                    "This script is not configured to run with 2-axis tracking or azimuth-axis tracking systems."
-                )
-
         # assume 1 AC disconnect per inverter
         self.num_inverters = self.value("inverter_count")
         self.num_disconnects = self.num_inverters
@@ -624,9 +612,6 @@ class SamCase:
         """
         Precalculate_tracker_losses calculates an array of coefficients (one for every day of the year) that account for the "benefit" of trackers on that particular day. This is used to determine how much power is lost if a tracker fails.
         """
-        if self.value("subarray1_tilt") != 0:
-            raise CaseError("This script can only model tracker failures for 0 degree tilt trackers.")
-
         user_analysis_period = self.value("analysis_period")
         self.value("analysis_period", 1)
         self.value("en_ac_lifetime_losses", 0)
@@ -636,33 +621,43 @@ class SamCase:
         timeseries_with_tracker = self.output("dc_net")
 
         # calculate timeseries performance without trackers for one year
-        user_tracking_mode = self.value("subarray1_track_mode")
-        user_azimuth = self.value("subarray1_azimuth")
-        user_tilt = self.value("subarray1_tilt")
-        self.value("subarray1_track_mode", 0)  # fixed tilt
+        user_tracking_mode = {}
+        user_azimuth = {}
+        user_tilt = {}
+        for i in range(1, 5):
+            if i == 1 or self.value(f"subarray{i}_enable"):
+                user_tracking_mode[i] = self.value(f"subarray{i}_track_mode")
+                user_azimuth[i] = self.value(f"subarray{i}_azimuth")
+                user_tilt[i] = self.value(f"subarray{i}_tilt")
 
-        if user_azimuth > 360 or user_azimuth < 0:
-            raise CaseError("Azimuth must be between 0 and 360. Please adjust the azimuth and try again.")
+            self.value(f"subarray{i}_track_mode", 0)  # fixed tilt
 
-        if self.config[ck.WORST_TRACKER]:
-            # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
-            worst_case_az = user_azimuth
+        for i, uaz in user_azimuth.items():
+            if uaz > 360 or uaz < 0:
+                raise CaseError(
+                    f"Azimuth must be between 0 and 360. Please adjust the azimuth for subarray {i} and try again."
+                )
 
-            if user_azimuth < 180:
-                worst_case_az -= 90
+        for i, uaz in user_azimuth.items():
+            if self.config[ck.WORST_TRACKER]:
+                # assume worst case tracker gets stuck to north. If axis is north-south, assume gets stuck to west.
+                worst_case_az = uaz
+
+                if uaz < 180:
+                    worst_case_az -= 90
+                else:
+                    worst_case_az += 90
+
+                if worst_case_az < 0:
+                    worst_case_az += 360
+                if worst_case_az >= 360:
+                    worst_case_az -= 360
+
+                self.value(f"subarray{i}_azimuth", worst_case_az)
+                self.value(f"subarray{i}_tilt", self.value(f"subarray{i}_rotlim"))
             else:
-                worst_case_az += 90
-
-            if worst_case_az < 0:
-                worst_case_az += 360
-            if worst_case_az >= 360:
-                worst_case_az -= 360
-
-            self.value("subarray1_azimuth", worst_case_az)
-            self.value("subarray1_tilt", self.value("subarray1_rotlim"))
-        else:
-            # assume average case is that tracker gets stuck flat
-            self.value("subarray1_tilt", 0)
+                # assume average case is that tracker gets stuck flat
+                self.value(f"subarray{i}_tilt", 0)
 
         self.simulate()
         timeseries_without_tracker = self.output("dc_net")
@@ -675,9 +670,10 @@ class SamCase:
         self.daily_tracker_coeffs = sum_without_tracker / sum_with_tracker
 
         self.value("analysis_period", user_analysis_period)
-        self.value("subarray1_track_mode", user_tracking_mode)
-        self.value("subarray1_azimuth", user_azimuth)
-        self.value("subarray1_tilt", user_tilt)
+        for i in user_azimuth.keys():
+            self.value(f"subarray{i}_track_mode", user_tracking_mode[i])
+            self.value(f"subarray{i}_azimuth", user_azimuth[i])
+            self.value(f"subarray{i}_tilt", user_tilt[i])
 
     def base_case_sim(self) -> None:
         """
