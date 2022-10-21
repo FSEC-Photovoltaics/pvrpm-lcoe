@@ -203,7 +203,7 @@ def run_system_realization(
     # add the results of the simulation to the components class and return
     comp.timeseries_dc_power = case.output("dc_net")
     comp.timeseries_ac_power = case.value("gen")
-    comp.lcoe = case.output("lcoe_real")
+    comp.lcoe = (case.output("lcoe_real"), case.output("lcoe_nominal"))
     comp.npv = case.get_npv()
 
     # remove the first element from cf_energy_net because it is always 0, representing year 0
@@ -244,7 +244,7 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
             - Yearly Costs
     """
     summary_index = ["Base Case"]
-    summary_data = {"lcoe": [case.base_lcoe], "npv": [case.base_npv]}
+    summary_data = {"lcoe_real": [case.base_lcoe[0]], "lcoe_nominal": [case.base_lcoe[1]], "npv": [case.base_npv]}
     lifetime = case.config[ck.LIFETIME_YRS]
     p_vals = [99, 95, 90, 75, 50, 10]
 
@@ -299,7 +299,8 @@ def gen_results(case: SamCase, results: List[Components]) -> List[pd.DataFrame]:
 
         # summary
         summary_index.append(f"Realization {i+1}")
-        summary_data["lcoe"] += [comp.lcoe]
+        summary_data["lcoe_real"] += [comp.lcoe[0]]
+        summary_data["lcoe_nominal"] += [comp.lcoe[1]]
         summary_data["npv"] += [comp.npv]
 
         # ac energy
@@ -812,14 +813,27 @@ def graph_results(case: SamCase, results: List[Components], save_path: str = Non
     plt.close()  # clear plot
 
     # box plot for lcoe
-    lcoe = np.array([comp.lcoe for comp in results])
+    lcoe = np.array([comp.lcoe[0] for comp in results])
     plt.boxplot(lcoe, vert=True, labels=["LCOE"])
-    plt.title("LCOE Box Plot for Realizations")
+    plt.title("LCOE Real Box Plot for Realizations")
     plt.ylabel("LCOE (cents/kWh)")
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(os.path.join(save_path, "LCOE Box Plot.png"), bbox_inches="tight", dpi=200)
+        plt.savefig(os.path.join(save_path, "LCOE Real Box Plot.png"), bbox_inches="tight", dpi=200)
+    else:
+        plt.show()
+
+    plt.close()  # clear plot
+
+    lcoe = np.array([comp.lcoe[1] for comp in results])
+    plt.boxplot(lcoe, vert=True, labels=["LCOE"])
+    plt.title("LCOE Nominal Box Plot for Realizations")
+    plt.ylabel("LCOE (cents/kWh)")
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(os.path.join(save_path, "LCOE Nominal Box Plot.png"), bbox_inches="tight", dpi=200)
     else:
         plt.show()
 

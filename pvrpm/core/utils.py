@@ -221,3 +221,40 @@ def get_higher_components(
         return indicies.astype(np.int64), counts.astype(np.int64), int(total_comp)
     else:
         return int(total_comp)
+
+
+def get_components_per(array_to_split: np.array, split_indicies: np.array, per: int):
+    """
+    Splits a 1D array into a 2D array split up by split indicies, with `per` amount for each row
+
+    This will handle when the data cannot be evenly split.
+
+    Args:
+        array_to_split (np.array): 1D array to split.
+        split_indicies (np.array): List of row indicies for the new array
+        per (int): The amount to fill each row with
+    
+    Returns:
+        np.array: The newly shaped array
+    """
+    # first try to reshape the array normally, if the shapes are rectangular then we are done
+    try:
+        return np.reshape(array_to_split, (len(split_indicies), per))
+    except:
+        pass
+
+    new_array = np.ones((len(split_indicies), per + 1)) * np.nan
+    last_index = -1
+
+    # fill in all the ones that fit
+    for i in range(new_array.shape[0]):
+        last_index = i * per + per
+        new_array[i, :per] = array_to_split[i * per : last_index]
+
+    # fill in the extras evenly
+    new_array_index = 0
+    for i in range(last_index, len(array_to_split)):
+        new_array[new_array_index, -1] = array_to_split[i]
+        new_array_index += 1
+
+    return new_array

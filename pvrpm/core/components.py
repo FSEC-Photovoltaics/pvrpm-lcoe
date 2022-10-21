@@ -6,7 +6,7 @@ import pandas as pd
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
-from pvrpm.core.utils import summarize_dc_energy
+from pvrpm.core.utils import get_components_per
 from pvrpm.core.logger import logger
 from pvrpm.core.modules import failure, monitor, repair
 
@@ -54,6 +54,25 @@ class Components:
                 self.fails[c] += fails
                 self.monitors[c] += monitors
                 self.repairs[c] += repairs
+
+        # arrays of what lower level components map to higher level components
+        self.inverter_by_trans = get_components_per(
+            np.array(self.comps[ck.INVERTER].index),
+            np.array(self.comps[ck.TRANSFORMER].index),
+            self.case.config[ck.INVERTER_PER_TRANS],
+        )
+
+        self.str_by_comb = get_components_per(
+            np.array(self.comps[ck.STRING].index),
+            np.array(self.comps[ck.COMBINER].index),
+            self.case.config[ck.STR_PER_COMBINER],
+        )
+
+        self.modules_by_string = get_components_per(
+            np.array(self.comps[ck.MODULE].index),
+            np.array(self.comps[ck.STRING].index),
+            self.case.config[ck.MODULES_PER_STR],
+        )
 
         # Data from simulation at end of realization
         self.timeseries_dc_power = None
@@ -311,20 +330,19 @@ class Components:
         string_df = self.comps[ck.STRING]
         module_df = self.comps[ck.MODULE]
 
-        mods_per_str = self.case.config[ck.MODULES_PER_STR]
-        str_per_comb = self.case.config[ck.STR_PER_COMBINER]
         operational_combiners = combiner_df.index[combiner_df["state"] == 1]
         operational_strings = string_df.index[string_df["state"] == 1]
 
-        str_by_comb = np.reshape(np.array(string_df.index), (len(combiner_df), str_per_comb))
-        modules_by_string = np.reshape(np.array(module_df.index), (len(string_df), mods_per_str))
-
         # remove combiners and strings that are not operational
-        str_by_comb = str_by_comb[operational_combiners].flatten()
+        str_by_comb = self.str_by_comb[operational_combiners].flatten()
+        # remove nans
+        str_by_comb = str_by_comb[~np.isnan(str_by_comb)]
         # make sure strings under operational combiners are also operational
         operational_strings = np.intersect1d(str_by_comb, operational_strings)
         # get all modules under operational strings
-        modules_by_string = modules_by_string[operational_strings].flatten()
+        modules_by_string = self.modules_by_string[operational_strings].flatten()
+        # remove nans
+        modules_by_string = modules_by_string[~np.isnan(modules_by_string)]
 
         # note that here, "operational modules" means modules whose power is REACHING the inverter, regardless of whether the module itself is failed or not
         operational_modules = module_df.iloc[modules_by_string]["state"].sum()
@@ -343,17 +361,16 @@ class Components:
         inverter_df = self.comps[ck.INVERTER]
         disconnect_df = self.comps[ck.DISCONNECT]
 
-        invert_per_trans = self.case.config[ck.INVERTER_PER_TRANS]
-
         # theres always only 1 grid
         if grid_df.iloc[[0]]["state"][0] == 0:
             return 0
 
         operational_transformers = transformer_df.index[transformer_df["state"] == 1]
 
-        inverter_by_trans = np.reshape(np.array(inverter_df.index), (len(transformer_df), invert_per_trans))
         # remove inoperal transformers and their inverters
-        inverter_by_trans = inverter_by_trans[operational_transformers].flatten()
+        inverter_by_trans = self.inverter_by_trans[operational_transformers].flatten()
+        # remove nans
+        inverter_by_trans = inverter_by_trans[~np.isnan(inverter_by_trans)]
         inverter_df = inverter_df.iloc[inverter_by_trans]
         inverter_df = inverter_df[inverter_df["state"] == 1].index
         disconnect_df = disconnect_df.iloc[inverter_by_trans]

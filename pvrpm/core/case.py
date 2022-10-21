@@ -438,11 +438,16 @@ class SamCase:
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
 
+            # TODO: replace with warning instead of error
             if self.config[ck.STR_PER_COMBINER] * self.config[ck.NUM_COMBINERS] != self.num_strings:
-                raise CaseError("There must be an integer number of strings per combiner!")
+                logger.warning(
+                    "There is not an integer number of strings per combiner, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of strings per combiner."
+                )
 
             if self.config[ck.INVERTER_PER_TRANS] * self.config[ck.NUM_TRANSFORMERS] != self.num_inverters:
-                raise CaseError("There must be an integer number of inverters per transformer!")
+                logger.warning(
+                    "There is not an integer number of inverters per transformer, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of inverters per transformer."
+                )
 
             # add the number of each component to its configuration information
             if component == ck.MODULE:
@@ -698,7 +703,7 @@ class SamCase:
 
         self.simulate()
 
-        self.base_lcoe = self.output("lcoe_real")
+        self.base_lcoe = (self.output("lcoe_real"), self.output("lcoe_nominal"))
         self.base_npv = self.get_npv()
 
         # ac energy

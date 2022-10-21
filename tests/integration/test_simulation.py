@@ -46,7 +46,7 @@ def test_simulation(tmp_path: str):
         df_results = gen_results(case, results)
         mean_idx = 8
         summary = df_results[0]
-        avg_lcoe = summary["lcoe"][summary.index[mean_idx]]
+        avg_lcoe = summary["lcoe_real"][summary.index[mean_idx]]
 
         total_fails = [summary[f"{c}_total_failures"][mean_idx] for c in ck.component_keys]
 

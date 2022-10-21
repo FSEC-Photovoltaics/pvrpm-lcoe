@@ -6,7 +6,7 @@ import pandas as pd
 
 from pvrpm.core.enums import ConfigKeys as ck
 from pvrpm.core.case import SamCase
-from pvrpm.core.utils import sample, get_higher_components
+from pvrpm.core.utils import sample
 from pvrpm.core.modules.monitor import IndepMonitor
 
 
@@ -270,9 +270,7 @@ class PartialRepair(Repair):
 
         repair = component_info[ck.PARTIAL_REPAIR][self.repair_mode]
         df[f"time_to_repair_{self.fail_mode}"] = sample(
-            repair[ck.DIST],
-            repair[ck.PARAM],
-            component_info[ck.NUM_COMPONENT],
+            repair[ck.DIST], repair[ck.PARAM], component_info[ck.NUM_COMPONENT],
         )
         df[f"repair_times_{self.fail_mode}"] = df[f"time_to_repair_{self.fail_mode}"].copy()
 
