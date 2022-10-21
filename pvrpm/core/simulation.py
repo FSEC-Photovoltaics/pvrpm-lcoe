@@ -203,7 +203,7 @@ def run_system_realization(
     # add the results of the simulation to the components class and return
     comp.timeseries_dc_power = case.output("dc_net")
     comp.timeseries_ac_power = case.value("gen")
-    comp.lcoe = (case.output("lcoe_real"), case.output("lcoe_nominal"))
+    comp.lcoe = (case.output("lcoe_real"), case.output("lcoe_nom"))
     comp.npv = case.get_npv()
 
     # remove the first element from cf_energy_net because it is always 0, representing year 0

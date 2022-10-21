@@ -703,7 +703,7 @@ class SamCase:
 
         self.simulate()
 
-        self.base_lcoe = (self.output("lcoe_real"), self.output("lcoe_nominal"))
+        self.base_lcoe = (self.output("lcoe_real"), self.output("lcoe_nom"))
         self.base_npv = self.get_npv()
 
         # ac energy
