@@ -95,7 +95,11 @@ def simulate_day(case: SamCase, comp: Components, day: int):
 
 
 def run_system_realization(
-    case: SamCase, seed: bool = False, realization_num: int = 0, progress_bar: bool = False, debug: int = 0,
+    case: SamCase,
+    seed: bool = False,
+    realization_num: int = 0,
+    progress_bar: bool = False,
+    debug: int = 0,
 ) -> Components:
     """
     Run a full realization for calculating costs
@@ -927,7 +931,10 @@ def pvrpm_sim(
         ac_power_results,
         yearly_cost_results,
         yearly_fail_results,
-    ) = gen_results(case, results,)
+    ) = gen_results(
+        case,
+        results,
+    )
 
     # finally, graph results
     if save_graphs:

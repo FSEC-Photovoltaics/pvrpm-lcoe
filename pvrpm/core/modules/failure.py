@@ -15,7 +15,11 @@ class Failure(ABC):
     """
 
     def __init__(
-        self, level: str, comp_level_df: pd.DataFrame, case: SamCase, indep_monitoring: IndepMonitor = None,
+        self,
+        level: str,
+        comp_level_df: pd.DataFrame,
+        case: SamCase,
+        indep_monitoring: IndepMonitor = None,
     ):
         """
         Initalizes a failure instance
@@ -139,7 +143,11 @@ class TotalFailure(Failure):
                 sample_ = sample(fail[ck.DIST], fail[ck.PARAM], num_repaired)
 
                 # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-                possible_failure_times[:, i] = np.where(list(defective), sample_, np.finfo(np.float32).max,)
+                possible_failure_times[:, i] = np.where(
+                    list(defective),
+                    sample_,
+                    np.finfo(np.float32).max,
+                )
 
             else:
                 # setup failure times for each component
@@ -170,7 +178,11 @@ class TotalFailure(Failure):
                 sample_ = sample(fail[ck.DIST], fail[ck.PARAM], len(self.df))
 
                 # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-                possible_failure_times[:, i] = np.where(list(defective), sample_, np.finfo(np.float32).max,)
+                possible_failure_times[:, i] = np.where(
+                    list(defective),
+                    sample_,
+                    np.finfo(np.float32).max,
+                )
 
             possible_failure_times[:, -1] = self.df["time_to_failure"]
             failure_ind = np.argmin(possible_failure_times, axis=1)
@@ -264,7 +276,11 @@ class TotalFailure(Failure):
                     sample_ = sample(fail[ck.DIST], fail[ck.PARAM], len(self.df))
 
                     # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-                    possible_failure_times[:, i] = np.where(list(defective), sample_, np.finfo(np.float32).max,)
+                    possible_failure_times[:, i] = np.where(
+                        list(defective),
+                        sample_,
+                        np.finfo(np.float32).max,
+                    )
 
                 possible_failure_times[:, -1] = self.df["time_to_failure"]
                 failure_ind = np.argmin(possible_failure_times, axis=1)
@@ -287,7 +303,12 @@ class PartialFailure(Failure):
     """
 
     def __init__(
-        self, level: str, comp_level_df: pd.DataFrame, case: SamCase, mode: str, indep_monitoring: IndepMonitor = None,
+        self,
+        level: str,
+        comp_level_df: pd.DataFrame,
+        case: SamCase,
+        mode: str,
+        indep_monitoring: IndepMonitor = None,
     ):
         """
         Initalizes a partial failure instance
@@ -379,7 +400,11 @@ class PartialFailure(Failure):
             sample_ = sample(fail[ck.DIST], fail[ck.PARAM], len(update_df))
 
             # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-            failure_times = np.where(list(defective), sample_, np.nan,)
+            failure_times = np.where(
+                list(defective),
+                sample_,
+                np.nan,
+            )
 
             update_df[f"time_to_failure_{mode}"] = failure_times
             self.df.loc[counts] = update_df
@@ -446,7 +471,11 @@ class PartialFailure(Failure):
                     sample_ = sample(fail[ck.DIST], fail[ck.PARAM], len(update_df))
 
                     # only give a possible failure time if the module is defective, otherwise it is set to numpy max float value (which won't be used)
-                    failure_times = np.where(list(defective), sample_, np.nan,)
+                    failure_times = np.where(
+                        list(defective),
+                        sample_,
+                        np.nan,
+                    )
 
                     update_df[f"time_to_failure_{self.mode}"] = failure_times
                     self.df.loc[counts] = update_df

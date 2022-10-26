@@ -270,7 +270,9 @@ class PartialRepair(Repair):
 
         repair = component_info[ck.PARTIAL_REPAIR][self.repair_mode]
         df[f"time_to_repair_{self.fail_mode}"] = sample(
-            repair[ck.DIST], repair[ck.PARAM], component_info[ck.NUM_COMPONENT],
+            repair[ck.DIST],
+            repair[ck.PARAM],
+            component_info[ck.NUM_COMPONENT],
         )
         df[f"repair_times_{self.fail_mode}"] = df[f"time_to_repair_{self.fail_mode}"].copy()
 

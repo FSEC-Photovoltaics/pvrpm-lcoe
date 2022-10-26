@@ -121,7 +121,7 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
         # so they must be normalized first
         mu, sigma = parameters[ck.MEAN], parameters[ck.STD]
         normalized_std = np.sqrt(np.log(1 + (sigma / mu) ** 2))
-        normalized_mean = np.log(mu) - normalized_std ** 2 / 2
+        normalized_mean = np.log(mu) - normalized_std**2 / 2
         dist = stats.lognorm(s=normalized_std, scale=np.exp(normalized_mean))
     elif distribution == "normal":
         dist = stats.norm(loc=parameters[ck.MEAN], scale=parameters[ck.STD])
@@ -140,7 +140,12 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
         if ck.STD in parameters:
             mean, std = parameters[ck.MEAN], parameters[ck.STD]
             c0 = 1.27 * np.sqrt(mean / std)
-            c, info, ier, msg = scipy.optimize.fsolve(lambda t: _h(t) - (mean / std), c0, xtol=1e-10, full_output=True,)
+            c, info, ier, msg = scipy.optimize.fsolve(
+                lambda t: _h(t) - (mean / std),
+                c0,
+                xtol=1e-10,
+                full_output=True,
+            )
 
             # Test residual rather than error code.
             if np.abs(info["fvec"][0]) > 1e-8:
@@ -166,7 +171,10 @@ def sample(distribution: str, parameters: dict, num_samples: int) -> np.array:
 
 
 def get_higher_components(
-    top_level: str, start_level: str, case, start_level_df: pd.DataFrame = None,
+    top_level: str,
+    start_level: str,
+    case,
+    start_level_df: pd.DataFrame = None,
 ) -> Tuple[np.array, np.array, int]:
     """
     Calculates the indicies of the top level that correspond to the given level df indicies and returns the given level indicies count per top level component and the total number of start_level components per top_level component
@@ -233,7 +241,7 @@ def get_components_per(array_to_split: np.array, split_indicies: np.array, per: 
         array_to_split (np.array): 1D array to split.
         split_indicies (np.array): List of row indicies for the new array
         per (int): The amount to fill each row with
-    
+
     Returns:
         np.array: The newly shaped array
     """
