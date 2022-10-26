@@ -15,8 +15,8 @@ num_realizations: 2 # number of passes to make
 conf_interval: 95 #XX % confidence interval around the mean will be calculated
 
 ### Case Setup ###
-num_combiners: 2 # total number of DC combiner boxes
-num_transformers: 1 # total number of Transformers
+num_combiners: 3 # total number of DC combiner boxes
+num_transformers: 2 # total number of Transformers
 num_trackers: 24 # total number of trackers
 
 ### Financial Inputs ###

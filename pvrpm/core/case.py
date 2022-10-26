@@ -39,8 +39,13 @@ class SamCase:
         self.base_tax_cash_flow = None
         self.base_losses = {}
 
-        if not (self.modules and self.config):
+        if not self.config:
             raise CaseError("There are errors in the configuration files, see logs.")
+
+        if not self.modules:
+            raise CaseError(
+                "Could not load PySAM modules, please make sure you did not modify the case JSON file names after generation and that the case filepath is correct."
+            )
 
         # override results folder and number of realizations
         if num_realizations >= 2:
@@ -276,6 +281,16 @@ class SamCase:
                         monitor_config[ck.LEVELS] = component
                         self.config[monitor_component][ck.COMP_MONITOR] = monitor_config
 
+        if self.config[ck.STR_PER_COMBINER] * self.config[ck.NUM_COMBINERS] != self.num_strings:
+            logger.warning(
+                "There is not an integer number of strings per combiner, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of strings per combiner."
+            )
+
+        if self.config[ck.INVERTER_PER_TRANS] * self.config[ck.NUM_TRANSFORMERS] != self.num_inverters:
+            logger.warning(
+                "There is not an integer number of inverters per transformer, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of inverters per transformer."
+            )
+
         for component in ck.component_keys:
             if not self.config.get(component, None):  # for non-needed components, needed ones checked already above
                 continue
@@ -437,17 +452,6 @@ class SamCase:
 
             if missing:
                 raise CaseError(f"Missing configurations for component '{component}': {missing}")
-
-            # TODO: replace with warning instead of error
-            if self.config[ck.STR_PER_COMBINER] * self.config[ck.NUM_COMBINERS] != self.num_strings:
-                logger.warning(
-                    "There is not an integer number of strings per combiner, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of strings per combiner."
-                )
-
-            if self.config[ck.INVERTER_PER_TRANS] * self.config[ck.NUM_TRANSFORMERS] != self.num_inverters:
-                logger.warning(
-                    "There is not an integer number of inverters per transformer, this may cause slight inaccuracies if you are using failure per thresholding for component level monitoring. This shouldn't effect the output of the simulation noticeably, but it is better practice to have an integer number of inverters per transformer."
-                )
 
             # add the number of each component to its configuration information
             if component == ck.MODULE:

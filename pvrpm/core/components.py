@@ -338,7 +338,7 @@ class Components:
         # remove nans
         str_by_comb = str_by_comb[~np.isnan(str_by_comb)]
         # make sure strings under operational combiners are also operational
-        operational_strings = np.intersect1d(str_by_comb, operational_strings)
+        operational_strings = np.intersect1d(str_by_comb, operational_strings).astype(int)
         # get all modules under operational strings
         modules_by_string = self.modules_by_string[operational_strings].flatten()
         # remove nans
