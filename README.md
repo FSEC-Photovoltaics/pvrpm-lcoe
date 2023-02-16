@@ -6,7 +6,7 @@
 ---
 
 ### Quick Reference
-[Documentation](https://pvrpm.readthedocs.io/en/latest/)
+[Documentation](https://pvrpm.readthedocs.io/)
 
 [License](LICENSE)
 
