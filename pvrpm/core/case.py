@@ -153,6 +153,7 @@ class SamCase:
         """
         Verifies loaded YAML configuration file.
         """
+
         # helper function to check distribution parameters
         def check_params(component: str, name: str, config: dict):
             if ck.MEAN not in config[ck.PARAM]:
@@ -735,13 +736,15 @@ class SamCase:
 
         # calculate availability using sun hours
         # contains every hour in the year and whether is sun up, down, sunrise, sunset
+        # for every year of simulation
         sunup = self.value("sunup")
 
         # 0 sun is down, 1 sun is up, 2 surnise, 3 sunset, we only considered sun up (1)
-        sunup = np.array(sunup)
+        sunup = np.reshape(np.array(sunup), (25, -1))[0]
 
         # determine the frequency of the data, same as frequncy of supplied weather file
         total = len(sunup)
+
         if total == 8760:
             freq = 1
         else:

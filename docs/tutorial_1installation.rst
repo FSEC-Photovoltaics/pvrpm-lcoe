@@ -5,7 +5,7 @@ Installation
 
 This document covers installation and setup of the tool. The tool requires you to build a valid case in SAM, so if you haven't already download and install SAM from here: https://sam.nrel.gov/download.html
 
-**Currently, the supported SAM version is 2021.12.02!**
+**Currently, the supported SAM version is 2022.11.21!**
 
 SAM can be installed on Windows, MAC, or Linux.
 
@@ -29,7 +29,7 @@ Works on Windows and Linux x64 OSes.
   pip install git+https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/@master
 
   # for specific version
-  pip install git+https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/@vx.x.x
+  pip install pvrpm-lcoe==1.8.0
 
 Using the wheel file downloaded from https://github.com/FSEC-Photovoltaics/pvrpm-lcoe/releases
 

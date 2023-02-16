@@ -18,10 +18,10 @@
 
 Photovoltaic simulation tool using [SAM](https://github.com/NREL/SAM)
 
-Currently using SAM version 2021.12.02
+Currently using SAM version 2022.11.21
 
 Please see the documentation for installation and usage guides.
 
-*Note:* Currently Py-PVRPM has issues running on macOS, pleas see #49 for updates.
+*Note:* Currently Py-PVRPM has issues running on macOS, please see issue #49 for updates.
 
-If you would like to contribute to PVRPM, have a question, or need support, please see the contributing guide [here](.github/CONTRIBUTING.md) for guides on submitting these issues.
+If you would like to contribute to PVRPM, have a question, or need support, please see the contributing guide [here](.github/CONTRIBUTING.md) for guides on submitting issues and PRs.
