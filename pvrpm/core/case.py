@@ -609,7 +609,7 @@ class SamCase:
             pass
 
         try:
-            return np.array(self.output("cf_project_return_aftertax_npv")).sum()
+            return self.output("project_return_aftertax_npv")
         except AttributeError:
             pass
 
