@@ -10,7 +10,7 @@ def read_file(filename):
 setup(
     name="pvrpm",
     description="Run simulations to estimate LCOE costs for PV systems using SAM.",
-    version="1.8.0",
+    version="1.8.1",
     packages=find_packages(include=["pvrpm", "pvrpm.*"]),
     install_requires=[
         "nrel-pysam==4.0.0",
